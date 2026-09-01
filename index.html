@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4.1 FIX)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -282,7 +282,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4.1 FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -1374,13 +1374,15 @@
       .select('*').eq('project_id',projectId).eq('doc_type','PLAN').single();
     if(error) return alert(error.message);
     const d=x.data||{};
-    r_orgName.value=d.orgName||''; r_staff.value=d.staff||''; r_reviewer.value=d.reviewer||''; r_approver.value=d.approver||'';
-    r_projName.value=projectNameFromPlan(d)||'';
+    const setV1041=(id,value)=>{ const el=document.getElementById(id); if(el) el.value=value??''; };
+    setV1041('r_orgName',d.orgName||''); setV1041('r_staff',d.staff||'');
+    setV1041('r_reviewer',d.reviewer||''); setV1041('r_approver',d.approver||'');
+    setV1041('r_projName',projectNameFromPlan(d)||'');
     const om={}; (d.overview||[]).forEach(a=>{if(a[0]) om[a[0]]=a[1]||'';});
-    r_dateLoc.value=[om['사업일시']||om['운영일시']||om['일시'],om['사업장소']||om['장소']].filter(Boolean).join(' / ');
-    r_target.value=om['참여대상']||om['대상']||'';
-    r_content.value=(d.programs||[]).map(a=>a[0]?`${a[0]}: ${a[1]||''}`:'').filter(Boolean).join('\n');
-    r_budgetSource.value=d.budgetSource||''; r_budgetCategory.value=d.budgetCategory||'';
+    setV1041('r_dateLoc',[om['사업일시']||om['운영일시']||om['일시'],om['사업장소']||om['장소']].filter(Boolean).join(' / '));
+    setV1041('r_target',om['참여대상']||om['대상']||'');
+    setV1041('r_content',(d.programs||[]).map(a=>a[0]?`${a[0]}: ${a[1]||''}`:'').filter(Boolean).join('\n'));
+    setV1041('r_budgetSource',d.budgetSource||''); setV1041('r_budgetCategory',d.budgetCategory||'');
     window.currentSourcePlanId=projectId; window.currentCloudResultProjectId=projectId;
     switchMode('RESULT'); switchSubTab('r',1);
     alert('공동 DB의 계획서 정보를 결과보고서로 승계했습니다.');
