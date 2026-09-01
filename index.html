@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="사업계획서 및 결과보고서 공동업무 관리 시스템">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v9.0 Web)</title>
+<style>
+  body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
+  .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+  h1 { font-size: 22px; color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; margin-top: 0; text-align: center; }
+  
+  /* 메인 모드 선택기 */
+  .mode-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; margin-top: 15px; }
+  .mode-btn { flex: 1; padding: 12px; text-align: center; font-size: 15px; font-weight: bold; border: 2px solid #cbd5e1; border-radius: 8px; cursor: pointer; background-color: #f8fafc; color: #64748b; transition: all 0.2s ease; }
+  .mode-btn.active-plan { background-color: #eff6ff; border-color: #2563eb; color: #1d4ed8; box-shadow: 0 2px 5px rgba(37,99,235,0.15); }
+  .mode-btn.active-result { background-color: #ecfdf5; border-color: #059669; color: #047857; box-shadow: 0 2px 5px rgba(5,150,105,0.15); }
+  .mode-btn.active-list { background-color: #fef3c7; border-color: #d97706; color: #b45309; box-shadow: 0 2px 5px rgba(217,119,6,0.15); }
+
+  /* 입력 서브 탭 */
+  .sub-tab-container { display: flex; gap: 5px; border-bottom: 2px solid #cbd5e1; margin-bottom: 15px; }
+  .sub-tab { padding: 10px 18px; font-size: 13px; font-weight: bold; background: #f1f5f9; border: 1px solid #cbd5e1; border-bottom: none; border-radius: 4px 4px 0 0; cursor: pointer; color: #475569; }
+  .sub-tab.active { background: #2563eb; color: #ffffff; border-color: #2563eb; }
+  .sub-tab.active-res { background: #059669; color: #ffffff; border-color: #059669; }
+
+  h2 { font-size: 16px; border-left: 4px solid #1e40af; padding-left: 8px; margin-top: 20px; margin-bottom: 12px; }
+  .section-plan-head { border-color: #2563eb; color: #1e40af; }
+  .section-result-head { border-color: #059669; color: #047857; }
+  .section-list-head { border-color: #d97706; color: #b45309; }
+  
+  .sub-section { display: none; }
+  .sub-section.active { display: block; }
+
+  /* Table Layout */
+  .form-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 13px; }
+  .form-table th, .form-table td { border: 1px solid #cbd5e1; padding: 8px; vertical-align: middle; }
+  .form-table th { background-color: #f1f5f9; color: #334155; font-weight: bold; text-align: center; }
+  
+  input[type="text"], input[type="number"], select, textarea { width: 100%; box-sizing: border-box; padding: 7px 9px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; font-family: inherit; }
+  textarea { resize: vertical; min-height: 48px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+  
+  .form-section { display: none; }
+  .form-section.active { display: block; }
+
+  .td-center { text-align: center; }
+  .td-right { text-align: right; }
+  
+  /* Buttons */
+  .btn-container { display: flex; justify-content: center; gap: 10px; margin-top: 20px; margin-bottom: 20px; }
+  .btn { padding: 10px 20px; font-size: 14px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
+  .btn-plan { background-color: #2563eb; color: #ffffff; }
+  .btn-plan:hover { background-color: #1d4ed8; }
+  .btn-result { background-color: #059669; color: #ffffff; }
+  .btn-result:hover { background-color: #047857; }
+  .btn-save { background-color: #d97706; color: #ffffff; }
+  .btn-save:hover { background-color: #b45309; }
+  .btn-add { background-color: #475569; color: #ffffff; font-size: 12px; padding: 5px 12px; border: none; border-radius: 3px; cursor: pointer; }
+  .btn-del { background-color: #ef4444; color: #ffffff; font-size: 12px; padding: 4px 8px; border: none; border-radius: 3px; cursor: pointer; }
+  .btn-gform { background-color: #7c3aed; color: #ffffff; font-size: 12px; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+  
+  /* 공문서 서식 스타일 */
+  .doc-sheet { background: #ffffff; border: 1px solid #94a3b8; padding: 40px; font-family: 'Batang', 'Gungsuh', serif; color: #000; box-shadow: 0 0 5px rgba(0,0,0,0.1); margin-top: 20px; line-height: 1.8; page-break-inside: avoid; }
+  .doc-org-header { font-size: 24px; font-weight: bold; text-align: left; letter-spacing: -1px; margin-bottom: 5px; }
+  .doc-sub-header { font-size: 12px; color: #555; margin-bottom: 20px; }
+  .doc-meta-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 14px; }
+  .doc-meta-table td { padding: 4px 0; vertical-align: top; }
+  .doc-body-text { font-size: 14px; margin-bottom: 20px; text-align: justify; }
+  .doc-list-item { padding-left: 15px; text-indent: -15px; margin: 3px 0; font-size: 14px; }
+
+  /* 출력용 테이블 스타일 */
+  .out-table { width: 100%; border-collapse: collapse; margin: 10px 0 20px 0; font-size: 13px; font-family: 'Batang', serif; }
+  .out-table th, .out-table td { border: 1px solid #000; padding: 6px 8px; text-align: left; }
+  .out-table th { background-color: #f2f2f2; text-align: center; font-weight: bold; }
+
+  /* 2단 고정 결재/시행선 스타일 */
+  .doc-approval-container { width: 100%; border-top: 2px solid #666; margin-top: 30px; padding-top: 10px; font-size: 13px; font-family: 'Batang', serif; }
+  .doc-approval-row { display: flex; justify-content: flex-start; margin-bottom: 6px; }
+  .doc-app-item { flex: 1; display: flex; align-items: center; }
+  .doc-app-label { font-weight: normal; margin-right: 12px; white-space: nowrap; }
+  .doc-app-value { font-weight: bold; }
+  
+  .doc-footer-address { font-size: 11px; color: #333; margin-top: 8px; text-align: left; line-height: 1.5; font-family: 'Batang', serif; }
+  .tag-plan { background-color: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+  .tag-result { background-color: #d1fae5; color: #065f46; padding: 2px 6px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+
+  @media print {
+    @page { size: A4 portrait; margin: 15mm; }
+    body { padding: 0 !important; margin: 0 !important; background-color: #ffffff !important; }
+    .app-container { border: none !important; box-shadow: none !important; padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
+    .mode-selector, .form-section, h1, h2, .btn-container, .no-print, .sub-tab-container { display: none !important; }
+    .print-target { display: block !important; }
+    .form-section.print-parent { display: block !important; }
+    .form-section.print-parent > * { display: none !important; }
+    .form-section.print-parent > .print-target { display: block !important; }
+
+    .doc-sheet { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
+    .tag-plan, .tag-result { display: none !important; }
+  }
+
+/* v8.6 기관 업무형 UI 보강 */
+#section-home-v86.active{display:block;}
+#section-home-v86:not(.active){display:none;}
+.mode-selector{flex-wrap:wrap;}
+.mode-btn{min-width:140px;}
+@media(max-width:760px){
+  .mode-selector{display:grid!important;grid-template-columns:1fr 1fr;}
+  .mode-btn{min-width:0!important;font-size:11px!important;padding:10px 6px!important;}
+}
+
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+<div id="authOverlay" style="position:fixed;inset:0;background:#f5f7fa;z-index:99999;display:flex;align-items:center;justify-content:center;">
+  <div style="width:min(430px,92vw);background:#fff;border:1px solid #ddd;border-radius:14px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.12);">
+    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v8.3</h2>
+    <p style="font-size:13px;color:#666;margin:0 0 20px;">직원 계정으로 로그인하면 공동 사업 DB를 사용할 수 있습니다.</p>
+    <label>이메일</label><input id="loginEmail" type="email" style="width:100%;padding:10px;margin:5px 0 12px;box-sizing:border-box;">
+    <label>비밀번호</label><input id="loginPassword" type="password" style="width:100%;padding:10px;margin:5px 0 14px;box-sizing:border-box;">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-plan" style="flex:1;" onclick="loginV8()">로그인</button>
+      <button class="btn btn-add" style="flex:1;" onclick="signupV8()">직원 계정 생성</button>
+    </div>
+    <div id="authMsg" style="margin-top:12px;font-size:12px;color:#b91c1c;"></div>
+  </div>
+</div>
+<div id="collabBar" class="no-print" style="display:none;background:#172554;color:#fff;padding:9px 16px;font-size:12px;align-items:center;justify-content:space-between;">
+  <span>☁️ Supabase 공동 DB 연결 · <strong id="currentUserLabel"></strong></span>
+  <span style="display:flex;gap:6px;align-items:center;">
+    <span id="currentRoleLabel" style="opacity:.85;"></span>
+    <button class="btn btn-add" style="padding:5px 9px;font-size:11px;" type="button" id="profileBtnV812">내 정보</button>
+    <button class="btn btn-add" style="display:none;padding:5px 9px;font-size:11px;" type="button" id="adminBtnV82" onclick="openAdminV82()">직원관리</button>
+    <button class="btn btn-add" style="padding:5px 9px;font-size:11px;" onclick="renderCloudDB()">공동 DB 새로고침</button>
+    <button type="button" class="btn btn-add" onclick="openSystemCheckV87()">🔧 연결점검</button>
+      <button class="btn btn-del" style="padding:5px 9px;font-size:11px;" onclick="logoutV8()">로그아웃</button>
+  </span>
+</div>
+
+<div id="profileModalV81" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100001;align-items:center;justify-content:center;">
+  <div style="width:min(460px,92vw);background:#fff;border-radius:12px;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.25);">
+    <h3 style="margin-top:0;">내 직원정보</h3>
+    <label>이름</label>
+    <input id="profileNameV81" type="text" style="width:100%;padding:9px;box-sizing:border-box;margin:5px 0 10px;">
+    <label>직급/직책</label>
+    <input id="profilePositionV81" type="text" style="width:100%;padding:9px;box-sizing:border-box;margin:5px 0 10px;">
+    <div style="font-size:12px;color:#666;margin-bottom:14px;">현재 권한: <strong id="profileRoleV81">담당자</strong></div>
+    <div style="display:flex;justify-content:flex-end;gap:7px;">
+      <button type="button" class="btn btn-add" onclick="closeProfileV81()">취소</button>
+      <button type="button" class="btn btn-plan" onclick="saveProfileV81()">저장</button>
+    </div>
+  </div>
+</div>
+
+<div id="historyModalV81" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100001;align-items:center;justify-content:center;">
+  <div style="width:min(760px,94vw);max-height:80vh;overflow:auto;background:#fff;border-radius:12px;padding:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0 0 14px;">사업 수정이력</h3>
+      <button type="button" class="btn btn-del" onclick="closeHistoryV81()">닫기</button>
+    </div>
+    <div id="historyListV81"></div>
+  </div>
+</div>
+
+
+
+
+<div id="adminModalV82" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100002;align-items:center;justify-content:center;">
+  <div style="width:min(900px,96vw);max-height:86vh;overflow:auto;background:#fff;border-radius:12px;padding:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div>
+        <h3 style="margin:0;">직원 및 권한 관리</h3>
+        <div style="font-size:12px;color:#666;margin-top:4px;">관리자만 직원의 담당자·검토자·관리자 권한을 변경할 수 있습니다.</div>
+      </div>
+      <button class="btn btn-del" onclick="closeAdminV82()">닫기</button>
+    </div>
+    <div id="adminUserListV82">불러오는 중...</div>
+  </div>
+</div>
+
+
+<div id="reviewModalV84" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100003;align-items:center;justify-content:center;">
+  <div style="width:min(720px,94vw);max-height:86vh;overflow:auto;background:#fff;border-radius:12px;padding:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div><h3 style="margin:0;">검토 의견</h3><div id="reviewProjectNameV84" style="font-size:12px;color:#666;margin-top:4px;"></div></div>
+      <button type="button" class="btn btn-del" onclick="closeReviewV84()">닫기</button>
+    </div>
+    <div id="reviewHistoryV84" style="margin:16px 0;max-height:300px;overflow:auto;"></div>
+    <textarea id="reviewCommentV84" rows="5" placeholder="검토 의견을 입력하세요." style="width:100%;box-sizing:border-box;padding:10px;"></textarea>
+    <div style="display:flex;justify-content:flex-end;gap:7px;margin-top:10px;">
+      <button type="button" class="btn btn-add" onclick="saveReviewCommentV84()">의견 저장</button>
+      <button type="button" class="btn btn-result" onclick="requestRevisionV84()">수정 요청</button>
+      <button type="button" class="btn btn-plan" onclick="approveReviewV84()">검토 완료</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="projectDetailModalV85" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100004;align-items:center;justify-content:center;">
+  <div style="width:min(900px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:12px;padding:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div>
+        <h3 id="detailProjectNameV85" style="margin:0;">사업 상세관리</h3>
+        <div id="detailProjectMetaV85" style="font-size:12px;color:#666;margin-top:5px;"></div>
+      </div>
+      <button class="btn btn-del" onclick="closeProjectDetailV85()">닫기</button>
+    </div>
+    <div id="detailFlowV85" style="margin:18px 0;"></div>
+    <div id="detailActionsV85" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
+      <div style="border:1px solid #ddd;border-radius:8px;padding:13px;"><strong>계획서</strong><div id="detailPlanV85" style="margin-top:8px;"></div></div>
+      <div style="border:1px solid #ddd;border-radius:8px;padding:13px;"><strong>결과보고서</strong><div id="detailResultV85" style="margin-top:8px;"></div></div>
+    </div>
+    <div style="border:1px solid #ddd;border-radius:8px;padding:13px;margin-top:12px;">
+      <strong>최근 검토·수정 이력</strong><div id="detailHistoryV85" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
+
+<div id="systemCheckModalV87" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100006;align-items:center;justify-content:center;">
+ <div style="width:min(650px,94vw);background:#fff;border-radius:12px;padding:22px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;"><h3 style="margin:0;">시스템 연결 점검</h3><button class="btn btn-del" onclick="closeSystemCheckV87()">닫기</button></div>
+  <div id="systemCheckBodyV87" style="margin-top:15px;">점검 중...</div>
+ </div>
+</div>
+
+<div class="app-container">
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v9.0 Web)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+
+  <!-- 메인 모드 선택기 -->
+  <div class="mode-selector no-print">
+    <div id="btn-mode-home" class="mode-btn" onclick="switchModeV86Home()">
+      🏠 업무 홈
+    </div>
+    <div id="btn-mode-plan" class="mode-btn active-plan" onclick="switchMode('PLAN')">
+      📌 [1단계] 사업계획서 작성
+    </div>
+    <div id="btn-mode-result" class="mode-btn" onclick="switchMode('RESULT')">
+      ✅ [2단계] 사업 결과보고서 작성 (구글폼 연동)
+    </div>
+    <div id="btn-mode-list" class="mode-btn" onclick="switchMode('LIST')">
+      📁 [3단계] 누적 사업 DB 목록
+    </div>
+    <div id="btn-mode-dashboard" class="mode-btn" onclick="switchModeV831Dashboard()">
+      📊 [관리] 사업관리 대시보드
+    </div>
+    <div id="btn-employee-v87" class="mode-btn" style="display:none;" onclick="openAdminV82()">👥 직원관리</div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 입력 폼 1: 사업계획 전용 입력 폼          -->
+  <!-- ========================================== -->
+  
+<div id="section-home-v86" class="form-section">
+  <div class="no-print" style="padding:4px 0 16px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h2 style="margin:0;">업무 홈</h2>
+        <div id="homeWelcomeV86" style="font-size:13px;color:#666;margin-top:5px;">공동 사업 업무현황을 불러옵니다.</div>
+      </div>
+      <button class="btn btn-add" onclick="renderHomeV86()">새로고침</button>
+    </div>
+    <div id="homeCardsV86" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:16px 0;"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;">
+      <div style="border:1px solid #ddd;border-radius:9px;padding:14px;background:#fff;">
+        <h3 style="margin:0 0 10px;">빠른 업무</h3>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;">
+          <button class="btn btn-plan" onclick="switchMode('PLAN')">새 사업계획서</button>
+          <button class="btn btn-result" onclick="switchMode('RESULT')">결과보고서</button>
+          <button class="btn btn-add" onclick="switchModeV831Dashboard()">사업관리</button>
+        </div>
+      </div>
+      <div style="border:1px solid #ddd;border-radius:9px;padding:14px;background:#fff;">
+        <h3 style="margin:0 0 10px;">내가 확인할 업무</h3>
+        <div id="homeTasksV86">불러오는 중...</div>
+      </div>
+    </div>
+    <div style="border:1px solid #ddd;border-radius:9px;padding:14px;background:#fff;margin-top:12px;">
+      <h3 style="margin:0 0 10px;">최근 사업</h3>
+      <div id="homeRecentV86">불러오는 중...</div>
+    </div>
+  </div>
+</div>
+
+<div id="section-input-plan" class="form-section active">
+    <div class="sub-tab-container no-print">
+      <div id="subtab-1" class="sub-tab active" onclick="switchSubTab('p', 1)">Ⅰ. 사업 개요</div>
+      <div id="subtab-2" class="sub-tab" onclick="switchSubTab('p', 2)">Ⅱ. 주요 프로그램 및 세부일정</div>
+      <div id="subtab-3" class="sub-tab" onclick="switchSubTab('p', 3)">Ⅲ. 소요 예산(안) 및 재원</div>
+    </div>
+
+    <div style="display: flex; gap: 15px; margin-bottom: 12px;" class="no-print">
+      <div style="flex: 1;"><label style="font-weight: bold; font-size: 12px; color: #475569;">기관명</label><input type="text" id="p_orgName" value="화성시장기요양지원센터"></div>
+      <div style="flex: 1;"><label style="font-weight: bold; font-size: 12px; color: #475569;">담당자</label><input type="text" id="p_staff" value="최송아"></div>
+      <div style="flex: 1;"><label style="font-weight: bold; font-size: 12px; color: #475569;">검토자</label><input type="text" id="p_reviewer" value="대리 박예원"></div>
+      <div style="flex: 1;"><label style="font-weight: bold; font-size: 12px; color: #475569;">결재자</label><input type="text" id="p_approver" value="센터장 임은숙"></div>
+    </div>
+
+    <!-- 계획 서브탭 1: 사업 개요 -->
+    <div id="p-sub-section-1" class="sub-section active">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="section-plan-head" style="margin:0;">Ⅰ. 사업 개요</h2>
+        <button class="btn btn-add" onclick="addOverviewRow()">+ 항목 추가</button>
+      </div>
+      <table class="form-table" style="margin-top: 8px;">
+        <colgroup><col style="width: 20%;"><col style="width: 72%;"><col style="width: 8%;"></colgroup>
+        <thead><tr><th>항목명</th><th>내용</th><th>삭제</th></tr></thead>
+        <tbody id="p_overviewTbody">
+          <tr><td><input type="text" class="p-ov-key" value="사업명"></td><td><textarea class="p-ov-val">화성시 장기요양종사자 힐링 나들이 「마음충전 힐링데이」</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+          <tr><td><input type="text" class="p-ov-key" value="사업일시"></td><td><textarea class="p-ov-val">2026. 05. 15. (금) 09:00 ~ 17:00</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+          <tr><td><input type="text" class="p-ov-key" value="사업목적"></td><td><textarea class="p-ov-val">신체적·정서적 소진 회복, 직무 스트레스 해소 및 정서적 지지 강화</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+          <tr><td><input type="text" class="p-ov-key" value="참여대상"></td><td><textarea class="p-ov-val">화성시 관내 장기요양종사자 30명 (기관별 최대 2인)</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+          <tr><td><input type="text" class="p-ov-key" value="장소"></td><td><textarea class="p-ov-val">가평 아침고요수목원 (가평군 상면 수목원로 432)</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 계획 서브탭 2: 프로그램 및 일정 -->
+    <div id="p-sub-section-2" class="sub-section">
+      <div class="no-print" style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;">
+        <button class="btn btn-add" onclick="setPlanSectionVisible('program', true)">＋ 주요 프로그램 다시 표시</button>
+        <button class="btn btn-add" onclick="setPlanSectionVisible('schedule', true)">＋ 세부 일정 다시 표시</button>
+      </div>
+      <div id="p-program-block">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="section-plan-head" style="margin:0;">1. 주요 프로그램</h2>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-add" onclick="addProgRow()">+ 프로그램 추가</button>
+          <button class="btn btn-del" onclick="setPlanSectionVisible('program', false)">항목 삭제</button>
+        </div>
+      </div>
+      <table class="form-table" style="margin-top: 8px;">
+        <colgroup><col style="width: 25%;"><col style="width: 67%;"><col style="width: 8%;"></colgroup>
+        <tbody id="p_progTbody">
+          <tr><td><input type="text" class="p-prog-key" value="자연 힐링 활동"></td><td><textarea class="p-prog-val">수목원 자유 관람 및 산책</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+          <tr><td><input type="text" class="p-prog-key" value="가드닝 클래스"></td><td><textarea class="p-prog-val">식물 심기 및 관리 체험 프로그램</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+        </tbody>
+      </table>
+
+      </div>
+      <div id="p-schedule-block">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+        <h2 class="section-plan-head" style="margin:0;">2. 세부 일정(안)</h2>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-add" onclick="addScheduleRow()">+ 일정 추가</button>
+          <button class="btn btn-del" onclick="setPlanSectionVisible('schedule', false)">항목 삭제</button>
+        </div>
+      </div>
+      <table class="form-table" style="margin-top: 8px;">
+        <colgroup><col style="width: 25%;"><col style="width: 67%;"><col style="width: 8%;"></colgroup>
+        <tbody id="p_schedTbody">
+          <tr><td><input type="text" class="p-sch-time" value="09:00 ~ 10:30"></td><td><input type="text" class="p-sch-val" value="집결 및 출발 (융건릉 주차장)"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+          <tr><td><input type="text" class="p-sch-time" value="10:30 ~ 12:00"></td><td><input type="text" class="p-sch-val" value="가드닝 클래스 체험"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 계획 서브탭 3: 예산 -->
+    <div id="p-sub-section-3" class="sub-section">
+      <h2 class="section-plan-head" style="margin-top:0;">1. 재원 및 예산항목</h2>
+      <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+        <div style="flex: 1;"><label style="font-size: 12px;">재원 구분</label><input type="text" id="p_budgetSource" value="보조금"></div>
+        <div style="flex: 2;"><label style="font-size: 12px;">예산항목</label><input type="text" id="p_budgetCategory" value="관) 사업비 항) 건강증진 세) 사업운영비"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="section-plan-head" style="margin:0;">2. 소요 예산 산출</h2>
+        <button class="btn btn-add" onclick="addPlanBudgetRow()">+ 예산 추가</button>
+      </div>
+      <table class="form-table" style="margin-top: 8px;">
+        <thead><tr><th>세목</th><th>산출 근거</th><th>금액(원)</th><th>비고</th><th>삭제</th></tr></thead>
+        <tbody id="p_budgetTbody">
+          <tr><td><input type="text" class="p-bg-item" value="입장료"></td><td><input type="text" class="p-bg-calc" value="11,000원 × 40명"></td><td><input type="number" class="p-bg-amount" value="440000" oninput="calcPlanBudget()"></td><td><input type="text" class="p-bg-note" value="수목원"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcPlanBudget();">삭제</button></td></tr>
+          <tr><td><input type="text" class="p-bg-item" value="식대"></td><td><input type="text" class="p-bg-calc" value="15,000원 × 40명"></td><td><input type="number" class="p-bg-amount" value="600000" oninput="calcPlanBudget()"></td><td><input type="text" class="p-bg-note" value="중식"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcPlanBudget();">삭제</button></td></tr>
+        </tbody>
+        <tfoot><tr><td colspan="2" class="td-center">합계</td><td class="td-right" style="font-weight:bold; color:#2563eb;" id="p_totalBudgetDisplay">1,040,000 원</td><td colspan="2"></td></tr></tfoot>
+      </table>
+    </div>
+
+    <div class="btn-container no-print">
+      <button class="btn btn-plan" onclick="generatePlanDocs()">📄 사업계획서 + 기안문서 통합 생성</button>
+      <button class="btn btn-save" onclick="saveCloudDocument('PLAN')">💾 작성 내용 DB 저장</button>
+      <button class="btn btn-add" onclick="startNewDocument('PLAN')">➕ 새 사업계획서 작성</button>
+    </div>
+
+    <!-- 계획 생성 결과 출력 영역 -->
+    <div id="output-plan-container" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center;" class="no-print">
+        <h2 class="section-plan-head">생성된 사업계획서 통합본</h2>
+        <div>
+          <button class="btn btn-plan" style="padding: 6px 12px; font-size:12px;" onclick="printDoc('output-plan-container')">🖨️ 인쇄 / PDF 저장</button>
+          <button class="btn btn-save" style="padding: 6px 12px; font-size:12px;" onclick="exportDoc('output-plan-container', '사업계획서_통합본')">📥 Doc 저장</button>
+        </div>
+      </div>
+      <div class="doc-sheet">
+        <span class="tag-plan">내부결재 기안문</span>
+        <div class="doc-org-header" id="out_p_org">화성시장기요양지원센터</div>
+        <div class="doc-sub-header">특별한 시민, 스마트한 도시 HWASEONG SPECIAL CITY</div>
+        <table class="doc-meta-table">
+          <tr><td style="width: 80px; font-weight: bold;">수신자</td><td>내부결재</td></tr>
+          <tr><td style="font-weight: bold;">제목</td><td style="font-weight: bold;" id="out_p_docTitle">2026 장기요양종사자 힐링 나들이 운영 계획(안)</td></tr>
+        </table>
+        <div class="doc-body-text">
+          <p>1. 관련 근거: 2026년 <span class="bind_p_org">화성시장기요양지원센터</span> 사업계획서</p>
+          <p>2. 위 관련 근거에 따라 장기요양요원의 소진 예방 및 정서적 회복을 위해 아래와 같이 사업을 운영하고자 하오니 결재하여 주시기 바랍니다.</p>
+          <p style="text-align: center; font-weight: bold; margin: 15px 0;">- &nbsp;아 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 래 &nbsp;-</p>
+          <div id="out_p_overview_summary"></div>
+          <br><p>붙임 . 사업계획서(안) 1부. 끝.</p>
+        </div>
+        <div class="doc-approval-container">
+          <div class="doc-approval-row">
+            <div class="doc-app-item"><span class="doc-app-label">담당</span><span class="doc-app-value" id="out_p_staff">최송아</span></div>
+            <div class="doc-app-item"><span class="doc-app-label">대리</span><span class="doc-app-value" id="out_p_reviewer">박예원</span></div>
+            <div class="doc-app-item"><span class="doc-app-label">센터장</span><span class="doc-app-value" id="out_p_approver">임은숙</span></div>
+          </div>
+        </div>
+        <div class="doc-footer-address">우 18290 경기 화성시 매송면 매송고색로 375번길 11 / 전화 (031) 294-1630 / hsgoodcare@daum.net</div>
+        <hr style="margin: 40px 0; border: 0; border-top: 1px dashed #aaa;" class="no-print">
+        <h2 style="text-align:center; font-size:20px; font-family:'Batang', serif; margin-bottom:20px;">[사업계획서]</h2>
+        <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px;">Ⅰ. 사업 개요</h3>
+        <table class="out-table" id="out_p_overview_table"></table>
+        <div id="out_p_program_schedule_section">
+        <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅱ. 주요 프로그램 및 세부일정(안)</h3>
+        <div id="out_p_program_block"><table class="out-table" id="out_p_prog_table"></table></div>
+        <div id="out_p_schedule_block"><table class="out-table" id="out_p_sched_table"></table></div>
+        </div>
+        <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅲ. 소요 예산(안)</h3>
+        <p style="font-size:13px; font-family:'Batang', serif;" id="out_p_budget_meta"></p>
+        <p style="font-size:13px; font-family:'Batang', serif;">○ 총 소요예산 : <strong id="out_p_budget_total">0 원</strong></p>
+        <table class="out-table" id="out_p_budget_table"></table>
+        <div style="text-align:right;font-size:13px;font-family:'Batang',serif;margin-top:-12px;margin-bottom:20px;">
+          <strong>합계금액 : <span id="out_p_budget_total_bottom">0 원</span></strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 입력 폼 2: 사업 결과보고 전용 입력 폼      -->
+  <!-- ========================================== -->
+  <div id="section-input-result" class="form-section">
+    <div class="sub-tab-container no-print">
+      <div id="r-subtab-1" class="sub-tab active-res" onclick="switchSubTab('r', 1)">Ⅰ. 사업 결과 개요</div>
+      <div id="r-subtab-2" class="sub-tab" onclick="switchSubTab('r', 2)">Ⅱ. 설문 결과 (구글폼 연동)</div>
+      <div id="r-subtab-3" class="sub-tab" onclick="switchSubTab('r', 3)">Ⅲ. 예산 정산 (재원/예산항목)</div>
+    </div>
+
+    <div style="display: flex; gap: 15px; margin-bottom: 12px;" class="no-print">
+      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">기관명</label><input type="text" id="r_orgName" value="화성시장기요양지원센터"></div>
+      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">담당자</label><input type="text" id="r_staff" value="최송아"></div>
+      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">검토자</label><input type="text" id="r_reviewer" value="대리 박예원"></div>
+      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">결재자</label><input type="text" id="r_approver" value="센터장 임은숙"></div>
+    </div>
+
+    <!-- 결과 서브탭 1: 결과 개요 -->
+    <div id="r-sub-section-1" class="sub-section active">
+      <div class="no-print" style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;">
+        <button class="btn btn-plan" style="padding:7px 12px;font-size:12px;" onclick="openPlanPicker()">📥 저장된 계획서 불러오기</button>
+        <button class="btn btn-save" style="padding:7px 12px;font-size:12px;" onclick="validatePlanVsResult()">🔎 계획 대비 실적 점검</button>
+      </div>
+      <div id="validationBox" class="no-print" style="display:none;margin-bottom:12px;padding:10px;border-radius:6px;background:#fffbeb;border:1px solid #f59e0b;font-size:12px;"></div>
+      <h2 class="section-result-head" style="margin-top:0;">Ⅰ. 사업 결과 기본 정보</h2>
+      <table class="form-table">
+        <colgroup><col style="width: 25%;"><col style="width: 75%;"></colgroup>
+        <tr><th>사업명</th><td><input type="text" id="r_projName" value="화성시 장기요양종사자 힐링 나들이 「마음충전 힐링데이」"></td></tr>
+        <tr><th>관련 기안문 근거 번호</th><td><input type="text" id="r_refDoc" value="장기요양지원- (2026. 04. 20.)"></td></tr>
+        <tr><th>실시 일시 및 장소</th><td><input type="text" id="r_dateLoc" value="2026. 5. 15. (금) 09:00~17:00 / 가평 아침고요수목원"></td></tr>
+        <tr><th>실제 참석 인원</th><td><input type="text" id="r_actualTarget" value="장기요양종사자 28명 참석"></td></tr>
+        <tr><th>주요 추진 내용 요약</th><td><textarea id="r_summaryContent">가드닝 클래스 식물심기 체험, 정원 해설 프로그램 참여, 수목원 산책 및 네트워킹 진행</textarea></td></tr>
+      </table>
+    </div>
+
+    <!-- 결과 서브탭 2: 구글 폼 연동 -->
+    <div id="r-sub-section-2" class="sub-section">
+      <div style="background:#f3e8ff; border:1px solid #c084fc; border-radius:6px; padding:12px; margin-bottom:15px;" class="no-print">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong style="color:#6b21a8; font-size:13px;">🔗 구글 폼 응답 연동 설정</strong>
+            <div style="font-size:11px; color:#581c87; margin-top:2px;">연결된 구글 폼의 설문 데이터를 가져와 결과를 자동으로 요약합니다.</div>
+          </div>
+          <button class="btn-gform" onclick="fetchGoogleFormResponses()">📊 설문 결과 자동 불러오기 (테스트)</button>
+        </div>
+      </div>
+
+      <h2 class="section-result-head" style="margin-top:0;">1. 만족도 설문 결과 요약</h2>
+      <table class="form-table">
+        <colgroup><col style="width: 30%;"><col style="width: 70%;"></colgroup>
+        <tr><th>전반적 만족도 점수</th><td><input type="text" id="r_surveyScore" value="4.9점 / 5.0점 만점 (만족도 98%)"></td></tr>
+        <tr><th>주요 항목별 반응률</th><td><textarea id="r_surveyItems">ㆍ프로그램 내용 만족도: 98%&#10;ㆍ장소 및 식사 만족도: 95%&#10;ㆍ재참여 의향: 99%</textarea></td></tr>
+        <tr><th>참여자 주요 소감 / 의견</th><td><textarea id="r_surveyFeedback">"자연 속에서 동료들과 소통하며 몸과 마음이 원기를 회복했습니다."&#10;"다짐 카드 작성이 나를 돌아보는 계기가 되었습니다."</textarea></td></tr>
+      </table>
+      <h2 class="section-result-head" style="margin-top:20px;">2. 분석 및 종합 평가</h2>
+      <table class="form-table">
+        <colgroup><col style="width: 30%;"><col style="width: 70%;"></colgroup>
+        <tr><th>잘된 점 (주요 성과)</th><td><textarea id="r_evalGood">ㆍ자연 친화적 힐링 활동으로 소진을 완화하고 유대감을 형성함</textarea></td></tr>
+        <tr><th>아쉬운 점 (개선사항)</th><td><textarea id="r_evalBad">ㆍ이동 시간이 길어 자유 시간이 약간 부족했다는 의견 있음</textarea></td></tr>
+        <tr><th>차년도 환류계획</th><td><textarea id="r_evalPlan">ㆍ권역별 장소 선정 및 자유 소통 시간을 확대하여 반영 예정</textarea></td></tr>
+      </table>
+    </div>
+
+    <!-- 결과 서브탭 3: 예산 정산 -->
+    <div id="r-sub-section-3" class="sub-section">
+      <h2 class="section-result-head" style="margin-top:0;">1. 재원 및 예산항목 설정</h2>
+      <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">재원 구분</label><input type="text" id="r_budgetSource" value="보조금"></div>
+        <div style="flex: 2;"><label style="font-size: 12px; font-weight:bold;">예산항목</label><input type="text" id="r_budgetCategory" value="관) 사업비 항) 건강증진 세) 사업운영비"></div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="section-result-head" style="margin:0;">2. 실제 집행 예산 정산 내역</h2>
+        <button class="btn btn-add" onclick="addResultBudgetRow()">+ 정산 항목 추가</button>
+      </div>
+      <table class="form-table" style="margin-top: 8px;">
+        <thead><tr><th>세목</th><th>집행 내역 및 근거</th><th>실제 집행액(원)</th><th>비고</th><th>삭제</th></tr></thead>
+        <tbody id="r_budgetTbody">
+          <tr><td><input type="text" class="r-bg-item" value="입장료"></td><td><input type="text" class="r-bg-calc" value="11,000원 × 30명"></td><td><input type="number" class="r-bg-amount" value="330000" oninput="calcResultBudget()"></td><td><input type="text" class="r-bg-note" value="실제 참석자"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcResultBudget();">삭제</button></td></tr>
+          <tr><td><input type="text" class="r-bg-item" value="식대"></td><td><input type="text" class="r-bg-calc" value="15,000원 × 30명"></td><td><input type="number" class="r-bg-amount" value="450000" oninput="calcResultBudget()"></td><td><input type="text" class="r-bg-note" value="푸드가든"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcResultBudget();">삭제</button></td></tr>
+          <tr><td><input type="text" class="r-bg-item" value="버스 임차비"></td><td><input type="text" class="r-bg-calc" value="800,000원 × 1대"></td><td><input type="number" class="r-bg-amount" value="800000" oninput="calcResultBudget()"></td><td><input type="text" class="r-bg-note" value="45인승"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcResultBudget();">삭제</button></td></tr>
+        </tbody>
+        <tfoot><tr><td colspan="2" class="td-center">실제 집행 총액</td><td class="td-right" style="font-weight:bold; color:#059669;" id="r_totalBudgetDisplay">1,580,000 원</td><td colspan="2"></td></tr></tfoot>
+      </table>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top:20px;">
+        <h2 class="section-result-head" style="margin:0;">3. 붙임 서류 목록 관리</h2>
+        <button class="btn btn-add" onclick="addAttachRow()">+ 붙임 서류 추가</button>
+      </div>
+      <table class="form-table" style="margin-top: 8px;">
+        <colgroup><col style="width: 15%;"><col style="width: 77%;"><col style="width: 8%;"></colgroup>
+        <tbody id="r_attachTbody">
+          <tr><td class="td-center">붙임 1.</td><td><input type="text" class="r-attach-val" value="사업 진행 사진 (현장 사진) 1부."></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+          <tr><td class="td-center">붙임 2.</td><td><input type="text" class="r-attach-val" value="만족도 설문지 집계표 (구글폼 결과) 1부."></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+          <tr><td class="td-center">붙임 3.</td><td><input type="text" class="r-attach-val" value="정산 영수증 사본 1부. 끝."></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="btn-container no-print">
+      <button class="btn btn-result" onclick="generateResultDocs()">✅ 사업 결과보고서 + 기안문서 통합 생성</button>
+      <button class="btn btn-save" onclick="saveCloudDocument('RESULT')">💾 결과보고서 DB 저장</button>
+      <button class="btn btn-add" onclick="startNewDocument('RESULT')">➕ 새 결과보고서 작성</button>
+    </div>
+
+    <div id="output-result-container" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center;" class="no-print">
+        <h2 class="section-result-head">생성된 사업 결과보고서 통합본</h2>
+        <div>
+          <button class="btn btn-result" style="padding: 6px 12px; font-size:12px;" onclick="printDoc('output-result-container')">🖨️ 인쇄 / PDF 저장</button>
+          <button class="btn btn-save" style="padding: 6px 12px; font-size:12px;" onclick="exportDoc('output-result-container', '사업결과보고서_통합본')">📥 Doc 저장</button>
+        </div>
+      </div>
+      <div class="doc-sheet">
+        <span class="tag-result">내부결재 기안문</span>
+        <div class="doc-org-header" id="out_r_org">화성시장기요양지원센터</div>
+        <div class="doc-sub-header">특별한 시민, 스마트한 도시 HWASEONG SPECIAL CITY</div>
+        <table class="doc-meta-table">
+          <tr><td style="width: 80px; font-weight: bold;">수신자</td><td>내부결재</td></tr>
+          <tr><td style="font-weight: bold;">제목</td><td style="font-weight: bold;" id="out_r_docTitle">2026 장기요양종사자 힐링 나들이 운영 결과 보고</td></tr>
+        </table>
+        <div class="doc-body-text">
+          <p>1. 관련 근거 : <span id="out_r_refDocText">장기요양지원- (2026. 04. 20.)</span></p>
+          <p>2. 위 관련 근거에 따라 실시한 <span id="out_r_projText">...</span> 결과를 아래와 같이 보고합니다.</p>
+          <p style="text-align: center; font-weight: bold; margin: 15px 0;">- &nbsp;아 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 래 &nbsp;-</p>
+          <div class="doc-list-item">가. 사&nbsp;업&nbsp;명 : <span id="out_r_pName">...</span></div>
+          <div class="doc-list-item">나. 일시/장소 : <span id="out_r_dateLocText">...</span></div>
+          <div class="doc-list-item">다. 참석인원 : <strong style="color: #047857;" id="out_r_targetText">...</strong></div>
+          <div class="doc-list-item">라. 집행예산 : <span id="out_r_budgetText">...</span></div>
+          <br><p>붙임 . 사업 결과보고서 1부. 끝.</p>
+        </div>
+        <div class="doc-approval-container">
+          <div class="doc-approval-row">
+            <div class="doc-app-item"><span class="doc-app-label">담당</span><span class="doc-app-value" id="out_r_staff">최송아</span></div>
+            <div class="doc-app-item"><span class="doc-app-label">대리</span><span class="doc-app-value" id="out_r_reviewer">박예원</span></div>
+            <div class="doc-app-item"><span class="doc-app-label">센터장</span><span class="doc-app-value" id="out_r_approver">임은숙</span></div>
+          </div>
+        </div>
+        <div class="doc-footer-address">우 18290 경기 화성시 매송면 매송고색로 375번길 11 / 전화 (031) 294-1630 / hsgoodcare@daum.net</div>
+        <hr style="margin: 40px 0; border: 0; border-top: 1px dashed #aaa;" class="no-print">
+        
+        <h2 style="text-align:center; font-size:20px; font-family:'Batang', serif; margin-bottom:20px;">[사업 결과보고서]</h2>
+        <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px;">Ⅰ. 사업 개요 및 추진 결과</h3>
+        <table class="out-table">
+          <tr><th style="width:25%;">사업명</th><td id="out_r_tbl_pName"></td></tr>
+          <tr><th>일시 및 장소</th><td id="out_r_tbl_dateLoc"></td></tr>
+          <tr><th>참석 인원</th><td id="out_r_tbl_target"></td></tr>
+          <tr><th>주요 추진 내용</th><td id="out_r_tbl_summary"></td></tr>
+        </table>
+
+        <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅱ. 설문 결과 및 성과 분석</h3>
+        <h4 style="font-size:13px; font-family:'Batang', serif; margin:5px 0;">1. 만족도 조사 요약</h4>
+        <table class="out-table">
+          <tr><th style="width:25%;">전반적 만족도</th><td id="out_r_tbl_score"></td></tr>
+          <tr><th>주요 항목별 만족도</th><td id="out_r_tbl_surveyItems"></td></tr>
+          <tr><th>참여자 주요 의견</th><td id="out_r_tbl_surveyFeedback"></td></tr>
+        </table>
+
+        <h4 style="font-size:13px; font-family:'Batang', serif; margin:10px 0 5px 0;">2. 종합 분석 및 평가</h4>
+        <table class="out-table">
+          <tr><th style="width:25%;">잘된 점 (성과)</th><td id="out_r_tbl_good"></td></tr>
+          <tr><th>아쉬운 점</th><td id="out_r_tbl_bad"></td></tr>
+          <tr><th>차년도 환류계획</th><td id="out_r_tbl_plan"></td></tr>
+        </table>
+
+        <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅲ. 예산 집행 정산 내역</h3>
+        <p style="font-size:13px; font-family:'Batang', serif;" id="out_r_budget_meta"></p>
+        <p style="font-size:13px; font-family:'Batang', serif;">○ 실제 집행 총액 : <strong id="out_r_tbl_budgetTotal" style="color:#059669;">0 원</strong></p>
+        <table class="out-table" id="out_r_tbl_budgetTable"></table>
+
+        <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅳ. 붙임 서류</h3>
+        <div id="out_r_tbl_attachList" style="font-size:13px; font-family:'Batang', serif; padding-left:10px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 입력 폼 3: 누적 데이터 관리               -->
+  <!-- ========================================== -->
+  
+<div id="dashboard-mode" class="content-area" style="display:none;">
+  <div class="no-print" style="padding:18px 0;">
+    <h2 style="margin:0 0 5px;">📊 사업관리 대시보드</h2>
+    <p style="font-size:12px;color:#666;margin:0 0 10px;">사업 단위로 계획서·결과보고서·담당자·진행상태를 확인합니다.</p>
+    <div style="font-size:12px;background:#f8fafc;border:1px solid #dbe3ea;border-radius:7px;padding:9px;margin-bottom:15px;">
+      업무흐름: <strong>작성중 → 검토요청 → 수정/재검토 → 검토완료 → 결과보고서 작성 → 사업완료</strong>
+    </div>
+    <div id="dashboardSummaryV831" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:15px;"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <input id="dashSearchV831" placeholder="사업명 또는 담당자 검색" oninput="filterDashboardV831()" style="flex:1;min-width:200px;padding:9px;">
+      <select id="dashStatusV831" onchange="filterDashboardV831()" style="padding:9px;">
+        <option value="">전체 상태</option><option value="draft">작성중</option>
+        <option value="review_requested">검토요청</option><option value="reviewed">검토완료</option>
+        <option value="completed">사업완료</option>
+      </select>
+      <button class="btn btn-add" onclick="renderDashboardV831()">새로고침</button>
+    </div>
+    <div id="dashboardTableV831">불러오는 중...</div>
+  </div>
+</div>
+
+<div id="section-input-list" class="form-section">
+    <h2 class="section-list-head">📁 저장된 사업 누적 DB 목록</h2>
+    <div class="no-print" style="background:#fff7ed;border:1px solid #fdba74;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#9a3412;">
+      v8.0: Supabase 공동 DB 기반으로 직원 프로필, 사업 상태, 수정자·수정일, 수정이력 조회를 지원합니다.
+    </div>
+    <table class="form-table">
+      <thead><tr><th>구분</th><th>사업명</th><th>담당자</th><th>저장일</th><th>관리</th></tr></thead>
+      <tbody id="dbTableBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+
+<div id="mode-dashboard" class="form-section" style="display:none;">
+  <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+    <div>
+      <h2 style="margin:0;">사업관리 대시보드</h2>
+      <div style="font-size:12px;color:#666;margin-top:4px;">사업 단위로 계획서·결과보고서·담당자·진행상태를 한눈에 확인합니다.</div>
+    </div>
+    <button class="btn btn-add" onclick="renderDashboardV83()">새로고침</button>
+  </div>
+  <div id="dashboardSummaryV83" class="no-print" style="display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:10px;margin-bottom:15px;"></div>
+  <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+    <input id="dashSearchV83" type="text" placeholder="사업명·담당자 검색" oninput="filterDashboardV83()" style="flex:1;min-width:180px;padding:8px;">
+    <select id="dashStatusV83" onchange="filterDashboardV83()" style="padding:8px;">
+      <option value="">전체 상태</option><option value="draft">작성중</option>
+      <option value="review_requested">검토요청</option><option value="reviewed">검토완료</option>
+      <option value="completed">사업완료</option>
+    </select>
+  </div>
+  <div id="dashboardTableV83">불러오는 중...</div>
+</div>
+
+<script>
+  function switchMode(mode) {
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.className = 'mode-btn');
+    document.querySelectorAll('.form-section').forEach(sec => sec.classList.remove('active'));
+
+    if (mode === 'PLAN') {
+      document.getElementById('btn-mode-plan').className = 'mode-btn active-plan';
+      document.getElementById('section-input-plan').classList.add('active');
+    } else if (mode === 'RESULT') {
+      document.getElementById('btn-mode-result').className = 'mode-btn active-result';
+      document.getElementById('section-input-result').classList.add('active');
+    } else if (mode === 'LIST') {
+      document.getElementById('btn-mode-list').className = 'mode-btn active-list';
+      document.getElementById('section-input-list').classList.add('active');
+      renderDBList();
+    }
+  }
+
+  function switchSubTab(prefix, num) {
+    let container = prefix === 'p' ? 'section-input-plan' : 'section-input-result';
+    document.querySelectorAll(`#${container} .sub-tab`).forEach(tab => tab.classList.remove('active', 'active-res'));
+    document.querySelectorAll(`#${container} .sub-section`).forEach(sec => sec.classList.remove('active'));
+
+    let targetTab = document.getElementById(`${prefix}-subtab-${num}`) || document.getElementById(`subtab-${num}`);
+    let activeClass = prefix === 'p' ? 'active' : 'active-res';
+    if(targetTab) targetTab.classList.add(activeClass);
+    
+    let targetSec = document.getElementById(`${prefix}-sub-section-${num}`);
+    if(targetSec) targetSec.classList.add('active');
+  }
+
+  function delRow(btn) { btn.closest('tr').remove(); }
+
+  function fetchGoogleFormResponses() {
+    alert("구글 폼 응답 연동 요청 완료!\n테스트 응답 데이터가 각 항목에 자동으로 반영됩니다.");
+    document.getElementById('r_surveyScore').value = "4.92점 / 5.0점 만점 (응답인원 28명 완료)";
+    document.getElementById('r_surveyItems').value = "ㆍ힐링 프로그램 만족도: 100% (매우 만족)\nㆍ가드닝 체험 만족도: 96.4%\nㆍ식사 및 장소 만족도: 92.8%";
+    document.getElementById('r_surveyFeedback').value = "\"바쁜 일상에서 벗어나 내 자신을 돌아보는 시간이었습니다.\"\n\"칭찬 카드를 주고받은 순간이 따뜻했습니다.\"";
+  }
+
+  // 계획 추가
+  function addOverviewRow() {
+    document.getElementById('p_overviewTbody').insertAdjacentHTML('beforeend', 
+      `<tr><td><input type="text" class="p-ov-key" placeholder="항목명"></td><td><textarea class="p-ov-val" placeholder="내용"></textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>`);
+  }
+  function addProgRow() {
+    document.getElementById('p_progTbody').insertAdjacentHTML('beforeend', 
+      `<tr><td><input type="text" class="p-prog-key" placeholder="구분"></td><td><textarea class="p-prog-val" placeholder="내용"></textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>`);
+  }
+  function addScheduleRow() {
+    document.getElementById('p_schedTbody').insertAdjacentHTML('beforeend', 
+      `<tr><td><input type="text" class="p-sch-time" placeholder="시간"></td><td><input type="text" class="p-sch-val" placeholder="내용"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>`);
+  }
+  function addPlanBudgetRow() {
+    document.getElementById('p_budgetTbody').insertAdjacentHTML('beforeend', 
+      `<tr><td><input type="text" class="p-bg-item" placeholder="세목"></td><td><input type="text" class="p-bg-calc" placeholder="근거"></td><td><input type="number" class="p-bg-amount" value="0" oninput="calcPlanBudget()"></td><td><input type="text" class="p-bg-note" placeholder="비고"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcPlanBudget();">삭제</button></td></tr>`);
+    calcPlanBudget();
+  }
+
+  // 결과 추가
+  function addResultBudgetRow() {
+    document.getElementById('r_budgetTbody').insertAdjacentHTML('beforeend', 
+      `<tr><td><input type="text" class="r-bg-item" placeholder="세목"></td><td><input type="text" class="r-bg-calc" placeholder="근거"></td><td><input type="number" class="r-bg-amount" value="0" oninput="calcResultBudget()"></td><td><input type="text" class="r-bg-note" placeholder="비고"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcResultBudget();">삭제</button></td></tr>`);
+    calcResultBudget();
+  }
+  function addAttachRow() {
+    let count = document.querySelectorAll('#r_attachTbody tr').length + 1;
+    document.getElementById('r_attachTbody').insertAdjacentHTML('beforeend', 
+      `<tr><td class="td-center">붙임 ${count}.</td><td><input type="text" class="r-attach-val" placeholder="서류명"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>`);
+  }
+
+  function calcPlanBudget() {
+    let total = 0;
+    document.querySelectorAll('.p-bg-amount').forEach(i => total += parseInt(i.value)||0);
+    document.getElementById('p_totalBudgetDisplay').innerText = total.toLocaleString() + ' 원';
+    return total;
+  }
+
+  function calcResultBudget() {
+    let total = 0;
+    document.querySelectorAll('.r-bg-amount').forEach(i => total += parseInt(i.value)||0);
+    document.getElementById('r_totalBudgetDisplay').innerText = total.toLocaleString() + ' 원';
+    return total;
+  }
+
+  // [오류 수정완료] 사업계획서 생성 함수
+  function generatePlanDocs() {
+    let org = document.getElementById('p_orgName').value;
+    let staff = document.getElementById('p_staff').value;
+    let reviewer = document.getElementById('p_reviewer').value;
+    let approver = document.getElementById('p_approver').value;
+
+    document.getElementById('out_p_org').innerText = org;
+    document.querySelectorAll('.bind_p_org').forEach(el => el.innerText = org);
+    document.getElementById('out_p_staff').innerText = staff;
+    document.getElementById('out_p_reviewer').innerText = reviewer;
+    document.getElementById('out_p_approver').innerText = approver;
+
+    // 1. 사업개요 매핑
+    let keys = document.querySelectorAll('.p-ov-key'), vals = document.querySelectorAll('.p-ov-val');
+    let summary = '', tbl = '<tr><th style="width:25%;">항목</th><th>내용</th></tr>';
+    let firstProjName = "사업계획(안)";
+    let overviewMap = {};
+
+    for(let i=0; i<keys.length; i++) {
+      if(keys[i].value.trim()) {
+        let k = keys[i].value.trim(), v = vals[i].value.trim();
+        overviewMap[k] = v;
+        if(k === '사업명' || (firstProjName === "사업계획(안)" && i === 0)) firstProjName = v;
+        tbl += `<tr><th class="td-center">${esc(k)}</th><td>${esc(v).replaceAll('\n','<br>')}</td></tr>`;
+      }
+    }
+
+    // 기안문에는 핵심 항목만 선별하여 가/나/다 형식으로 출력
+    const pick = (...names) => {
+      for (const n of names) if (overviewMap[n]) return overviewMap[n];
+      return '';
+    };
+    let draftItems = [
+      ['사업명', pick('사업명')],
+      ['사업목적', pick('사업목적','목적')],
+      ['운영일시', pick('운영일시','사업일시','일시')],
+      ['신청방법', pick('신청방법','접수방법','모집방법')],
+      ['교육내용', pick('교육내용','주요내용','프로그램내용')],
+      ['재원', document.getElementById('p_budgetSource').value],
+      ['소요예산', calcPlanBudget().toLocaleString() + '원']
+    ];
+    // 교육내용이 사업개요에 없으면 주요 프로그램을 간략 연결
+    if(!draftItems[4][1] && window.planProgramVisible !== false) {
+      let pk = document.querySelectorAll('.p-prog-key'), pv = document.querySelectorAll('.p-prog-val');
+      draftItems[4][1] = Array.from(pk).map((x,i)=> x.value.trim() ? `${x.value.trim()}: ${pv[i].value.trim()}` : '').filter(Boolean).join(', ');
+    }
+    const ga = ['가','나','다','라','마','바','사','아','자','차','카','타','파','하'];
+    draftItems.filter(x=>x[1]).forEach((x,i)=>{
+      summary += `<div class="doc-list-item">${ga[i]}. ${esc(x[0])} : ${esc(x[1]).replaceAll('\n','<br>')}</div>`;
+    });
+    document.getElementById('out_p_docTitle').innerText = firstProjName + " 운영 계획(안)";
+    document.getElementById('out_p_overview_summary').innerHTML = summary;
+    document.getElementById('out_p_overview_table').innerHTML = tbl;
+
+    // 2. 주요 프로그램
+    let pKeys = document.querySelectorAll('.p-prog-key'), pVals = document.querySelectorAll('.p-prog-val');
+    let pTbl = '<tr><th style="width:25%;">구분</th><th>내용</th></tr>';
+    for(let i=0; i<pKeys.length; i++) if(pKeys[i].value) pTbl += `<tr><th class="td-center">${pKeys[i].value}</th><td>${pVals[i].value.replaceAll('\n','<br>')}</td></tr>`;
+    document.getElementById('out_p_prog_table').innerHTML = pTbl;
+    document.getElementById('out_p_program_block').style.display = window.planProgramVisible === false ? 'none' : 'block';
+
+    // 3. 세부 일정
+    let sTimes = document.querySelectorAll('.p-sch-time'), sVals = document.querySelectorAll('.p-sch-val');
+    let sTbl = '<tr><th style="width:25%;">시간</th><th>내용</th></tr>';
+    for(let i=0; i<sTimes.length; i++) if(sTimes[i].value) sTbl += `<tr><td class="td-center">${sTimes[i].value}</td><td>${sVals[i].value}</td></tr>`;
+    document.getElementById('out_p_sched_table').innerHTML = sTbl;
+    document.getElementById('out_p_schedule_block').style.display = window.planScheduleVisible === false ? 'none' : 'block';
+    document.getElementById('out_p_program_schedule_section').style.display =
+      (window.planProgramVisible === false && window.planScheduleVisible === false) ? 'none' : 'block';
+
+    // 4. 예산
+    document.getElementById('out_p_budget_meta').innerText = `○ 재원 및 예산항목 : ${document.getElementById('p_budgetSource').value} / ${document.getElementById('p_budgetCategory').value}`;
+    let bItems = document.querySelectorAll('.p-bg-item'), bCalcs = document.querySelectorAll('.p-bg-calc'), bAmts = document.querySelectorAll('.p-bg-amount'), bNotes = document.querySelectorAll('.p-bg-note');
+    let bTbl = '<tr><th>세목</th><th>산출 근거</th><th>금액(원)</th><th>비고</th></tr>';
+    let totalAmt = calcPlanBudget();
+    for(let i=0; i<bItems.length; i++) if(bItems[i].value) bTbl += `<tr><td class="td-center">${bItems[i].value}</td><td>${bCalcs[i].value}</td><td class="td-right">${(parseInt(bAmts[i].value)||0).toLocaleString()}</td><td class="td-center">${bNotes[i].value}</td></tr>`;
+    document.getElementById('out_p_budget_table').innerHTML = bTbl;
+    document.getElementById('out_p_budget_total').innerText = totalAmt.toLocaleString() + ' 원';
+    document.getElementById('out_p_budget_total_bottom').innerText = totalAmt.toLocaleString() + ' 원';
+
+    document.getElementById('output-plan-container').style.display = 'block';
+  }
+
+  // 사업 결과보고서 생성 함수
+  function generateResultDocs() {
+    let pName = document.getElementById('r_projName').value;
+    let dateLoc = document.getElementById('r_dateLoc').value;
+    let actualTarget = document.getElementById('r_actualTarget').value;
+    let summaryContent = document.getElementById('r_summaryContent').value;
+    let totalBudget = calcResultBudget();
+
+    document.getElementById('out_r_org').innerText = document.getElementById('r_orgName').value;
+    document.getElementById('out_r_staff').innerText = document.getElementById('r_staff').value;
+    document.getElementById('out_r_reviewer').innerText = document.getElementById('r_reviewer').value;
+    document.getElementById('out_r_approver').innerText = document.getElementById('r_approver').value;
+    document.getElementById('out_r_refDocText').innerText = document.getElementById('r_refDoc').value;
+    document.getElementById('out_r_docTitle').innerText = pName + " 운영 결과 보고";
+    document.getElementById('out_r_projText').innerText = pName;
+    document.getElementById('out_r_pName').innerText = pName;
+    document.getElementById('out_r_dateLocText').innerText = dateLoc;
+    document.getElementById('out_r_targetText').innerText = actualTarget;
+    document.getElementById('out_r_budgetText').innerText = totalBudget.toLocaleString() + '원';
+
+    document.getElementById('out_r_tbl_pName').innerText = pName;
+    document.getElementById('out_r_tbl_dateLoc').innerText = dateLoc;
+    document.getElementById('out_r_tbl_target').innerText = actualTarget;
+    document.getElementById('out_r_tbl_summary').innerHTML = summaryContent.replaceAll('\n','<br>');
+
+    document.getElementById('out_r_tbl_score').innerText = document.getElementById('r_surveyScore').value;
+    document.getElementById('out_r_tbl_surveyItems').innerHTML = document.getElementById('r_surveyItems').value.replaceAll('\n','<br>');
+    document.getElementById('out_r_tbl_surveyFeedback').innerHTML = document.getElementById('r_surveyFeedback').value.replaceAll('\n','<br>');
+
+    document.getElementById('out_r_tbl_good').innerHTML = document.getElementById('r_evalGood').value.replaceAll('\n','<br>');
+    document.getElementById('out_r_tbl_bad').innerHTML = document.getElementById('r_evalBad').value.replaceAll('\n','<br>');
+    document.getElementById('out_r_tbl_plan').innerHTML = document.getElementById('r_evalPlan').value.replaceAll('\n','<br>');
+
+    document.getElementById('out_r_budget_meta').innerText = `○ 재원 및 예산항목 : ${document.getElementById('r_budgetSource').value} / ${document.getElementById('r_budgetCategory').value}`;
+
+    let bItems = document.querySelectorAll('.r-bg-item'), bCalcs = document.querySelectorAll('.r-bg-calc'), bAmts = document.querySelectorAll('.r-bg-amount'), bNotes = document.querySelectorAll('.r-bg-note');
+    let bTbl = '<tr><th>세목</th><th>집행 내역</th><th>실제 집행액(원)</th><th>비고</th></tr>';
+    for(let i=0; i<bItems.length; i++) if(bItems[i].value) bTbl += `<tr><td class="td-center">${bItems[i].value}</td><td>${bCalcs[i].value}</td><td class="td-right">${(parseInt(bAmts[i].value)||0).toLocaleString()}</td><td class="td-center">${bNotes[i].value}</td></tr>`;
+    document.getElementById('out_r_tbl_budgetTable').innerHTML = bTbl;
+    document.getElementById('out_r_tbl_budgetTotal').innerText = totalBudget.toLocaleString() + ' 원';
+
+    let attaches = document.querySelectorAll('.r-attach-val');
+    let attachHTML = '';
+    for(let i=0; i<attaches.length; i++) if(attaches[i].value) attachHTML += `<div style="margin:3px 0;">붙임 ${i+1}. ${attaches[i].value}</div>`;
+    document.getElementById('out_r_tbl_attachList').innerHTML = attachHTML;
+
+    document.getElementById('output-result-container').style.display = 'block';
+  }
+
+  // v7.0 데이터 직렬화/복원
+  function getValues(selector) {
+    return Array.from(document.querySelectorAll(selector)).map(el => el.value);
+  }
+  function getRows(tbodySelector, classes) {
+    return Array.from(document.querySelectorAll(tbodySelector + ' tr')).map(tr => {
+      let o = {};
+      classes.forEach(c => {
+        let el = tr.querySelector('.' + c);
+        o[c] = el ? el.value : '';
+      });
+      return o;
+    });
+  }
+  function esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function getPlanData() {
+    return {
+      orgName:p_orgName.value, staff:p_staff.value, reviewer:p_reviewer.value, approver:p_approver.value,
+      overview:getRows('#p_overviewTbody',['p-ov-key','p-ov-val']),
+      programs:getRows('#p_progTbody',['p-prog-key','p-prog-val']),
+      schedule:getRows('#p_schedTbody',['p-sch-time','p-sch-val']),
+      budgetSource:p_budgetSource.value, budgetCategory:p_budgetCategory.value,
+      budget:getRows('#p_budgetTbody',['p-bg-item','p-bg-calc','p-bg-amount','p-bg-note']),
+      programVisible: window.planProgramVisible !== false,
+      scheduleVisible: window.planScheduleVisible !== false
+    };
+  }
+  function getResultData() {
+    return {
+      orgName:r_orgName.value, staff:r_staff.value, reviewer:r_reviewer.value, approver:r_approver.value,
+      projName:r_projName.value, refDoc:r_refDoc.value, dateLoc:r_dateLoc.value,
+      actualTarget:r_actualTarget.value, summaryContent:r_summaryContent.value,
+      surveyScore:r_surveyScore.value, surveyItems:r_surveyItems.value, surveyFeedback:r_surveyFeedback.value,
+      evalGood:r_evalGood.value, evalBad:r_evalBad.value, evalPlan:r_evalPlan.value,
+      budgetSource:r_budgetSource.value, budgetCategory:r_budgetCategory.value,
+      budget:getRows('#r_budgetTbody',['r-bg-item','r-bg-calc','r-bg-amount','r-bg-note']),
+      attachments:getValues('.r-attach-val'),
+      sourcePlanId: window.currentSourcePlanId || null
+    };
+  }
+  function projectNameFromPlan(data) {
+    let row = (data.overview || []).find(x => (x['p-ov-key']||'').trim() === '사업명') || (data.overview||[])[0];
+    return row ? row['p-ov-val'] : '사업계획서';
+  }
+  function saveCurrentData(type) {
+    let db = JSON.parse(localStorage.getItem('app_project_db') || '[]');
+    let data = type === 'PLAN' ? getPlanData() : getResultData();
+    let currentId = type === 'PLAN' ? window.currentPlanRecordId : window.currentResultRecordId;
+    let projName = type === 'PLAN' ? projectNameFromPlan(data) : data.projName;
+    if(currentId) {
+      let idx = db.findIndex(x => x.id === currentId);
+      if(idx >= 0 && confirm('현재 불러온 문서를 수정 저장하시겠습니까?\\n취소하면 새 문서로 저장합니다.')) {
+        db[idx] = {...db[idx], projName, staff:data.staff, regDate:new Date().toLocaleString(), data};
+        localStorage.setItem('app_project_db', JSON.stringify(db));
+        alert('기존 문서가 수정 저장되었습니다.');
+        return;
+      }
+    }
+    let item = {id:Date.now(), type, regDate:new Date().toLocaleString(), projName, staff:data.staff, data};
+    db.push(item);
+    localStorage.setItem('app_project_db', JSON.stringify(db));
+    if(type === 'PLAN') window.currentPlanRecordId = item.id;
+    else window.currentResultRecordId = item.id;
+    alert('v7.1 DB에 전체 작성 내용이 저장되었습니다.');
+  }
+  function renderDBList() {
+    let db = JSON.parse(localStorage.getItem('app_project_db') || '[]');
+    let tbody = document.getElementById('dbTableBody');
+    tbody.innerHTML = '';
+    if(db.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="td-center">저장 목록이 없습니다.</td></tr>'; return; }
+    db.slice().reverse().forEach(item => {
+      let tr = document.createElement('tr');
+      let canLoad = !!item.data;
+      tr.innerHTML = `
+        <td class="td-center"><span class="${item.type==='PLAN'?'tag-plan':'tag-result'}">${item.type==='PLAN'?'계획':'결과'}</span></td>
+        <td>${esc(item.projName)}</td>
+        <td class="td-center">${esc(item.staff)}</td>
+        <td class="td-center">${esc(item.regDate || '')}</td>
+        <td class="td-center">
+          ${canLoad ? `<button class="btn-add" onclick="loadSavedData(${item.id})">불러오기</button>` : ''}
+          ${item.type==='PLAN' && canLoad ? `<button class="btn-gform" onclick="usePlanForResult(${item.id})">결과작성</button>` : ''}
+          <button class="btn-del" onclick="deleteData(${item.id})">삭제</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  function findSaved(id) {
+    return JSON.parse(localStorage.getItem('app_project_db') || '[]').find(x => x.id === id);
+  }
+  function setRows(tbodyId, rows, columns, addFnName) {
+    let tbody = document.getElementById(tbodyId); tbody.innerHTML = '';
+    (rows || []).forEach(row => {
+      window[addFnName]();
+      let tr = tbody.lastElementChild;
+      columns.forEach(c => { let el = tr.querySelector('.'+c); if(el) el.value = row[c] ?? ''; });
+    });
+  }
+  function loadSavedData(id) {
+    let item = findSaved(id); if(!item || !item.data) return alert('구버전 요약 데이터는 전체 불러오기를 지원하지 않습니다.');
+    let d = item.data;
+    if(item.type === 'PLAN') {
+      window.currentPlanRecordId = item.id;
+      p_orgName.value=d.orgName||''; p_staff.value=d.staff||''; p_reviewer.value=d.reviewer||''; p_approver.value=d.approver||'';
+      setRows('p_overviewTbody',d.overview,['p-ov-key','p-ov-val'],'addOverviewRow');
+      setRows('p_progTbody',d.programs,['p-prog-key','p-prog-val'],'addProgRow');
+      setRows('p_schedTbody',d.schedule,['p-sch-time','p-sch-val'],'addScheduleRow');
+      setPlanSectionVisible('program', d.programVisible !== false, false);
+      setPlanSectionVisible('schedule', d.scheduleVisible !== false, false);
+      p_budgetSource.value=d.budgetSource||''; p_budgetCategory.value=d.budgetCategory||'';
+      setRows('p_budgetTbody',d.budget,['p-bg-item','p-bg-calc','p-bg-amount','p-bg-note'],'addPlanBudgetRow');
+      calcPlanBudget(); switchMode('PLAN');
+    } else {
+      window.currentResultRecordId = item.id;
+      fillResult(d); switchMode('RESULT');
+    }
+  }
+  function fillResult(d) {
+    r_orgName.value=d.orgName||''; r_staff.value=d.staff||''; r_reviewer.value=d.reviewer||''; r_approver.value=d.approver||'';
+    r_projName.value=d.projName||''; r_refDoc.value=d.refDoc||''; r_dateLoc.value=d.dateLoc||'';
+    r_actualTarget.value=d.actualTarget||''; r_summaryContent.value=d.summaryContent||'';
+    r_surveyScore.value=d.surveyScore||''; r_surveyItems.value=d.surveyItems||''; r_surveyFeedback.value=d.surveyFeedback||'';
+    r_evalGood.value=d.evalGood||''; r_evalBad.value=d.evalBad||''; r_evalPlan.value=d.evalPlan||'';
+    r_budgetSource.value=d.budgetSource||''; r_budgetCategory.value=d.budgetCategory||'';
+    setRows('r_budgetTbody',d.budget,['r-bg-item','r-bg-calc','r-bg-amount','r-bg-note'],'addResultBudgetRow');
+    let tbody=document.getElementById('r_attachTbody'); tbody.innerHTML='';
+    (d.attachments||[]).forEach(v=>{ addAttachRow(); tbody.lastElementChild.querySelector('.r-attach-val').value=v; });
+    window.currentSourcePlanId=d.sourcePlanId||null; calcResultBudget();
+  }
+  function openPlanPicker() {
+    let plans = JSON.parse(localStorage.getItem('app_project_db') || '[]').filter(x=>x.type==='PLAN' && x.data);
+    if(!plans.length) return alert('먼저 사업계획서를 DB에 저장해 주세요.');
+    let msg = plans.map((p,i)=>`${i+1}. ${p.projName}`).join('\n');
+    let n = parseInt(prompt('결과보고서로 승계할 계획서 번호를 입력하세요.\n\n'+msg),10);
+    if(n>=1 && n<=plans.length) usePlanForResult(plans[n-1].id);
+  }
+  function usePlanForResult(id) {
+    let item=findSaved(id); if(!item || !item.data) return;
+    let d=item.data, ov={}; (d.overview||[]).forEach(x=>ov[x['p-ov-key']]=x['p-ov-val']);
+    r_orgName.value=d.orgName||''; r_staff.value=d.staff||''; r_reviewer.value=d.reviewer||''; r_approver.value=d.approver||'';
+    r_projName.value=ov['사업명']||projectNameFromPlan(d);
+    r_dateLoc.value=[ov['사업일시'],ov['장소']].filter(Boolean).join(' / ');
+    r_actualTarget.value=ov['참여대상']||'';
+    r_summaryContent.value=(d.programs||[]).map(x=>`${x['p-prog-key']}: ${x['p-prog-val']}`).join('\n');
+    r_budgetSource.value=d.budgetSource||''; r_budgetCategory.value=d.budgetCategory||'';
+    window.currentSourcePlanId=id; window.currentResultRecordId=null; switchMode('RESULT');
+    alert('계획서 기본정보를 결과보고서로 승계했습니다. 실제 실적·집행액·설문 결과를 수정해 주세요.');
+  }
+  function extractFirstNumber(text) {
+    let m=String(text||'').replace(/,/g,'').match(/\d+/); return m ? parseInt(m[0],10) : null;
+  }
+  function validatePlanVsResult() {
+    let box=document.getElementById('validationBox'), msgs=[];
+    let plan=window.currentSourcePlanId ? findSaved(window.currentSourcePlanId) : null;
+    if(!plan || !plan.data) {
+      box.style.display='block'; box.innerHTML='⚠️ 연결된 사업계획서가 없습니다. 먼저 <b>저장된 계획서 불러오기</b>를 실행하세요.'; return;
+    }
+    let d=plan.data, ov={}; (d.overview||[]).forEach(x=>ov[x['p-ov-key']]=x['p-ov-val']);
+    let plannedPeople=extractFirstNumber(ov['참여대상']), actualPeople=extractFirstNumber(r_actualTarget.value);
+    let planBudget=(d.budget||[]).reduce((a,x)=>a+(parseInt(x['p-bg-amount'])||0),0);
+    let actualBudget=calcResultBudget();
+    if(plannedPeople!==null && actualPeople!==null)
+      msgs.push(`참여인원: 계획 ${plannedPeople}명 → 실제 ${actualPeople}명 (${actualPeople-plannedPeople>=0?'+':''}${actualPeople-plannedPeople}명)`);
+    msgs.push(`예산: 계획 ${planBudget.toLocaleString()}원 → 집행 ${actualBudget.toLocaleString()}원 (집행률 ${planBudget?((actualBudget/planBudget)*100).toFixed(1):0}%)`);
+    // budget calculation-headcount consistency hints
+    (d.budget||[]).forEach(x=>{
+      let calcN=extractFirstNumber((x['p-bg-calc']||'').split('×').pop());
+      if(plannedPeople && calcN && calcN!==plannedPeople) msgs.push(`⚠️ 계획 예산 '${x['p-bg-item']}' 산출인원 ${calcN}명은 참여대상 ${plannedPeople}명과 다릅니다.`);
+    });
+    box.style.display='block'; box.innerHTML='<b>계획 대비 실적 점검</b><br>'+msgs.map(esc).join('<br>');
+  }
+  function setPlanSectionVisible(section, visible, ask=true) {
+    if(!visible && ask && !confirm('이 항목을 계획서 입력 및 출력에서 제외하시겠습니까?\n입력 내용은 현재 화면에서 숨겨지며 다시 표시할 수 있습니다.')) return;
+    if(section === 'program') {
+      window.planProgramVisible = visible;
+      document.getElementById('p-program-block').style.display = visible ? 'block' : 'none';
+    } else {
+      window.planScheduleVisible = visible;
+      document.getElementById('p-schedule-block').style.display = visible ? 'block' : 'none';
+    }
+  }
+
+  function startNewDocument(type) {
+    const label = type === 'PLAN' ? '새 사업계획서' : '새 결과보고서';
+    if(!confirm(label + ' 작성을 시작하시겠습니까?\n현재 화면의 입력 내용은 초기화됩니다. 저장하지 않은 내용은 사라집니다.')) return;
+
+    if(type === 'PLAN') {
+      window.currentPlanRecordId = null;
+      window.planProgramVisible = true; window.planScheduleVisible = true;
+      document.querySelectorAll('#section-input-plan input[type="text"], #section-input-plan input[type="number"], #section-input-plan textarea').forEach(el=>{
+        if(!el.closest('#output-plan-container')) el.value = el.type === 'number' ? '0' : '';
+      });
+      p_overviewTbody.innerHTML=''; addOverviewRow();
+      p_progTbody.innerHTML=''; addProgRow();
+      p_schedTbody.innerHTML=''; addScheduleRow();
+      p_budgetTbody.innerHTML=''; addPlanBudgetRow();
+      setPlanSectionVisible('program', true, false); setPlanSectionVisible('schedule', true, false);
+      p_orgName.value='화성시장기요양지원센터';
+      document.getElementById('output-plan-container').style.display='none';
+      calcPlanBudget(); switchSubTab('p',1); switchMode('PLAN');
+    } else {
+      window.currentResultRecordId = null; window.currentSourcePlanId = null;
+      document.querySelectorAll('#section-input-result input[type="text"], #section-input-result input[type="number"], #section-input-result textarea').forEach(el=>{
+        if(!el.closest('#output-result-container')) el.value = el.type === 'number' ? '0' : '';
+      });
+      r_budgetTbody.innerHTML=''; addResultBudgetRow();
+      r_attachTbody.innerHTML=''; addAttachRow();
+      r_orgName.value='화성시장기요양지원센터';
+      document.getElementById('validationBox').style.display='none';
+      document.getElementById('output-result-container').style.display='none';
+      calcResultBudget(); switchSubTab('r',1); switchMode('RESULT');
+    }
+  }
+  function deleteData(id) {
+    if(!confirm("해당 사업 데이터를 삭제하시겠습니까?")) return;
+    let db = JSON.parse(localStorage.getItem('app_project_db') || '[]').filter(x => x.id !== id);
+    localStorage.setItem('app_project_db', JSON.stringify(db)); renderDBList();
+  }
+
+  function printDoc(targetId) {
+    let target = document.getElementById(targetId);
+    if (!target) return;
+    document.querySelectorAll('#output-plan-container, #output-result-container').forEach(el => el.classList.remove('print-target'));
+    document.querySelectorAll('.form-section').forEach(el => el.classList.remove('print-parent'));
+    target.classList.add('print-target');
+    let parent = target.closest('.form-section');
+    if(parent) parent.classList.add('print-parent');
+
+    const cleanup = () => {
+      target.classList.remove('print-target');
+      if(parent) parent.classList.remove('print-parent');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    window.print();
+  }
+
+  function exportDoc(containerId, filename) {
+    let header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>";
+    let sourceHTML = header + document.getElementById(containerId).innerHTML + "</body></html>";
+    let source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+    let a = document.createElement("a");
+    document.body.appendChild(a);
+    a.href = source;
+    a.download = filename + '.doc';
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  window.onload = function() { window.planProgramVisible=true; window.planScheduleVisible=true; calcPlanBudget(); calcResultBudget(); };
+
+  // ===== v8.0 Supabase 협업 기능 =====
+  const V8_SUPABASE_URL = 'https://quienpvidvkjvtiwyhoq.supabase.co';
+  const V8_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1aWVucHZpZHZranZ0aXd5aG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMzE0MzIsImV4cCI6MjEwMzgwNzQzMn0.Q2SvpeN2s_okehjVhjNeKpqBCc2ml7EBcmvDMJ4tqKE';
+  const sb = window.supabase.createClient(V8_SUPABASE_URL, V8_SUPABASE_ANON_KEY);
+  let v8User = null;
+
+  async function initV8Auth() {
+    const {data:{session}} = await sb.auth.getSession();
+    if(session?.user) await enterV8(session.user);
+    sb.auth.onAuthStateChange(async (_event, session) => {
+      if(session?.user) await enterV8(session.user);
+    });
+  }
+
+  async function loginV8() {
+    document.getElementById('authMsg').textContent = '로그인 중...';
+    const {data,error} = await sb.auth.signInWithPassword({
+      email: document.getElementById('loginEmail').value.trim(), password: document.getElementById('loginPassword').value
+    });
+    if(error) { document.getElementById('authMsg').textContent = error.message; return; }
+    document.getElementById('authMsg').textContent = '';
+    await enterV8(data.user);
+  }
+
+  async function signupV8() {
+    const email = document.getElementById('loginEmail').value.trim(), password = document.getElementById('loginPassword').value;
+    if(!email || password.length < 6) {
+      document.getElementById('authMsg').textContent = '이메일과 6자 이상의 비밀번호를 입력하세요.'; return;
+    }
+    document.getElementById('authMsg').textContent = '계정 생성 중...';
+    const {data,error} = await sb.auth.signUp({
+      email, password, options:{data:{name: email.split('@')[0]}}
+    });
+    if(error) { document.getElementById('authMsg').textContent = error.message; return; }
+    if(data.session) {
+      await enterV8(data.user);
+      document.getElementById('authMsg').textContent = '';
+    } else {
+      document.getElementById('authMsg').style.color='#166534';
+      document.getElementById('authMsg').textContent = '계정이 생성되었습니다. 이메일 확인 설정이 켜져 있다면 메일 인증 후 로그인하세요.';
+    }
+  }
+
+  async function logoutV8() {
+    await sb.auth.signOut();
+    v8User=null;
+    document.getElementById('authOverlay').style.display='flex';
+    document.getElementById('collabBar').style.display='none';
+  }
+
+  async function enterV8(user) {
+    v8User=user;
+    document.getElementById('authOverlay').style.display='none';
+    document.getElementById('collabBar').style.display='flex';
+    document.getElementById('currentUserLabel').textContent=user.email || user.id;
+    await loadProfileV81();
+    await renderCloudDB();
+    switchModeV86Home();
+    setTimeout(refreshProfileAndRoleV87,300);
+  }
+
+  function planProjectName(data) {
+    return projectNameFromPlan(data) || '사업계획';
+  }
+
+  async function saveCloudDocument(type) {
+    if(!v8User) return alert('먼저 로그인하세요.');
+    const data = type === 'PLAN' ? getPlanData() : getResultData();
+    const name = type === 'PLAN' ? planProjectName(data) : (data.projName || '결과보고');
+    let projectId = type === 'PLAN' ? window.currentCloudPlanProjectId :
+                    (window.currentCloudResultProjectId || window.currentSourcePlanId);
+
+    try {
+      if(!projectId) {
+        const {data:pr,error} = await sb.from('projects').insert({
+          project_name:name, owner_id:v8User.id, created_by:v8User.id, updated_by:v8User.id
+        }).select().single();
+        if(error) throw error;
+        projectId=pr.id;
+      } else {
+        const {error} = await sb.from('projects').update({
+          project_name:name, updated_by:v8User.id
+        }).eq('id',projectId);
+        if(error) throw error;
+      }
+
+      const {data:existing,error:findErr} = await sb.from('project_documents')
+        .select('id').eq('project_id',projectId).eq('doc_type',type).maybeSingle();
+      if(findErr) throw findErr;
+
+      let doc;
+      if(existing) {
+        const {data:updated,error} = await sb.from('project_documents').update({
+          data, updated_by:v8User.id
+        }).eq('id',existing.id).select().single();
+        if(error) throw error; doc=updated;
+      } else {
+        const {data:created,error} = await sb.from('project_documents').insert({
+          project_id:projectId, doc_type:type, data,
+          created_by:v8User.id, updated_by:v8User.id
+        }).select().single();
+        if(error) throw error; doc=created;
+      }
+
+      await sb.from('project_history').insert({
+        project_id:projectId, document_id:doc.id,
+        action: existing ? 'UPDATE_'+type : 'CREATE_'+type,
+        snapshot:data, changed_by:v8User.id
+      });
+
+      if(type==='PLAN') window.currentCloudPlanProjectId=projectId;
+      else window.currentCloudResultProjectId=projectId;
+      alert('공동 DB에 저장되었습니다.');
+      await renderCloudDB();
+    } catch(e) {
+      console.error(e); alert('공동 DB 저장 오류: '+e.message);
+    }
+  }
+
+  async function renderCloudDB() {
+    if(!v8User) return;
+    const tbody=document.getElementById('db-list');
+    if(!tbody) return;
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;">공동 DB 불러오는 중...</td></tr>';
+    const {data,error} = await sb.from('project_documents')
+      .select('id,project_id,doc_type,data,updated_at,updated_by,projects(project_name,status,owner_id,updated_by)')
+      .order('updated_at',{ascending:false});
+    if(error) {
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#b91c1c;">'+esc(error.message)+'</td></tr>'; return;
+    }
+    tbody.innerHTML='';
+    if(!data.length) tbody.innerHTML='<tr><td colspan="6" style="text-align:center;">저장된 공동 문서가 없습니다.</td></tr>';
+    data.forEach(x=>{
+      const tr=document.createElement('tr');
+      const nm=x.projects?.project_name || (x.doc_type==='PLAN'?projectNameFromPlan(x.data):x.data?.projName) || '-';
+      const st=x.projects?.status||'draft';
+      const stLabel={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'}[st]||st;
+      tr.innerHTML=`<td>${x.doc_type==='PLAN'?'계획서':'결과보고'}</td>
+        <td>${esc(nm)}<div style="font-size:11px;margin-top:3px;"><span style="padding:2px 6px;border:1px solid #bbb;border-radius:10px;">${stLabel}</span></div></td>
+        <td>${esc(x.data?.staff||'-')}</td>
+        <td>${new Date(x.updated_at).toLocaleString()}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-add" onclick="loadCloudDocument('${x.id}')">불러오기</button>
+          ${x.doc_type==='PLAN'?`<button class="btn btn-result" onclick="cloudPlanToResult('${x.project_id}')">결과작성</button>`:''}
+          <button class="btn btn-add" onclick="changeProjectStatusV81('${x.project_id}','${st}')">상태변경</button>
+          <button class="btn btn-add" onclick="showHistoryV81('${x.project_id}')">이력</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function loadCloudDocument(docId) {
+    const {data:x,error}=await sb.from('project_documents').select('*').eq('id',docId).single();
+    if(error) return alert(error.message);
+    const d=x.data||{};
+    if(x.doc_type==='PLAN') {
+      window.currentCloudPlanProjectId=x.project_id;
+      p_orgName.value=d.orgName||''; p_staff.value=d.staff||''; p_reviewer.value=d.reviewer||''; p_approver.value=d.approver||'';
+      setRows('p_overviewTbody',d.overview,['p-overview-key','p-overview-val'],'addOverviewRow');
+      setRows('p_progTbody',d.programs,['p-prog-key','p-prog-val'],'addProgRow');
+      setRows('p_schedTbody',d.schedule,['p-sch-time','p-sch-val'],'addScheduleRow');
+      setPlanSectionVisible('program', d.programVisible !== false, false);
+      setPlanSectionVisible('schedule', d.scheduleVisible !== false, false);
+      p_budgetSource.value=d.budgetSource||''; p_budgetCategory.value=d.budgetCategory||'';
+      setRows('p_budgetTbody',d.budget,['p-bg-item','p-bg-calc','p-bg-amount','p-bg-note'],'addPlanBudgetRow');
+      calcPlanBudget(); switchMode('PLAN');
+    } else {
+      window.currentCloudResultProjectId=x.project_id;
+      fillResult(d); calcResultBudget(); switchMode('RESULT');
+    }
+  }
+
+  async function cloudPlanToResult(projectId) {
+    const {data:x,error}=await sb.from('project_documents')
+      .select('*').eq('project_id',projectId).eq('doc_type','PLAN').single();
+    if(error) return alert(error.message);
+    const d=x.data||{};
+    r_orgName.value=d.orgName||''; r_staff.value=d.staff||''; r_reviewer.value=d.reviewer||''; r_approver.value=d.approver||'';
+    r_projName.value=projectNameFromPlan(d)||'';
+    const om={}; (d.overview||[]).forEach(a=>{if(a[0]) om[a[0]]=a[1]||'';});
+    r_dateLoc.value=[om['사업일시']||om['운영일시']||om['일시'],om['사업장소']||om['장소']].filter(Boolean).join(' / ');
+    r_target.value=om['참여대상']||om['대상']||'';
+    r_content.value=(d.programs||[]).map(a=>a[0]?`${a[0]}: ${a[1]||''}`:'').filter(Boolean).join('\n');
+    r_budgetSource.value=d.budgetSource||''; r_budgetCategory.value=d.budgetCategory||'';
+    window.currentSourcePlanId=projectId; window.currentCloudResultProjectId=projectId;
+    switchMode('RESULT'); switchSubTab('r',1);
+    alert('공동 DB의 계획서 정보를 결과보고서로 승계했습니다.');
+  }
+
+  // ===== v8.1 직원 프로필 / 권한표시 / 사업상태 / 수정이력 =====
+  let v81Profile = null;
+
+  async function loadProfileV81() {
+    if(!v8User) return;
+    const {data,error}=await sb.from('profiles').select('*').eq('id',v8User.id).maybeSingle();
+    if(error) { console.warn(error); return; }
+    v81Profile=data;
+    const who=[data?.name,data?.position].filter(Boolean).join(' · ');
+    document.getElementById('currentUserLabel').textContent=who || v8User.email || v8User.id;
+    document.getElementById('currentRoleLabel').textContent='권한: '+({admin:'관리자',staff:'담당자',reviewer:'검토자'}[data?.role]||data?.role||'담당자');
+  }
+
+  function openProfileV81() {
+    const modal=document.getElementById('profileModalV81');
+    if(!modal) { alert('내 정보 창을 찾지 못했습니다. v8.1.1 파일을 다시 열어주세요.'); return; }
+    document.getElementById('profileNameV81').value=v81Profile?.name||'';
+    document.getElementById('profilePositionV81').value=v81Profile?.position||'';
+    document.getElementById('profileRoleV81').textContent=({admin:'관리자',staff:'담당자',reviewer:'검토자'}[v81Profile?.role]||v81Profile?.role||'담당자');
+    modal.style.display='flex';
+  }
+  function closeProfileV81(){ document.getElementById('profileModalV81').style.display='none'; }
+
+  async function saveProfileV81() {
+    if(!v8User) return;
+    const {error}=await sb.from('profiles').update({
+      name:document.getElementById('profileNameV81').value.trim(),
+      position:document.getElementById('profilePositionV81').value.trim()
+    }).eq('id',v8User.id);
+    if(error) return alert('직원정보 저장 오류: '+error.message);
+    closeProfileV81(); await loadProfileV81();
+    alert('직원정보가 저장되었습니다.');
+  }
+
+  async function changeProjectStatusV81(projectId,current) {
+    const options=[
+      ['draft','작성중'],['review_requested','검토요청'],
+      ['reviewed','검토완료'],['completed','사업완료']
+    ];
+    let msg='변경할 상태 번호를 입력하세요.\n\n'+options.map((x,i)=>(i+1)+'. '+x[1]).join('\n');
+    let n=Number(prompt(msg, String(Math.max(1,options.findIndex(x=>x[0]===current)+1))));
+    if(!n || !options[n-1]) return;
+    const next=options[n-1][0];
+
+    // 담당자는 검토완료로 직접 변경하지 못하도록 UI에서 1차 제한
+    if(v81Profile?.role==='staff' && next==='reviewed') {
+      return alert('검토완료 처리는 검토자 또는 관리자가 수행하도록 설정했습니다.');
+    }
+    const {error}=await sb.from('projects').update({
+      status:next, updated_by:v8User.id
+    }).eq('id',projectId);
+    if(error) return alert('상태 변경 오류: '+error.message);
+
+    await sb.from('project_history').insert({
+      project_id:projectId, action:'STATUS_'+current+'_TO_'+next,
+      snapshot:{from:current,to:next}, changed_by:v8User.id
+    });
+    await renderCloudDB();
+  }
+
+  async function showHistoryV81(projectId) {
+    document.getElementById('historyModalV81').style.display='flex';
+    document.getElementById('historyListV81').innerHTML='불러오는 중...';
+    const {data,error}=await sb.from('project_history')
+      .select('id,action,changed_at,changed_by')
+      .eq('project_id',projectId).order('changed_at',{ascending:false}).limit(100);
+    if(error) { document.getElementById('historyListV81').innerHTML=esc(error.message); return; }
+
+    const ids=[...new Set((data||[]).map(x=>x.changed_by).filter(Boolean))];
+    let people={};
+    if(ids.length) {
+      const {data:p}=await sb.from('profiles').select('id,name,position').in('id',ids);
+      (p||[]).forEach(x=>people[x.id]=[x.name,x.position].filter(Boolean).join(' · '));
+    }
+    if(!data?.length) { document.getElementById('historyListV81').innerHTML='<p>저장된 수정이력이 없습니다.</p>'; return; }
+    document.getElementById('historyListV81').innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <tr><th style="padding:7px;border:1px solid #ddd;">일시</th><th style="padding:7px;border:1px solid #ddd;">작업</th><th style="padding:7px;border:1px solid #ddd;">수정자</th></tr>
+      ${data.map(x=>`<tr><td style="padding:7px;border:1px solid #ddd;">${new Date(x.changed_at).toLocaleString()}</td>
+      <td style="padding:7px;border:1px solid #ddd;">${esc(historyActionLabelV81(x.action))}</td>
+      <td style="padding:7px;border:1px solid #ddd;">${esc(people[x.changed_by]||x.changed_by||'-')}</td></tr>`).join('')}
+    </table>`;
+  }
+  function closeHistoryV81(){ document.getElementById('historyModalV81').style.display='none'; }
+
+  function historyActionLabelV81(a) {
+    if(a==='CREATE_PLAN') return '사업계획서 최초 저장';
+    if(a==='UPDATE_PLAN') return '사업계획서 수정 저장';
+    if(a==='CREATE_RESULT') return '결과보고서 최초 저장';
+    if(a==='UPDATE_RESULT') return '결과보고서 수정 저장';
+    if((a||'').startsWith('STATUS_')) return '사업 상태 변경';
+    return a||'-';
+  }
+
+  // ===== v8.3 사업관리 대시보드 =====
+  let dashboardRowsV83=[];
+
+  function switchModeV83Dashboard(){
+    document.querySelectorAll('.form-section').forEach(x=>x.style.display='none');
+    const d=document.getElementById('mode-dashboard');
+    if(d) d.style.display='block';
+    document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active-plan','active-result','active-db'));
+    const b=document.getElementById('btn-mode-dashboard');
+    if(b) b.classList.add('active-db');
+    renderDashboardV83();
+  }
+
+  async function renderDashboardV83(){
+    const box=document.getElementById('dashboardTableV83');
+    if(!box||!v8User) return;
+    box.innerHTML='공동 DB에서 사업을 불러오는 중...';
+
+    const {data:projects,error}=await sb.from('projects')
+      .select('id,project_name,status,owner_id,updated_by,created_at,updated_at')
+      .order('updated_at',{ascending:false});
+    if(error){box.innerHTML='<div style="color:#b91c1c;">'+esc(error.message)+'</div>';return;}
+
+    const pids=(projects||[]).map(x=>x.id);
+    let docs=[];
+    if(pids.length){
+      const r=await sb.from('project_documents')
+        .select('id,project_id,doc_type,data,updated_at').in('project_id',pids);
+      if(r.error){box.innerHTML='<div style="color:#b91c1c;">'+esc(r.error.message)+'</div>';return;}
+      docs=r.data||[];
+    }
+
+    const userIds=[...new Set((projects||[]).flatMap(x=>[x.owner_id,x.updated_by]).filter(Boolean))];
+    let people={};
+    if(userIds.length){
+      const r=await sb.from('profiles').select('id,name,position,email').in('id',userIds);
+      (r.data||[]).forEach(x=>people[x.id]=x);
+    }
+
+    dashboardRowsV83=(projects||[]).map(p=>{
+      const plan=docs.find(d=>d.project_id===p.id&&d.doc_type==='PLAN');
+      const result=docs.find(d=>d.project_id===p.id&&d.doc_type==='RESULT');
+      const owner=people[p.owner_id];
+      const editor=people[p.updated_by];
+      return {...p,plan,result,owner,editor};
+    });
+    renderDashboardSummaryV83();
+    filterDashboardV83();
+  }
+
+  function renderDashboardSummaryV83(){
+    const el=document.getElementById('dashboardSummaryV83'); if(!el)return;
+    const all=dashboardRowsV83.length;
+    const review=dashboardRowsV83.filter(x=>x.status==='review_requested').length;
+    const done=dashboardRowsV83.filter(x=>x.status==='completed').length;
+    const noResult=dashboardRowsV83.filter(x=>x.plan&&!x.result).length;
+    const cards=[['전체 사업',all],['검토 요청',review],['사업 완료',done],['결과보고 미작성',noResult]];
+    el.innerHTML=cards.map(x=>`<div style="border:1px solid #ddd;border-radius:9px;padding:13px;background:#fff;">
+      <div style="font-size:11px;color:#666;">${x[0]}</div><div style="font-size:23px;font-weight:700;margin-top:3px;">${x[1]}</div></div>`).join('');
+  }
+
+  function filterDashboardV83(){
+    const q=(document.getElementById('dashSearchV83')?.value||'').trim().toLowerCase();
+    const st=document.getElementById('dashStatusV83')?.value||'';
+    const rows=dashboardRowsV83.filter(x=>{
+      const staff=x.plan?.data?.staff||x.result?.data?.staff||x.owner?.name||'';
+      return (!st||x.status===st) && (!q||(x.project_name||'').toLowerCase().includes(q)||staff.toLowerCase().includes(q));
+    });
+    drawDashboardV83(rows);
+  }
+
+  function drawDashboardV83(rows){
+    const box=document.getElementById('dashboardTableV83'); if(!box)return;
+    const labels={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'};
+    if(!rows.length){box.innerHTML='<div style="padding:24px;text-align:center;color:#666;">조건에 맞는 사업이 없습니다.</div>';return;}
+    box.innerHTML=`<div style="overflow:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:900px;">
+      <tr>
+       <th style="border:1px solid #ddd;padding:8px;">사업명</th>
+       <th style="border:1px solid #ddd;padding:8px;">담당자</th>
+       <th style="border:1px solid #ddd;padding:8px;">상태</th>
+       <th style="border:1px solid #ddd;padding:8px;">계획서</th>
+       <th style="border:1px solid #ddd;padding:8px;">결과보고서</th>
+       <th style="border:1px solid #ddd;padding:8px;">최종수정자</th>
+       <th style="border:1px solid #ddd;padding:8px;">최종수정일</th>
+       <th style="border:1px solid #ddd;padding:8px;">관리</th>
+      </tr>
+      ${rows.map(x=>{
+        const staff=x.plan?.data?.staff||x.result?.data?.staff||x.owner?.name||'-';
+        const editor=x.editor?.name||x.editor?.email||'-';
+        return `<tr>
+         <td style="border:1px solid #ddd;padding:8px;font-weight:600;">${esc(x.project_name||'-')}</td>
+         <td style="border:1px solid #ddd;padding:8px;">${esc(staff)}</td>
+         <td style="border:1px solid #ddd;padding:8px;">${labels[x.status]||esc(x.status)}</td>
+         <td style="border:1px solid #ddd;padding:8px;">${x.plan?`<button class="btn btn-add" onclick="loadCloudDocument('${x.plan.id}')">열기</button>`:'미작성'}</td>
+         <td style="border:1px solid #ddd;padding:8px;">${x.result?`<button class="btn btn-add" onclick="loadCloudDocument('${x.result.id}')">열기</button>`:(x.plan?`<button class="btn btn-result" onclick="cloudPlanToResult('${x.id}')">작성</button>`:'미작성')}</td>
+         <td style="border:1px solid #ddd;padding:8px;">${esc(editor)}</td>
+         <td style="border:1px solid #ddd;padding:8px;">${new Date(x.updated_at).toLocaleString()}</td>
+         <td style="border:1px solid #ddd;padding:8px;white-space:nowrap;">
+           <button class="btn btn-add" onclick="changeProjectStatusV81('${x.id}','${x.status}')">상태</button>
+           <button class="btn btn-add" onclick="showHistoryV81('${x.id}')">이력</button>
+         </td></tr>`}).join('')}
+    </table></div>`;
+  }
+
+  // ===== v8.2 관리자 직원/권한 관리 =====
+  async function openAdminV82() {
+    if(v81Profile?.role!=='admin') return alert('관리자만 직원관리를 사용할 수 있습니다.');
+    document.getElementById('adminModalV82').style.display='flex';
+    await renderAdminUsersV82();
+  }
+  function closeAdminV82(){ document.getElementById('adminModalV82').style.display='none'; }
+
+  async function renderAdminUsersV82() {
+    const box=document.getElementById('adminUserListV82');
+    box.innerHTML='직원 목록을 불러오는 중...';
+    const {data,error}=await sb.from('profiles').select('id,email,name,position,role,created_at').order('created_at',{ascending:true});
+    if(error){ box.innerHTML='<div style="color:#b91c1c;">'+esc(error.message)+'</div>'; return; }
+    const labels={admin:'관리자',staff:'담당자',reviewer:'검토자'};
+    box.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <tr>
+        <th style="border:1px solid #ddd;padding:8px;">이름</th>
+        <th style="border:1px solid #ddd;padding:8px;">직급/직책</th>
+        <th style="border:1px solid #ddd;padding:8px;">이메일</th>
+        <th style="border:1px solid #ddd;padding:8px;">현재 권한</th>
+        <th style="border:1px solid #ddd;padding:8px;">권한 변경</th>
+      </tr>
+      ${(data||[]).map(u=>`<tr>
+        <td style="border:1px solid #ddd;padding:8px;">${esc(u.name||'-')}${u.id===v8User.id?' <strong>(나)</strong>':''}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${esc(u.position||'-')}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${esc(u.email||'-')}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${labels[u.role]||esc(u.role)}</td>
+        <td style="border:1px solid #ddd;padding:8px;">
+          <select id="role_${u.id}" style="padding:6px;">
+            <option value="staff" ${u.role==='staff'?'selected':''}>담당자</option>
+            <option value="reviewer" ${u.role==='reviewer'?'selected':''}>검토자</option>
+            <option value="admin" ${u.role==='admin'?'selected':''}>관리자</option>
+          </select>
+          <button class="btn btn-plan" style="padding:5px 8px;font-size:11px;" onclick="updateUserRoleV82('${u.id}')">적용</button>
+        </td>
+      </tr>`).join('')}
+    </table>`;
+  }
+
+  async function updateUserRoleV82(userId) {
+    if(v81Profile?.role!=='admin') return alert('관리자 권한이 필요합니다.');
+    const el=document.getElementById('role_'+userId);
+    if(!el) return;
+    const role=el.value;
+    if(userId===v8User.id && v81Profile.role==='admin' && role!=='admin') {
+      if(!confirm('본인의 관리자 권한을 해제하시겠습니까? 다른 관리자가 없다면 직원 권한을 다시 변경하기 어려울 수 있습니다.')) return;
+    }
+    const {error}=await sb.rpc('admin_set_user_role',{target_user:userId,new_role:role});
+    if(error) return alert('권한 변경 오류: '+error.message);
+    alert('직원 권한을 변경했습니다.');
+    await loadProfileV81();
+    if(v81Profile?.role==='admin') await renderAdminUsersV82(); else closeAdminV82();
+  }
+
+  function bindV812UI() {
+    const b=document.getElementById('profileBtnV812');
+    if(b) b.addEventListener('click', function(e){ e.preventDefault(); openProfileV81(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', bindV812UI);
+  else bindV812UI();
+
+
+let dashboardRowsV831=[];
+function switchModeV831Dashboard(){
+  // Reuse existing mode switch first so all current sections are hidden consistently.
+  switchMode('LIST');
+  const lc=document.getElementById('section-input-list'); if(lc) lc.style.display='none';
+  const dash=document.getElementById('dashboard-mode'); if(dash) dash.style.display='block';
+  document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active-plan','active-result','active-list','active-db'));
+  document.getElementById('btn-mode-dashboard')?.classList.add('active-db');
+  renderDashboardV831();
+}
+async function renderDashboardV831(){
+  const box=document.getElementById('dashboardTableV831'); if(!box||!v8User)return;
+  box.innerHTML='공동 DB에서 사업을 불러오는 중...';
+  const pr=await sb.from('projects').select('id,project_name,status,owner_id,updated_by,updated_at').order('updated_at',{ascending:false});
+  if(pr.error){box.innerHTML='사업 조회 오류: '+esc(pr.error.message);return;}
+  const projects=pr.data||[], pids=projects.map(x=>x.id); let docs=[];
+  if(pids.length){const dr=await sb.from('project_documents').select('id,project_id,doc_type,data,updated_at').in('project_id',pids); if(dr.error){box.innerHTML='문서 조회 오류: '+esc(dr.error.message);return;} docs=dr.data||[];}
+  const uids=[...new Set(projects.flatMap(x=>[x.owner_id,x.updated_by]).filter(Boolean))]; let people={};
+  if(uids.length){const ur=await sb.from('profiles').select('id,name,email').in('id',uids);(ur.data||[]).forEach(x=>people[x.id]=x);}
+  dashboardRowsV831=projects.map(p=>({...p,plan:docs.find(d=>d.project_id===p.id&&d.doc_type==='PLAN'),result:docs.find(d=>d.project_id===p.id&&d.doc_type==='RESULT'),owner:people[p.owner_id],editor:people[p.updated_by]}));
+  const cards=[['전체 사업',dashboardRowsV831.length],['검토 요청',dashboardRowsV831.filter(x=>x.status==='review_requested').length],['사업 완료',dashboardRowsV831.filter(x=>x.status==='completed').length],['결과보고 미작성',dashboardRowsV831.filter(x=>x.plan&&!x.result).length]];
+  document.getElementById('dashboardSummaryV831').innerHTML=cards.map(x=>`<div style="border:1px solid #ddd;border-radius:9px;padding:14px;background:#fff"><div style="font-size:12px;color:#666">${x[0]}</div><div style="font-size:25px;font-weight:700">${x[1]}</div></div>`).join('');
+  filterDashboardV831();
+}
+function filterDashboardV831(){
+  const q=(document.getElementById('dashSearchV831')?.value||'').toLowerCase(),st=document.getElementById('dashStatusV831')?.value||'';
+  drawDashboardV831(dashboardRowsV831.filter(x=>{const staff=String(x.plan?.data?.staff||x.result?.data?.staff||x.owner?.name||'');return(!st||x.status===st)&&(!q||String(x.project_name||'').toLowerCase().includes(q)||staff.toLowerCase().includes(q));}));
+}
+function drawDashboardV831(rows){
+ const b=document.getElementById('dashboardTableV831'),L={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'};
+ if(!rows.length){b.innerHTML='<div style="padding:25px;text-align:center;border:1px solid #ddd">등록된 사업이 없습니다.</div>';return;}
+ b.innerHTML=`<div style="overflow:auto"><table style="width:100%;min-width:950px;border-collapse:collapse;font-size:12px;background:#fff"><tr>${['사업명','담당자','상태','계획서','결과보고서','최종수정자','최종수정일','관리'].map(x=>`<th style="border:1px solid #ddd;padding:8px">${x}</th>`).join('')}</tr>${rows.map(x=>{const staff=x.plan?.data?.staff||x.result?.data?.staff||x.owner?.name||'-',ed=x.editor?.name||x.editor?.email||'-';return`<tr><td style="border:1px solid #ddd;padding:8px">${esc(x.project_name||'-')}</td><td style="border:1px solid #ddd;padding:8px">${esc(staff)}</td><td style="border:1px solid #ddd;padding:8px">${L[x.status]||x.status}</td><td style="border:1px solid #ddd;padding:8px">${x.plan?`<button class="btn btn-add" onclick="loadCloudDocument('${x.plan.id}')">열기</button>`:'미작성'}</td><td style="border:1px solid #ddd;padding:8px">${x.result?`<button class="btn btn-add" onclick="loadCloudDocument('${x.result.id}')">열기</button>`:(x.plan?`<button class="btn btn-result" onclick="cloudPlanToResult('${x.id}')">작성</button>`:'미작성')}</td><td style="border:1px solid #ddd;padding:8px">${esc(ed)}</td><td style="border:1px solid #ddd;padding:8px">${new Date(x.updated_at).toLocaleString()}</td><td style="border:1px solid #ddd;padding:8px"><button class="btn btn-plan" onclick="openProjectDetailV85('${x.id}')">사업상세</button> ${x.status==='draft'?`<button class="btn btn-result" onclick="requestProjectReviewV84('${x.id}')">검토요청</button>`:''} <button class="btn btn-add" onclick="openReviewV84('${x.id}','${esc(x.project_name||'')}')">검토</button> <button class="btn btn-add" onclick="changeProjectStatusV81('${x.id}','${x.status}')">상태</button> <button class="btn btn-add" onclick="showHistoryV81('${x.id}')">이력</button></td></tr>`}).join('')}</table></div>`;
+}
+
+
+// ===== v8.4 검토·결재 업무흐름 =====
+let reviewProjectV84=null;
+
+async function openReviewV84(projectId, projectName){
+  reviewProjectV84=projectId;
+  document.getElementById('reviewProjectNameV84').textContent=projectName||'';
+  document.getElementById('reviewCommentV84').value='';
+  document.getElementById('reviewModalV84').style.display='flex';
+  await loadReviewHistoryV84();
+}
+function closeReviewV84(){document.getElementById('reviewModalV84').style.display='none';}
+
+async function loadReviewHistoryV84(){
+  const box=document.getElementById('reviewHistoryV84');
+  box.innerHTML='검토이력을 불러오는 중...';
+  const r=await sb.from('project_reviews').select('id,comment,review_action,created_by,created_at')
+    .eq('project_id',reviewProjectV84).order('created_at',{ascending:false});
+  if(r.error){box.innerHTML='<div style="color:#b91c1c;">'+esc(r.error.message)+'</div>';return;}
+  const ids=[...new Set((r.data||[]).map(x=>x.created_by).filter(Boolean))]; let people={};
+  if(ids.length){const p=await sb.from('profiles').select('id,name,position,email').in('id',ids);(p.data||[]).forEach(x=>people[x.id]=x);}
+  const L={comment:'의견',revision_requested:'수정요청',approved:'검토완료'};
+  box.innerHTML=(r.data||[]).length?(r.data||[]).map(x=>{
+    const u=people[x.created_by], who=u?.name||u?.email||'-';
+    return `<div style="border:1px solid #ddd;border-radius:7px;padding:10px;margin-bottom:7px;">
+      <div style="font-size:11px;color:#666;">${L[x.review_action]||x.review_action} · ${esc(who)} · ${new Date(x.created_at).toLocaleString()}</div>
+      <div style="margin-top:6px;white-space:pre-wrap;">${esc(x.comment||'')}</div></div>`;
+  }).join(''):'<div style="color:#666;">등록된 검토 의견이 없습니다.</div>';
+}
+
+async function addReviewV84(action){
+  if(!reviewProjectV84||!v8User)return;
+  const comment=document.getElementById('reviewCommentV84').value.trim();
+  if(!comment && action!=='approved') return alert('검토 의견을 입력해주세요.');
+  const r=await sb.from('project_reviews').insert({
+    project_id:reviewProjectV84,comment,review_action:action,created_by:v8User.id
+  });
+  if(r.error)return alert('검토의견 저장 오류: '+r.error.message);
+
+  let next=null;
+  if(action==='revision_requested') next='draft';
+  if(action==='approved') next='reviewed';
+  if(next){
+    const u=await sb.from('projects').update({status:next,updated_by:v8User.id}).eq('id',reviewProjectV84);
+    if(u.error)return alert('사업상태 변경 오류: '+u.error.message);
+  }
+  document.getElementById('reviewCommentV84').value='';
+  await loadReviewHistoryV84();
+  await renderDashboardV831();
+}
+function saveReviewCommentV84(){return addReviewV84('comment');}
+function requestRevisionV84(){return addReviewV84('revision_requested');}
+function approveReviewV84(){
+  if(v81Profile?.role==='staff') return alert('검토완료 처리는 검토자 또는 관리자 권한이 필요합니다.');
+  return addReviewV84('approved');
+}
+
+// Explicit "검토요청" shortcut for a project.
+async function requestProjectReviewV84(projectId){
+  if(!confirm('이 사업을 검토 요청 상태로 변경하시겠습니까?'))return;
+  const r=await sb.from('projects').update({status:'review_requested',updated_by:v8User.id}).eq('id',projectId);
+  if(r.error)return alert('검토요청 오류: '+r.error.message);
+  await sb.from('project_history').insert({project_id:projectId,action:'REVIEW_REQUESTED',snapshot:{status:'review_requested'},changed_by:v8User.id});
+  await renderDashboardV831();
+}
+
+
+// ===== v8.5 사업 상세관리 / 단계형 업무흐름 =====
+let detailProjectIdV85=null;
+async function openProjectDetailV85(projectId){
+  detailProjectIdV85=projectId;
+  document.getElementById('projectDetailModalV85').style.display='flex';
+  await renderProjectDetailV85();
+}
+function closeProjectDetailV85(){document.getElementById('projectDetailModalV85').style.display='none';}
+
+async function renderProjectDetailV85(){
+  const id=detailProjectIdV85;if(!id)return;
+  const pr=await sb.from('projects').select('*').eq('id',id).single();
+  if(pr.error)return alert('사업 상세조회 오류: '+pr.error.message);
+  const p=pr.data;
+  const dr=await sb.from('project_documents').select('id,doc_type,data,updated_at').eq('project_id',id);
+  const docs=dr.data||[], plan=docs.find(x=>x.doc_type==='PLAN'), result=docs.find(x=>x.doc_type==='RESULT');
+  const labels={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'};
+  document.getElementById('detailProjectNameV85').textContent=p.project_name||'사업 상세관리';
+  document.getElementById('detailProjectMetaV85').textContent='현재 상태: '+(labels[p.status]||p.status)+' · 최종수정 '+new Date(p.updated_at).toLocaleString();
+
+  const steps=[
+    ['계획서 작성',!!plan],
+    ['검토 요청',['review_requested','reviewed','completed'].includes(p.status)],
+    ['검토 완료',['reviewed','completed'].includes(p.status)],
+    ['결과보고 작성',!!result],
+    ['사업 완료',p.status==='completed']
+  ];
+  document.getElementById('detailFlowV85').innerHTML=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;">
+    ${steps.map((x,i)=>`<div style="text-align:center;padding:9px 5px;border-radius:7px;border:1px solid ${x[1]?'#64748b':'#ddd'};background:${x[1]?'#f1f5f9':'#fff'};font-size:11px;"><div style="font-weight:700;">${i+1}</div>${x[0]}<div>${x[1]?'✓':'-'}</div></div>`).join('')}</div>`;
+
+  let actions=[];
+  if(plan) actions.push(`<button class="btn btn-add" onclick="loadCloudDocument('${plan.id}');closeProjectDetailV85()">계획서 열기</button>`);
+  if(plan && p.status==='draft') actions.push(`<button class="btn btn-result" onclick="requestProjectReviewV84('${id}');closeProjectDetailV85()">검토 요청</button>`);
+  actions.push(`<button class="btn btn-add" onclick="openReviewV84('${id}',${JSON.stringify(p.project_name||'')});closeProjectDetailV85()">검토 의견</button>`);
+  if(plan && !result) actions.push(`<button class="btn btn-result" onclick="cloudPlanToResult('${id}');closeProjectDetailV85()">결과보고 작성</button>`);
+  if(result) actions.push(`<button class="btn btn-add" onclick="loadCloudDocument('${result.id}');closeProjectDetailV85()">결과보고 열기</button>`);
+  if(result && p.status!=='completed') actions.push(`<button class="btn btn-plan" onclick="completeProjectV85('${id}')">사업 완료 처리</button>`);
+  document.getElementById('detailActionsV85').innerHTML=actions.join('');
+
+  document.getElementById('detailPlanV85').innerHTML=plan?
+    `작성됨 · ${new Date(plan.updated_at).toLocaleString()}<br><span style="font-size:11px;color:#666;">담당자: ${esc(plan.data?.staff||'-')}</span>`:
+    '<span style="color:#b91c1c;">계획서 미작성</span>';
+  document.getElementById('detailResultV85').innerHTML=result?
+    `작성됨 · ${new Date(result.updated_at).toLocaleString()}<br><span style="font-size:11px;color:#666;">담당자: ${esc(result.data?.staff||'-')}</span>`:
+    '<span style="color:#666;">결과보고서 미작성</span>';
+
+  const hr=await sb.from('project_history').select('action,changed_at,changed_by').eq('project_id',id).order('changed_at',{ascending:false}).limit(5);
+  const rr=await sb.from('project_reviews').select('review_action,comment,created_at,created_by').eq('project_id',id).order('created_at',{ascending:false}).limit(5);
+  const items=[
+    ...(hr.data||[]).map(x=>({at:x.changed_at,text:historyActionLabelV81(x.action)})),
+    ...(rr.data||[]).map(x=>({at:x.created_at,text:({comment:'검토의견',revision_requested:'수정요청',approved:'검토완료'}[x.review_action]||x.review_action)+(x.comment?' · '+x.comment:'')}))
+  ].sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,8);
+  document.getElementById('detailHistoryV85').innerHTML=items.length?items.map(x=>`<div style="padding:6px 0;border-bottom:1px solid #eee;"><span style="font-size:11px;color:#666;">${new Date(x.at).toLocaleString()}</span> · ${esc(x.text)}</div>`).join(''):'이력이 없습니다.';
+}
+
+async function completeProjectV85(projectId){
+  if(!confirm('결과보고서 작성이 완료된 사업을 최종 완료 처리하시겠습니까?'))return;
+  const docs=await sb.from('project_documents').select('id').eq('project_id',projectId).eq('doc_type','RESULT').limit(1);
+  if(!docs.data?.length)return alert('결과보고서가 저장된 후 사업완료 처리할 수 있습니다.');
+  const r=await sb.from('projects').update({status:'completed',updated_by:v8User.id}).eq('id',projectId);
+  if(r.error)return alert('완료 처리 오류: '+r.error.message);
+  await sb.from('project_history').insert({project_id:projectId,action:'PROJECT_COMPLETED',snapshot:{status:'completed'},changed_by:v8User.id});
+  await renderProjectDetailV85(); await renderDashboardV831();
+}
+
+
+// ===== v8.6 업무 홈 / 사용자 중심 시작화면 =====
+function switchModeV86Home(){
+  document.querySelectorAll('.mode-btn').forEach(btn=>btn.className='mode-btn');
+  document.querySelectorAll('.form-section').forEach(sec=>sec.classList.remove('active'));
+  document.getElementById('btn-mode-home').className='mode-btn active-list';
+  document.getElementById('section-home-v86').classList.add('active');
+  const dash=document.getElementById('dashboard-mode'); if(dash) dash.style.display='none';
+  renderHomeV86();
+}
+
+async function renderHomeV86(){
+  if(!v8User)return;
+  const welcome=document.getElementById('homeWelcomeV86');
+  const name=v81Profile?.name||v8User.email||'사용자';
+  welcome.textContent=name+'님의 사업 업무현황입니다.';
+
+  const pr=await sb.from('projects').select('id,project_name,status,updated_at').order('updated_at',{ascending:false});
+  if(pr.error){document.getElementById('homeTasksV86').textContent=pr.error.message;return;}
+  const projects=pr.data||[], ids=projects.map(x=>x.id);
+  let docs=[];
+  if(ids.length){const dr=await sb.from('project_documents').select('id,project_id,doc_type').in('project_id',ids);docs=dr.data||[];}
+
+  const counts={
+    all:projects.length,
+    review:projects.filter(x=>x.status==='review_requested').length,
+    reviewed:projects.filter(x=>x.status==='reviewed').length,
+    completed:projects.filter(x=>x.status==='completed').length
+  };
+  const cards=[['전체 사업',counts.all],['검토 대기',counts.review],['검토 완료',counts.reviewed],['사업 완료',counts.completed]];
+  document.getElementById('homeCardsV86').innerHTML=cards.map(x=>`<div style="background:#fff;border:1px solid #d1d5db;border-radius:9px;padding:14px;"><div style="font-size:12px;color:#64748b">${x[0]}</div><div style="font-size:25px;font-weight:700">${x[1]}</div></div>`).join('');
+
+  let tasks=[];
+  projects.forEach(p=>{
+    const plan=docs.some(d=>d.project_id===p.id&&d.doc_type==='PLAN');
+    const result=docs.some(d=>d.project_id===p.id&&d.doc_type==='RESULT');
+    if(p.status==='review_requested') tasks.push(`${p.project_name} · 검토 대기`);
+    else if(plan&&!result&&p.status==='reviewed') tasks.push(`${p.project_name} · 결과보고 미작성`);
+  });
+  document.getElementById('homeTasksV86').innerHTML=tasks.length?
+    tasks.slice(0,6).map(x=>`<div style="padding:6px 0;border-bottom:1px solid #eee;">${esc(x)}</div>`).join(''):
+    '<span style="color:#666;">현재 우선 확인할 업무가 없습니다.</span>';
+
+  const L={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'};
+  document.getElementById('homeRecentV86').innerHTML=projects.length?
+    projects.slice(0,7).map(p=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #eee;">
+      <span><strong>${esc(p.project_name||'-')}</strong> · ${L[p.status]||esc(p.status)}</span>
+      <button class="btn btn-add" style="padding:4px 7px;font-size:11px;" onclick="openProjectDetailV85('${p.id}')">상세</button>
+    </div>`).join(''):'<span style="color:#666;">등록된 사업이 없습니다.</span>';
+}
+
+
+// ===== v8.7 RC 권한/배포 안정화 =====
+function refreshRoleUIV87(){
+  const role=v81Profile?.role||'staff';
+  const b=document.getElementById('btn-employee-v87');
+  if(b) b.style.display=(role==='admin')?'block':'none';
+  // 기존 v8.2 관리자 버튼이 있다면 동일하게 동기화
+  const old=document.getElementById('adminBtnV82');
+  if(old) old.style.display=(role==='admin')?'inline-block':'none';
+}
+async function refreshProfileAndRoleV87(){
+  if(!v8User)return;
+  const r=await sb.from('profiles').select('id,email,name,position,role').eq('id',v8User.id).single();
+  if(!r.error && r.data){
+    v81Profile=r.data;
+    refreshRoleUIV87();
+  }
+}
+async function openSystemCheckV87(){
+  const modal=document.getElementById('systemCheckModalV87'),box=document.getElementById('systemCheckBodyV87');
+  modal.style.display='flex'; box.innerHTML='Supabase 연결과 권한을 확인하는 중...';
+  const tests=[];
+  tests.push(['로그인',!!v8User,v8User?.email||'로그인 필요']);
+  const p=await sb.from('profiles').select('id,role').eq('id',v8User?.id||'00000000-0000-0000-0000-000000000000').maybeSingle();
+  tests.push(['프로필',!p.error,p.error?.message||('권한: '+(p.data?.role||'-'))]);
+  const pr=await sb.from('projects').select('id',{count:'exact',head:true});
+  tests.push(['사업 DB',!pr.error,pr.error?.message||'연결 정상']);
+  const dr=await sb.from('project_documents').select('id',{count:'exact',head:true});
+  tests.push(['문서 DB',!dr.error,dr.error?.message||'연결 정상']);
+  const rr=await sb.from('project_reviews').select('id',{count:'exact',head:true});
+  tests.push(['검토 DB',!rr.error,rr.error?.message||'연결 정상']);
+  box.innerHTML=tests.map(x=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:9px;border-bottom:1px solid #eee;">
+    <strong>${esc(x[0])}</strong><span>${x[1]?'✅':'❌'} ${esc(String(x[2]))}</span></div>`).join('');
+}
+function closeSystemCheckV87(){document.getElementById('systemCheckModalV87').style.display='none';}
+
+// 로그인/프로필 갱신 이후에도 관리자 메뉴를 확실히 재판정
+const _openProfileV87 = typeof openProfileV81==='function' ? openProfileV81 : null;
+document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshProfileAndRoleV87,1200));
+
+  initV8Auth();
+</script>
+
+</body>
+</html>
