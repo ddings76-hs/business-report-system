@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.5.1 FIX)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.7 STANDARD RESULT)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -284,7 +284,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.5.1 FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.7 STANDARD RESULT)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -342,6 +342,28 @@
 </div>
 
 <div id="section-input-plan" class="form-section active">
+<div id="standardPlanV106" style="border:2px solid #1f4e8c;border-radius:10px;padding:16px;margin-bottom:18px;background:#fff">
+  <h2 style="margin:0 0 8px;color:#173f78">Ⅰ. 사업 개요 · 표준 입력폼</h2>
+  <div style="font-size:12px;color:#666;margin-bottom:12px">기본항목은 결과보고서·사업상세·성과분석과 동일한 표준 데이터로 저장됩니다.</div>
+  <table style="width:100%;border-collapse:collapse">
+    <tbody id="standardPlanBodyV106">
+      <tr><th style="border:1px solid #bbb;padding:8px;width:180px">사업명</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_project_name" style="width:100%" placeholder="사업명을 입력하세요"></td></tr>
+      <tr><th style="border:1px solid #bbb;padding:8px">추진배경 및 필요성</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_background" style="width:100%;min-height:65px"></textarea></td></tr>
+      <tr><th style="border:1px solid #bbb;padding:8px">사업목적</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_purpose" style="width:100%;min-height:55px"></textarea></td></tr>
+      <tr><th style="border:1px solid #bbb;padding:8px">기대효과</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_expected_effect" style="width:100%;min-height:55px"></textarea></td></tr>
+      <tr><th style="border:1px solid #bbb;padding:8px">운영일시</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_operation_date" style="width:100%" placeholder="예: 2026. 9. 15. 14:00~16:00"></td></tr>
+      <tr><th style="border:1px solid #bbb;padding:8px">참여대상</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_target_group" style="width:100%" placeholder="예: 화성시 거주 청소년"></td></tr>
+      <tr><th style="border:1px solid #bbb;padding:8px">계획인원</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_planned_participants" type="number" min="0" style="width:160px" placeholder="30"> 명</td></tr>
+      <tr><th style="border:1px solid #bbb;padding:8px">주요내용</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_content" style="width:100%;min-height:70px"></textarea></td></tr>
+      <tr><th style="border:1px solid #bbb;padding:8px">운영장소</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_location" style="width:100%"></td></tr>
+      <tr><th style="border:1px solid #bbb;padding:8px">운영방법</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_operation_method" style="width:100%;min-height:55px"></textarea></td></tr>
+      <tr><th style="border:1px solid #bbb;padding:8px">평가·환류 계획</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_evaluation_plan" style="width:100%;min-height:55px"></textarea></td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:9px"><button type="button" class="btn btn-add" onclick="addCustomPlanFieldV106()">＋ 추가항목</button></div>
+  <div id="customPlanFieldsV106" style="margin-top:8px"></div>
+</div>
+
     <div class="sub-tab-container no-print">
       <div id="subtab-1" class="sub-tab active" onclick="switchSubTab('p', 1)">Ⅰ. 사업 개요</div>
       <div id="subtab-2" class="sub-tab" onclick="switchSubTab('p', 2)">Ⅱ. 주요 프로그램 및 세부일정</div>
@@ -498,6 +520,29 @@
   <!-- 입력 폼 2: 사업 결과보고 전용 입력 폼      -->
   <!-- ========================================== -->
   <div id="section-input-result" class="form-section">
+<div id="standardResultV107" style="border:2px solid #07845f;border-radius:10px;padding:16px;margin-bottom:18px;background:#fff">
+  <h2 style="margin:0 0 8px;color:#076348">Ⅰ. 사업 결과 개요 · 표준 실적폼</h2>
+  <div style="font-size:12px;color:#666;margin-bottom:12px">결과 기본항목은 계획서 표준 데이터와 1:1 대응하며 사업상세·성과분석에 직접 반영됩니다.</div>
+  <table style="width:100%;border-collapse:collapse">
+   <tbody>
+    <tr><th style="border:1px solid #bbb;padding:8px;width:180px">사업명</th><td style="border:1px solid #bbb;padding:6px"><input id="sr_project_name" style="width:100%" readonly></td></tr>
+    <tr><th style="border:1px solid #bbb;padding:8px">실제 운영일시</th><td style="border:1px solid #bbb;padding:6px"><input id="sr_actual_date" style="width:100%"></td></tr>
+    <tr><th style="border:1px solid #bbb;padding:8px">실제 참여대상</th><td style="border:1px solid #bbb;padding:6px"><input id="sr_actual_target_group" style="width:100%"></td></tr>
+    <tr><th style="border:1px solid #bbb;padding:8px">실제 참여인원</th><td style="border:1px solid #bbb;padding:6px"><input id="sr_actual_participants" type="number" min="0" style="width:160px"> 명</td></tr>
+    <tr><th style="border:1px solid #bbb;padding:8px">실제 주요내용</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sr_actual_content" style="width:100%;min-height:70px"></textarea></td></tr>
+    <tr><th style="border:1px solid #bbb;padding:8px">실제 운영장소</th><td style="border:1px solid #bbb;padding:6px"><input id="sr_actual_location" style="width:100%"></td></tr>
+    <tr><th style="border:1px solid #bbb;padding:8px">실제 집행액</th><td style="border:1px solid #bbb;padding:6px"><input id="sr_actual_budget" type="number" min="0" step="1" style="width:200px"> 원</td></tr>
+    <tr><th style="border:1px solid #bbb;padding:8px">만족도</th><td style="border:1px solid #bbb;padding:6px"><input id="sr_satisfaction_score" type="number" min="0" max="5" step="0.1" style="width:120px"> / 5.0</td></tr>
+    <tr><th style="border:1px solid #bbb;padding:8px">주요성과</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sr_achievements" style="width:100%;min-height:65px"></textarea></td></tr>
+    <tr><th style="border:1px solid #bbb;padding:8px">문제점·개선사항</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sr_improvements" style="width:100%;min-height:65px"></textarea></td></tr>
+    <tr><th style="border:1px solid #bbb;padding:8px">평가·환류 결과</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sr_evaluation_result" style="width:100%;min-height:65px"></textarea></td></tr>
+   </tbody>
+  </table>
+  <div id="resultPlanCompareV107" style="margin-top:10px"></div>
+  <div style="margin-top:9px"><button type="button" class="btn btn-add" onclick="addCustomResultFieldV107()">＋ 추가항목</button></div>
+  <div id="customResultFieldsV107" style="margin-top:8px"></div>
+</div>
+
     <div class="sub-tab-container no-print">
       <div id="r-subtab-1" class="sub-tab active-res" onclick="switchSubTab('r', 1)">Ⅰ. 사업 결과 개요</div>
       <div id="r-subtab-2" class="sub-tab" onclick="switchSubTab('r', 2)">Ⅱ. 설문 결과 (구글폼 연동)</div>
@@ -2595,6 +2640,357 @@ renderIntegratedProjectV10=async function(projectId){
   await renderIntegratedProjectV105Base(projectId);
   try{await renderIntegratedProjectV105(projectId);}catch(e){console.error('v10.5 canonical render',e);}
 };
+
+
+// ===== v10.6 표준 계획서 폼 =====
+let customPlanFieldsV106=[];
+function v106Val(id){return document.getElementById(id)?.value?.trim()||'';}
+function addCustomPlanFieldV106(label='',value=''){
+  const id='cpf_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  customPlanFieldsV106.push({id,label,value}); renderCustomPlanFieldsV106();
+}
+function renderCustomPlanFieldsV106(){
+ const box=document.getElementById('customPlanFieldsV106'); if(!box)return;
+ box.innerHTML=customPlanFieldsV106.map((x,i)=>`<div style="display:grid;grid-template-columns:180px 1fr 70px;gap:6px;margin:5px 0">
+ <input value="${esc(x.label||'')}" placeholder="추가 항목명" oninput="customPlanFieldsV106[${i}].label=this.value">
+ <input value="${esc(x.value||'')}" placeholder="내용" oninput="customPlanFieldsV106[${i}].value=this.value">
+ <button type="button" class="btn btn-del" onclick="customPlanFieldsV106.splice(${i},1);renderCustomPlanFieldsV106()">삭제</button></div>`).join('');
+}
+function getStandardPlanV106(){
+ return {
+  project_name:v106Val('sp_project_name'),
+  background:v106Val('sp_background'),
+  purpose:v106Val('sp_purpose'),
+  expected_effect:v106Val('sp_expected_effect'),
+  operation_date:v106Val('sp_operation_date'),
+  target_group:v106Val('sp_target_group'),
+  planned_participants:Number(v106Val('sp_planned_participants')||0),
+  content:v106Val('sp_content'),
+  location:v106Val('sp_location'),
+  operation_method:v106Val('sp_operation_method'),
+  evaluation_plan:v106Val('sp_evaluation_plan'),
+  custom_fields:customPlanFieldsV106.map(x=>({label:x.label||'',value:x.value||''})).filter(x=>x.label||x.value)
+ };
+}
+function applyStandardPlanV106(std={}){
+ const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??''};
+ set('sp_project_name',std.project_name); set('sp_background',std.background); set('sp_purpose',std.purpose);
+ set('sp_expected_effect',std.expected_effect); set('sp_operation_date',std.operation_date); set('sp_target_group',std.target_group);
+ set('sp_planned_participants',std.planned_participants||0); set('sp_content',std.content); set('sp_location',std.location);
+ set('sp_operation_method',std.operation_method); set('sp_evaluation_plan',std.evaluation_plan);
+ customPlanFieldsV106=Array.isArray(std.custom_fields)?std.custom_fields.map(x=>({id:'cpf_'+Math.random().toString(36).slice(2),label:x.label||'',value:x.value||''})):[];
+ renderCustomPlanFieldsV106();
+}
+function standardFromLegacyV106(d={}){
+ const m=rowsMapV105(d.overview);
+ const gv=(ks)=>{for(const k of ks)if(m[k]!==undefined&&m[k]!=='')return m[k];return ''};
+ return {
+  project_name:projectNameFromPlan(d)||'',
+  background:gv(['추진배경 및 필요성','추진배경','필요성']),
+  purpose:gv(['사업목적','목적','추진목적']),
+  expected_effect:gv(['기대효과']),
+  operation_date:gv(['사업일시','운영일시','교육일시','일시']),
+  target_group:gv(['참여대상','교육대상','대상','사업대상']),
+  planned_participants:firstNumV10(gv(['계획인원','모집인원'])||d.targetCount||d.plannedParticipants),
+  content:gv(['주요내용','교육내용','사업내용'])||(Array.isArray(d.programs)?d.programs.map(x=>Array.isArray(x)?[x[0],x[1]].filter(Boolean).join(': '):'').filter(Boolean).join('\n'):''),
+  location:gv(['운영장소','교육장소','사업장소','장소']),
+  operation_method:gv(['운영방법','교육운영']),
+  evaluation_plan:gv(['평가·환류 계획','사업평가 및 환류 계획']),
+  custom_fields:[]
+ };
+}
+async function syncStandardMetricsV106(projectId,std){
+ const u=(await sb.auth.getUser()).data.user;
+ const existing=await sb.from('project_metrics').select('*').eq('project_id',projectId).maybeSingle();
+ if(existing.error)throw existing.error;
+ const old=existing.data||{};
+ const row={
+  project_id:projectId,
+  purpose:std.purpose||'',
+  operation_date:std.operation_date||'',
+  location:std.location||'',
+  planned_participants:Number(std.planned_participants||0),
+  actual_participants:Number(old.actual_participants||0),
+  planned_budget:Number(old.planned_budget||0),
+  actual_budget:Number(old.actual_budget||0),
+  satisfaction_score:Number(old.satisfaction_score||0),
+  manager_name:v106Val('p_staff')||old.manager_name||'',
+  source_version:'v10.6',
+  updated_by:u?.id,updated_at:new Date().toISOString()
+ };
+ const r=await sb.from('project_metrics').upsert(row,{onConflict:'project_id'}); if(r.error)throw r.error;
+}
+// Extend PLAN save data with the fixed standard schema and synchronize project_metrics.
+const getPlanDataV106Base=getPlanData;
+getPlanData=function(){
+ const d=getPlanDataV106Base();
+ const std=getStandardPlanV106();
+ d.standard=std;
+ // compatibility mirror for existing reports
+ if(std.project_name) d.projectName=std.project_name;
+ d.targetCount=std.planned_participants;
+ d.plannedParticipants=std.planned_participants;
+ return d;
+};
+const saveCloudDocumentV106Base=saveCloudDocument;
+saveCloudDocument=async function(type){
+ await saveCloudDocumentV106Base(type);
+ if(type==='PLAN'&&window.currentCloudPlanProjectId){
+   try{await syncStandardMetricsV106(window.currentCloudPlanProjectId,getStandardPlanV106());}
+   catch(e){console.error(e);alert('계획서 저장은 완료되었으나 표준 데이터 동기화 오류: '+e.message);}
+ }
+};
+// Populate standard form whenever a PLAN is loaded, including legacy PLANs.
+const loadCloudDocumentV106Base=loadCloudDocument;
+loadCloudDocument=async function(docId){
+ const r=await sb.from('project_documents').select('doc_type,data').eq('id',docId).single();
+ await loadCloudDocumentV106Base(docId);
+ if(!r.error&&r.data?.doc_type==='PLAN'){
+   const d=r.data.data||{}; applyStandardPlanV106(d.standard||standardFromLegacyV106(d));
+ }
+};
+// v10.5 migration now prefers the fixed standard schema.
+const extractCanonicalV106Base=extractCanonicalV105;
+extractCanonicalV105=function(pd={},rd={},budgetSummary=null){
+ const c=extractCanonicalV106Base(pd,rd,budgetSummary),st=pd.standard||{};
+ if(st.purpose)c.purpose=st.purpose;
+ if(st.operation_date)c.operation_date=st.operation_date;
+ if(st.location)c.location=st.location;
+ if(Number(st.planned_participants||0)>0)c.planned_participants=Number(st.planned_participants);
+ return c;
+};
+
+
+// ===== v10.6.1 표준폼 단일화 / 사업명 / 사업상세 연동 수정 =====
+function syncStandardToLegacyV1061(){
+  const std=getStandardPlanV106();
+  // Legacy controls remain as an internal compatibility layer only.
+  const nameTargets=['p_projName','p_projectName'];
+  nameTargets.forEach(id=>{const e=document.getElementById(id);if(e)e.value=std.project_name||'';});
+  const map={
+    '사업명':std.project_name,'추진배경 및 필요성':std.background,'사업목적':std.purpose,'기대효과':std.expected_effect,
+    '운영일시':std.operation_date,'참여대상':std.target_group,'계획인원':String(std.planned_participants||0),
+    '주요내용':std.content,'운영장소':std.location,'운영방법':std.operation_method,'평가·환류 계획':std.evaluation_plan
+  };
+  document.querySelectorAll('#section-input-plan .p-ov-row').forEach(row=>{
+    const k=row.querySelector('.p-ov-key'),v=row.querySelector('.p-ov-val');
+    if(k&&v&&Object.prototype.hasOwnProperty.call(map,k.value))v.value=map[k.value];
+  });
+}
+function hideDuplicateLegacyOverviewV1061(){
+  const panel=document.getElementById('standardPlanV106'); if(!panel)return;
+  const sec=document.getElementById('section-input-plan'); if(!sec)return;
+  // Hide only the old overview block; budget/program/schedule remain available.
+  const candidates=[...sec.querySelectorAll('.card,.tab-content,.input-group,section,fieldset')];
+  candidates.forEach(el=>{
+    if(el.contains(panel))return;
+    const txt=(el.textContent||'').replace(/\s+/g,' ');
+    if((txt.includes('사업 개요')||txt.includes('사업개요')) && el.querySelector('.p-ov-row')){
+      el.style.display='none'; el.dataset.hiddenByV1061='1';
+    }
+  });
+  // Fallback: hide legacy overview rows and their nearest table if the block has no wrapper.
+  const rows=[...sec.querySelectorAll('.p-ov-row')];
+  if(rows.length){
+    const table=rows[0].closest('table');
+    if(table && !table.closest('#standardPlanV106')) table.style.display='none';
+  }
+}
+function canonicalProjectNameV1061(d){
+  return d?.standard?.project_name || d?.projectName || projectNameFromPlan(d) || '';
+}
+// Override plan name resolver so project row and standard form always use one name.
+const projectNameFromPlanV1061Base=projectNameFromPlan;
+projectNameFromPlan=function(d){
+  return d?.standard?.project_name || d?.projectName || projectNameFromPlanV1061Base(d) || '제목 없는 사업';
+};
+// Save standard form as the source of truth BEFORE legacy serialization.
+const getPlanDataV1061Base=getPlanData;
+getPlanData=function(){
+  syncStandardToLegacyV1061();
+  const d=getPlanDataV1061Base();
+  const std=getStandardPlanV106();
+  d.standard=std; d.projectName=std.project_name; d.targetCount=Number(std.planned_participants||0); d.plannedParticipants=Number(std.planned_participants||0);
+  return d;
+};
+// Update all standard metrics fields, not just the subset from v10.6.
+syncStandardMetricsV106=async function(projectId,std){
+  const u=(await sb.auth.getUser()).data.user;
+  const ex=await sb.from('project_metrics').select('*').eq('project_id',projectId).maybeSingle(); if(ex.error)throw ex.error;
+  const old=ex.data||{};
+  const row={project_id:projectId,background:std.background||'',purpose:std.purpose||'',expected_effect:std.expected_effect||'',
+    operation_date:std.operation_date||'',target_group:std.target_group||'',planned_participants:Number(std.planned_participants||0),
+    content:std.content||'',location:std.location||'',operation_method:std.operation_method||'',evaluation_plan:std.evaluation_plan||'',
+    custom_fields:std.custom_fields||[],actual_participants:Number(old.actual_participants||0),planned_budget:Number(old.planned_budget||0),
+    actual_budget:Number(old.actual_budget||0),satisfaction_score:Number(old.satisfaction_score||0),manager_name:v106Val('p_staff')||old.manager_name||'',
+    source_version:'v10.6.1',updated_by:u?.id,updated_at:new Date().toISOString()};
+  const r=await sb.from('project_metrics').upsert(row,{onConflict:'project_id'});if(r.error)throw r.error;
+  // Project master name must be identical to the plan form name.
+  const p=await sb.from('projects').update({project_name:std.project_name||'제목 없는 사업',updated_by:u?.id}).eq('id',projectId);if(p.error)throw p.error;
+};
+// Canonical extractor: fixed standard form wins for all plan-side fields.
+const extractCanonicalV1061Base=extractCanonicalV105;
+extractCanonicalV105=function(pd={},rd={},budgetSummary=null){
+  const c=extractCanonicalV1061Base(pd,rd,budgetSummary),st=pd.standard||{};
+  if(st.background!==undefined)c.background=st.background||'';
+  if(st.purpose!==undefined)c.purpose=st.purpose||'';
+  if(st.expected_effect!==undefined)c.expected_effect=st.expected_effect||'';
+  if(st.operation_date!==undefined)c.operation_date=st.operation_date||'';
+  if(st.target_group!==undefined)c.target_group=st.target_group||'';
+  if(st.planned_participants!==undefined)c.planned_participants=Number(st.planned_participants||0);
+  if(st.content!==undefined)c.content=st.content||'';
+  if(st.location!==undefined)c.location=st.location||'';
+  if(st.operation_method!==undefined)c.operation_method=st.operation_method||'';
+  if(st.evaluation_plan!==undefined)c.evaluation_plan=st.evaluation_plan||'';
+  return c;
+};
+// When loading old/new PLAN, populate standard form and immediately keep legacy compatibility values aligned.
+const loadCloudDocumentV1061Base=loadCloudDocument;
+loadCloudDocument=async function(docId){
+  await loadCloudDocumentV1061Base(docId);
+  const q=await sb.from('project_documents').select('doc_type,data').eq('id',docId).single();
+  if(!q.error&&q.data?.doc_type==='PLAN'){
+    applyStandardPlanV106(q.data.data?.standard||standardFromLegacyV106(q.data.data||{}));
+    syncStandardToLegacyV1061(); hideDuplicateLegacyOverviewV1061();
+  }
+};
+document.addEventListener('DOMContentLoaded',()=>{
+  hideDuplicateLegacyOverviewV1061();
+  const p=document.getElementById('standardPlanV106');
+  if(p)p.addEventListener('input',syncStandardToLegacyV1061,true);
+});
+
+
+// ===== v10.7 표준 결과보고서 / 계획↔실적 1:1 대응 =====
+let customResultFieldsV107=[];
+function srValV107(id){return document.getElementById(id)?.value?.trim()||'';}
+function addCustomResultFieldV107(label='',value=''){
+ customResultFieldsV107.push({label,value});renderCustomResultFieldsV107();
+}
+function renderCustomResultFieldsV107(){
+ const box=document.getElementById('customResultFieldsV107');if(!box)return;
+ box.innerHTML=customResultFieldsV107.map((x,i)=>`<div style="display:grid;grid-template-columns:180px 1fr 70px;gap:6px;margin:5px 0">
+ <input value="${esc(x.label||'')}" placeholder="추가 항목명" oninput="customResultFieldsV107[${i}].label=this.value">
+ <input value="${esc(x.value||'')}" placeholder="내용" oninput="customResultFieldsV107[${i}].value=this.value">
+ <button type="button" class="btn btn-del" onclick="customResultFieldsV107.splice(${i},1);renderCustomResultFieldsV107()">삭제</button></div>`).join('');
+}
+function getStandardResultV107(){
+ return {
+  project_name:srValV107('sr_project_name'),
+  actual_date:srValV107('sr_actual_date'),
+  actual_target_group:srValV107('sr_actual_target_group'),
+  actual_participants:Number(srValV107('sr_actual_participants')||0),
+  actual_content:srValV107('sr_actual_content'),
+  actual_location:srValV107('sr_actual_location'),
+  actual_budget:Number(srValV107('sr_actual_budget')||0),
+  satisfaction_score:Number(srValV107('sr_satisfaction_score')||0),
+  achievements:srValV107('sr_achievements'),
+  improvements:srValV107('sr_improvements'),
+  evaluation_result:srValV107('sr_evaluation_result'),
+  custom_fields:customResultFieldsV107.map(x=>({label:x.label||'',value:x.value||''})).filter(x=>x.label||x.value)
+ };
+}
+function applyStandardResultV107(std={}){
+ const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??''};
+ set('sr_project_name',std.project_name);set('sr_actual_date',std.actual_date);set('sr_actual_target_group',std.actual_target_group);
+ set('sr_actual_participants',std.actual_participants||0);set('sr_actual_content',std.actual_content);set('sr_actual_location',std.actual_location);
+ set('sr_actual_budget',std.actual_budget||0);set('sr_satisfaction_score',std.satisfaction_score||0);set('sr_achievements',std.achievements);
+ set('sr_improvements',std.improvements);set('sr_evaluation_result',std.evaluation_result);
+ customResultFieldsV107=Array.isArray(std.custom_fields)?std.custom_fields.map(x=>({...x})):[];
+ renderCustomResultFieldsV107();
+}
+async function inheritPlanToStandardResultV107(projectId){
+ if(!projectId)return;
+ const q=await sb.from('project_documents').select('data').eq('project_id',projectId).eq('doc_type','PLAN').maybeSingle();
+ if(q.error)throw q.error;if(!q.data)return;
+ const pd=q.data.data||{},st=pd.standard||standardFromLegacyV106(pd);
+ const set=(id,v)=>{const e=document.getElementById(id);if(e&&!e.value)e.value=v??''};
+ set('sr_project_name',st.project_name||projectNameFromPlan(pd));
+ set('sr_actual_date',st.operation_date);set('sr_actual_target_group',st.target_group);
+ set('sr_actual_content',st.content);set('sr_actual_location',st.location);
+ renderPlanCompareV107(st);
+}
+function renderPlanCompareV107(st={}){
+ const el=document.getElementById('resultPlanCompareV107');if(!el)return;
+ el.innerHTML=`<div style="background:#f5f8fb;border:1px solid #d6dee8;border-radius:7px;padding:9px;font-size:12px">
+ <strong>계획서 기준값</strong> · 계획인원 ${Number(st.planned_participants||0)}명 · 운영일시 ${esc(st.operation_date||'-')} · 장소 ${esc(st.location||'-')}</div>`;
+}
+function syncStandardResultToLegacyV107(){
+ const st=getStandardResultV107();
+ const map=[['r_projName',st.project_name],['r_dateLoc',[st.actual_date,st.actual_location].filter(Boolean).join(' / ')],
+ ['r_target',st.actual_target_group],['r_content',st.actual_content]];
+ map.forEach(([id,v])=>{const e=document.getElementById(id);if(e)e.value=v||'';});
+}
+async function syncResultMetricsV107(projectId,st){
+ const u=(await sb.auth.getUser()).data.user;
+ const ex=await sb.from('project_metrics').select('*').eq('project_id',projectId).maybeSingle();if(ex.error)throw ex.error;
+ const old=ex.data||{};
+ const row={...old,project_id:projectId,actual_participants:Number(st.actual_participants||0),actual_budget:Number(st.actual_budget||0),
+  satisfaction_score:Number(st.satisfaction_score||0),actual_date:st.actual_date||'',actual_target_group:st.actual_target_group||'',
+  actual_content:st.actual_content||'',actual_location:st.actual_location||'',achievements:st.achievements||'',
+  improvements:st.improvements||'',evaluation_result:st.evaluation_result||'',result_custom_fields:st.custom_fields||[],
+  source_version:'v10.7',updated_by:u?.id,updated_at:new Date().toISOString()};
+ delete row.created_at;
+ const r=await sb.from('project_metrics').upsert(row,{onConflict:'project_id'});if(r.error)throw r.error;
+}
+// Extend result serialization with a fixed result schema.
+const getResultDataV107Base=getResultData;
+getResultData=function(){
+ syncStandardResultToLegacyV107();
+ const d=getResultDataV107Base();
+ const st=getStandardResultV107();
+ d.standard_result=st;
+ d.actualParticipants=st.actual_participants;d.actualBudget=st.actual_budget;d.satisfactionScore=st.satisfaction_score;
+ return d;
+};
+// Save metrics after RESULT cloud save.
+const saveCloudDocumentV107Base=saveCloudDocument;
+saveCloudDocument=async function(type){
+ await saveCloudDocumentV107Base(type);
+ if(type==='RESULT'){
+   const pid=window.currentCloudResultProjectId||currentResultLinkedProjectV1043||v10CurrentProjectId;
+   if(pid)try{await syncResultMetricsV107(pid,getStandardResultV107());}catch(e){console.error(e);alert('결과보고서는 저장되었으나 표준 실적 동기화 오류: '+e.message);}
+ }
+};
+// Result load: fixed schema first, legacy result fallback, then plan inheritance.
+const loadCloudDocumentV107Base=loadCloudDocument;
+loadCloudDocument=async function(docId){
+ const q=await sb.from('project_documents').select('project_id,doc_type,data').eq('id',docId).single();
+ await loadCloudDocumentV107Base(docId);
+ if(!q.error&&q.data?.doc_type==='RESULT'){
+   window.currentCloudResultProjectId=q.data.project_id;
+   const d=q.data.data||{};
+   const legacy={project_name:d.projName||'',actual_date:d.actualDate||'',actual_target_group:d.target||'',
+    actual_participants:Number(d.actualParticipants||d.attendance||0),actual_content:d.content||'',actual_location:d.actualLocation||'',
+    actual_budget:Number(d.actualBudget||d.settlementTotal||0),satisfaction_score:Number(d.satisfactionScore||d.surveyScore||d.satisfaction||0),
+    achievements:d.achievements||'',improvements:d.improvements||'',evaluation_result:d.evaluationResult||'',custom_fields:[]};
+   applyStandardResultV107(d.standard_result||legacy);
+   await inheritPlanToStandardResultV107(q.data.project_id);
+ }
+};
+// Dashboard/result inheritance also fills the standard result form.
+const applyPlanDataToResultV107Base=applyPlanDataToResultV1043;
+applyPlanDataToResultV1043=async function(d){
+ await applyPlanDataToResultV107Base(d);
+ const pid=window.currentCloudResultProjectId||currentResultLinkedProjectV1043;
+ if(pid)await inheritPlanToStandardResultV107(pid);
+};
+// Hide duplicate legacy result overview while preserving survey/settlement sections.
+function hideDuplicateResultOverviewV107(){
+ const panel=document.getElementById('standardResultV107'),sec=document.getElementById('section-input-result');if(!panel||!sec)return;
+ const candidates=[...sec.querySelectorAll('.card,.tab-content,section,fieldset,table')];
+ candidates.forEach(el=>{
+   if(el.contains(panel))return;
+   const t=(el.textContent||'').replace(/\s+/g,' ');
+   if((t.includes('사업 결과 기본 정보')||t.includes('사업 결과 개요')) && (el.querySelector('#r_projName')||el.querySelector('#r_dateLoc'))){
+     el.style.display='none';el.dataset.hiddenByV107='1';
+   }
+ });
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ hideDuplicateResultOverviewV107();
+ const p=document.getElementById('standardResultV107');if(p)p.addEventListener('input',syncStandardResultToLegacyV107,true);
+});
 
   initV8Auth();
 </script>
