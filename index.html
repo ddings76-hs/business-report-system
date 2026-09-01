@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.5)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.5.1 FIX)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -284,7 +284,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.5)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.5.1 FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -2523,7 +2523,7 @@ function extractCanonicalV105(pd={},rd={},budgetSummary=null){
     actual_participants:numberV105(firstV105(rd.attendance,rd.actualParticipants,rd.participantCount,gv(rm,['참여인원','실제참여','참석인원']))),
     planned_budget:plannedBudget,
     actual_budget:actualBudget,
-    satisfaction_score:Number(firstV105(rd.surveyScore,rd.satisfactionScore,rd.satisfaction,gv(rm,['만족도','평균만족도']))||0),
+    satisfaction_score:(()=>{const n=Number(firstV105(rd.surveyScore,rd.satisfactionScore,rd.satisfaction,gv(rm,['만족도','평균만족도']))||0);return Number.isFinite(n)?n:0;})(),
     manager_name:firstV105(pd.staff,rd.staff),
     source_version:'v10.5'
   };
@@ -2538,6 +2538,9 @@ async function migrateCanonicalV105(projectId,silent=false){
   const pd=(d.data||[]).find(x=>x.doc_type==='PLAN')?.data||{}, rd=(d.data||[]).find(x=>x.doc_type==='RESULT')?.data||{};
   const bs=await sb.from('project_budget_summary').select('*').eq('project_id',projectId).maybeSingle();
   const c=extractCanonicalV105(pd,rd,bs.data);
+  ['planned_participants','actual_participants','planned_budget','actual_budget','satisfaction_score'].forEach(k=>{
+    const n=Number(c[k]); c[k]=Number.isFinite(n)&&n>=0?n:0;
+  });
   const u=(await sb.auth.getUser()).data.user;
   const up=await sb.from('project_metrics').upsert({
     project_id:projectId,...c,updated_by:u?.id,updated_at:new Date().toISOString()
