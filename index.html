@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="사업계획서 및 결과보고서 공동업무 관리 시스템">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v9.0 Web)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.0)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -198,37 +196,51 @@
 </div>
 
 
+
 <div id="projectDetailModalV85" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100004;align-items:center;justify-content:center;">
-  <div style="width:min(900px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:12px;padding:24px;">
+  <div style="width:min(1120px,97vw);max-height:92vh;overflow:auto;background:#fff;border-radius:12px;padding:22px;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-      <div>
-        <h3 id="detailProjectNameV85" style="margin:0;">사업 상세관리</h3>
-        <div id="detailProjectMetaV85" style="font-size:12px;color:#666;margin-top:5px;"></div>
-      </div>
+      <div><h2 id="detailProjectNameV85" style="margin:0;">사업 통합관리</h2><div id="detailProjectMetaV85" style="font-size:12px;color:#666;margin-top:5px;"></div></div>
       <button class="btn btn-del" onclick="closeProjectDetailV85()">닫기</button>
     </div>
-    <div id="detailFlowV85" style="margin:18px 0;"></div>
-    <div id="detailActionsV85" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;"></div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
-      <div style="border:1px solid #ddd;border-radius:8px;padding:13px;"><strong>계획서</strong><div id="detailPlanV85" style="margin-top:8px;"></div></div>
-      <div style="border:1px solid #ddd;border-radius:8px;padding:13px;"><strong>결과보고서</strong><div id="detailResultV85" style="margin-top:8px;"></div></div>
+    <div id="detailFlowV85" style="margin:16px 0;"></div>
+    <div id="detailActionsV85" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;"></div>
+
+    <div class="v10-tabs" style="display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid #ddd;margin-bottom:14px;">
+      <button class="btn btn-add" onclick="showProjectTabV10('basic',this)">기본정보</button>
+      <button class="btn btn-add" onclick="showProjectTabV10('plan',this)">계획</button>
+      <button class="btn btn-add" onclick="showProjectTabV10('budget',this)">예산</button>
+      <button class="btn btn-add" onclick="showProjectTabV10('schedule',this)">일정·실적</button>
+      <button class="btn btn-add" onclick="showProjectTabV10('review',this)">검토</button>
+      <button class="btn btn-add" onclick="showProjectTabV10('result',this)">결과·성과</button>
+      <button class="btn btn-add" onclick="showProjectTabV10('history',this)">변경이력</button>
     </div>
-    <div style="border:1px solid #ddd;border-radius:8px;padding:13px;margin-top:12px;">
-      <strong>최근 검토·수정 이력</strong><div id="detailHistoryV85" style="margin-top:8px;"></div>
+
+    <div id="v10tab-basic" class="v10-project-tab">
+      <div id="v10BasicSummary"></div>
+    </div>
+    <div id="v10tab-plan" class="v10-project-tab" style="display:none;">
+      <div id="detailPlanV85"></div>
+    </div>
+    <div id="v10tab-budget" class="v10-project-tab" style="display:none;">
+      <div id="v10BudgetBox"></div>
+    </div>
+    <div id="v10tab-schedule" class="v10-project-tab" style="display:none;">
+      <div id="v10ScheduleBox"></div>
+    </div>
+    <div id="v10tab-review" class="v10-project-tab" style="display:none;">
+      <div id="v10ReviewBox"></div>
+    </div>
+    <div id="v10tab-result" class="v10-project-tab" style="display:none;">
+      <div id="detailResultV85"></div><div id="v10PerformanceBox" style="margin-top:12px;"></div>
+    </div>
+    <div id="v10tab-history" class="v10-project-tab" style="display:none;">
+      <div id="detailHistoryV85"></div>
     </div>
   </div>
 </div>
-
-
-<div id="systemCheckModalV87" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100006;align-items:center;justify-content:center;">
- <div style="width:min(650px,94vw);background:#fff;border-radius:12px;padding:22px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;"><h3 style="margin:0;">시스템 연결 점검</h3><button class="btn btn-del" onclick="closeSystemCheckV87()">닫기</button></div>
-  <div id="systemCheckBodyV87" style="margin-top:15px;">점검 중...</div>
- </div>
-</div>
-
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v9.0 Web)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.0)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -1847,6 +1859,82 @@ function closeSystemCheckV87(){document.getElementById('systemCheckModalV87').st
 // 로그인/프로필 갱신 이후에도 관리자 메뉴를 확실히 재판정
 const _openProfileV87 = typeof openProfileV81==='function' ? openProfileV81 : null;
 document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshProfileAndRoleV87,1200));
+
+
+// ===== v10.0 사업 전 과정 통합관리 =====
+function showProjectTabV10(name, btn){
+  document.querySelectorAll('.v10-project-tab').forEach(x=>x.style.display='none');
+  const el=document.getElementById('v10tab-'+name); if(el) el.style.display='block';
+  document.querySelectorAll('.v10-tabs button').forEach(x=>x.style.fontWeight='400');
+  if(btn) btn.style.fontWeight='700';
+}
+function moneyV10(v){ return Number(v||0).toLocaleString('ko-KR')+'원'; }
+function firstNumV10(v){
+  const m=String(v??'').replace(/,/g,'').match(/-?\d+(\.\d+)?/); return m?Number(m[0]):0;
+}
+function pickV10(o, keys){
+  for(const k of keys){ if(o && o[k]!==undefined && o[k]!==null && o[k]!=='') return o[k]; }
+  return '';
+}
+function arrayV10(v){ return Array.isArray(v)?v:[]; }
+
+async function renderIntegratedProjectV10(projectId){
+  const pr=await sb.from('projects').select('*').eq('id',projectId).single();
+  if(pr.error) return;
+  const p=pr.data;
+  const dr=await sb.from('project_documents').select('*').eq('project_id',projectId);
+  const docs=dr.data||[], plan=docs.find(x=>x.doc_type==='PLAN'), result=docs.find(x=>x.doc_type==='RESULT');
+  const pd=plan?.data||{}, rd=result?.data||{};
+
+  const staff=pickV10(pd,['staff','manager','personInCharge'])||pickV10(rd,['staff','manager','personInCharge'])||'-';
+  const purpose=pickV10(pd,['purpose','projectPurpose','objective'])||'-';
+  const period=pickV10(pd,['date','period','operationDate','schedule'])||'-';
+  document.getElementById('v10BasicSummary').innerHTML=`
+    <table style="width:100%;border-collapse:collapse;background:#fff">
+      <tr><th style="border:1px solid #ddd;padding:8px;width:140px">사업명</th><td style="border:1px solid #ddd;padding:8px">${esc(p.project_name||'-')}</td></tr>
+      <tr><th style="border:1px solid #ddd;padding:8px">담당자</th><td style="border:1px solid #ddd;padding:8px">${esc(String(staff))}</td></tr>
+      <tr><th style="border:1px solid #ddd;padding:8px">운영기간</th><td style="border:1px solid #ddd;padding:8px">${esc(String(period))}</td></tr>
+      <tr><th style="border:1px solid #ddd;padding:8px">목적</th><td style="border:1px solid #ddd;padding:8px">${esc(String(purpose))}</td></tr>
+    </table>`;
+
+  // Budget: tolerate current and future field names without breaking existing records.
+  const planBudget=firstNumV10(pickV10(pd,['budgetTotal','totalBudget','budget','total']));
+  const actualBudget=firstNumV10(pickV10(rd,['actualBudget','settlementTotal','totalExpense','budgetTotal','total']));
+  const rate=planBudget>0?Math.round(actualBudget/planBudget*1000)/10:0;
+  const remain=planBudget-actualBudget;
+  document.getElementById('v10BudgetBox').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px">
+      ${[['계획예산',moneyV10(planBudget)],['실제집행',moneyV10(actualBudget)],['잔액',moneyV10(remain)],['집행률',rate+'%']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:13px"><div style="font-size:12px;color:#666">${x[0]}</div><strong style="font-size:20px">${x[1]}</strong></div>`).join('')}
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:${remain<0?'#b91c1c':'#666'}">${remain<0?'⚠ 계획예산을 초과했습니다.':'계획 대비 실제 집행 현황입니다.'}</div>`;
+
+  const planCount=firstNumV10(pickV10(pd,['targetCount','participants','target','plannedParticipants']));
+  const actualCount=firstNumV10(pickV10(rd,['attendance','actualParticipants','participants','participantCount']));
+  const sat=pickV10(rd,['surveyScore','satisfaction','satisfactionScore'])||'-';
+  const achievement=planCount>0?Math.round(actualCount/planCount*1000)/10:0;
+  document.getElementById('v10PerformanceBox').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px">
+      ${[['계획인원',planCount+'명'],['실제참여',actualCount+'명'],['참여달성률',achievement+'%'],['만족도',String(sat)]].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:12px"><div style="font-size:12px;color:#666">${x[0]}</div><strong>${esc(x[1])}</strong></div>`).join('')}
+    </div>`;
+
+  const prog=arrayV10(pickV10(pd,['programs','programList','scheduleItems']));
+  document.getElementById('v10ScheduleBox').innerHTML=prog.length?
+    `<table style="width:100%;border-collapse:collapse"><tr><th style="border:1px solid #ddd;padding:7px">계획 일정/프로그램</th><th style="border:1px solid #ddd;padding:7px">운영 실적</th></tr>${prog.map((x,i)=>`<tr><td style="border:1px solid #ddd;padding:7px">${esc(typeof x==='string'?x:JSON.stringify(x))}</td><td style="border:1px solid #ddd;padding:7px">${i<arrayV10(pickV10(rd,['programs','programList','scheduleItems'])).length?'실적 기록 있음':'-'}</td></tr>`).join('')}</table>`:
+    '<div style="color:#666">저장된 일정/프로그램 정보를 기존 문서에서 확인할 수 있습니다.</div>';
+
+  const rr=await sb.from('project_reviews').select('review_action,comment,created_at').eq('project_id',projectId).order('created_at',{ascending:false}).limit(10);
+  document.getElementById('v10ReviewBox').innerHTML=(rr.data||[]).length?
+    rr.data.map(x=>`<div style="padding:8px;border-bottom:1px solid #eee"><small>${new Date(x.created_at).toLocaleString()}</small><br>${esc(x.comment||x.review_action)}</div>`).join(''):
+    '<div style="color:#666">등록된 검토 의견이 없습니다.</div>';
+}
+
+// Extend the existing project-detail entry point without changing stored data.
+const openProjectDetailV10Base = openProjectDetailV85;
+openProjectDetailV85 = async function(projectId){
+  await openProjectDetailV10Base(projectId);
+  await renderIntegratedProjectV10(projectId);
+  showProjectTabV10('basic', document.querySelector('.v10-tabs button'));
+};
 
   initV8Auth();
 </script>
