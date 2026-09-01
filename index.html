@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.0)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.1)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -224,6 +224,7 @@
     </div>
     <div id="v10tab-budget" class="v10-project-tab" style="display:none;">
       <div id="v10BudgetBox"></div>
+      <div style="margin-top:12px"><button class="btn btn-save" onclick="openBudgetManagerV101(v10CurrentProjectId)">예산·정산 상세관리</button></div>
     </div>
     <div id="v10tab-schedule" class="v10-project-tab" style="display:none;">
       <div id="v10ScheduleBox"></div>
@@ -239,8 +240,41 @@
     </div>
   </div>
 </div>
+
+<div id="budgetModalV101" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100006;align-items:center;justify-content:center;">
+  <div style="width:min(1050px,97vw);max-height:92vh;overflow:auto;background:#fff;border-radius:12px;padding:22px;">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
+      <div><h2 style="margin:0">예산·정산 상세관리</h2><div id="budgetProjectNameV101" style="font-size:12px;color:#666;margin-top:4px"></div></div>
+      <button class="btn btn-del" onclick="closeBudgetManagerV101()">닫기</button>
+    </div>
+    <div style="margin:14px 0;padding:10px;background:#f7f7f7;border-radius:8px;font-size:12px">
+      입력 중 내용은 이 브라우저에 자동 임시저장됩니다. <span id="autosaveStateV101">대기</span>
+    </div>
+    <div style="overflow:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:820px">
+        <thead><tr>
+          <th style="border:1px solid #ddd;padding:7px">항목</th>
+          <th style="border:1px solid #ddd;padding:7px">산출근거</th>
+          <th style="border:1px solid #ddd;padding:7px">계획예산</th>
+          <th style="border:1px solid #ddd;padding:7px">실제집행</th>
+          <th style="border:1px solid #ddd;padding:7px">잔액</th>
+          <th style="border:1px solid #ddd;padding:7px">비고</th>
+          <th style="border:1px solid #ddd;padding:7px">관리</th>
+        </tr></thead>
+        <tbody id="budgetRowsV101"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn btn-add" onclick="addBudgetRowV101()">+ 예산항목</button>
+      <button class="btn btn-save" onclick="saveBudgetManagerV101()">☁ 예산·정산 저장</button>
+      <button class="btn" onclick="clearBudgetDraftV101()">임시저장 삭제</button>
+    </div>
+    <div id="budgetSummaryV101" style="margin-top:14px"></div>
+  </div>
+</div>
+
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.0)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.1)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -1879,6 +1913,7 @@ function pickV10(o, keys){
 function arrayV10(v){ return Array.isArray(v)?v:[]; }
 
 async function renderIntegratedProjectV10(projectId){
+  v10CurrentProjectId=projectId;
   const pr=await sb.from('projects').select('*').eq('id',projectId).single();
   if(pr.error) return;
   const p=pr.data;
@@ -1935,6 +1970,98 @@ openProjectDetailV85 = async function(projectId){
   await renderIntegratedProjectV10(projectId);
   showProjectTabV10('basic', document.querySelector('.v10-tabs button'));
 };
+
+
+// ===== v10.1 예산·정산 상세관리 + 자동 임시저장 =====
+let v10CurrentProjectId=null;
+let budgetProjectIdV101=null;
+let budgetRowsDataV101=[];
+let budgetAutosaveTimerV101=null;
+
+function budgetDraftKeyV101(){ return 'v101_budget_draft_'+(budgetProjectIdV101||'none'); }
+function numV101(v){ const n=Number(String(v??'').replace(/,/g,'')); return Number.isFinite(n)?n:0; }
+function escAttrV101(v){ return String(v??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderBudgetRowsV101(){
+  const tb=document.getElementById('budgetRowsV101'); if(!tb) return;
+  if(!budgetRowsDataV101.length) budgetRowsDataV101=[{item:'',basis:'',planned:0,actual:0,note:''}];
+  tb.innerHTML=budgetRowsDataV101.map((r,i)=>{
+    const remain=numV101(r.planned)-numV101(r.actual);
+    return `<tr>
+      <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.item)}" oninput="updateBudgetCellV101(${i},'item',this.value)"></td>
+      <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.basis)}" oninput="updateBudgetCellV101(${i},'basis',this.value)"></td>
+      <td style="border:1px solid #ddd;padding:5px"><input type="number" style="width:120px" value="${numV101(r.planned)}" oninput="updateBudgetCellV101(${i},'planned',this.value)"></td>
+      <td style="border:1px solid #ddd;padding:5px"><input type="number" style="width:120px" value="${numV101(r.actual)}" oninput="updateBudgetCellV101(${i},'actual',this.value)"></td>
+      <td style="border:1px solid #ddd;padding:7px;text-align:right">${moneyV10(remain)}</td>
+      <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.note)}" oninput="updateBudgetCellV101(${i},'note',this.value)"></td>
+      <td style="border:1px solid #ddd;padding:5px"><button class="btn btn-del" onclick="removeBudgetRowV101(${i})">삭제</button></td>
+    </tr>`;
+  }).join('');
+  renderBudgetSummaryV101();
+}
+function updateBudgetCellV101(i,k,v){
+  if(!budgetRowsDataV101[i]) return;
+  budgetRowsDataV101[i][k]=(k==='planned'||k==='actual')?numV101(v):v;
+  scheduleBudgetDraftV101();
+  renderBudgetSummaryV101();
+  // refresh only balance cells without destroying current input focus
+  const tr=document.querySelectorAll('#budgetRowsV101 tr')[i];
+  if(tr) tr.children[4].textContent=moneyV10(numV101(budgetRowsDataV101[i].planned)-numV101(budgetRowsDataV101[i].actual));
+}
+function addBudgetRowV101(){ budgetRowsDataV101.push({item:'',basis:'',planned:0,actual:0,note:''}); renderBudgetRowsV101(); scheduleBudgetDraftV101(); }
+function removeBudgetRowV101(i){ budgetRowsDataV101.splice(i,1); renderBudgetRowsV101(); scheduleBudgetDraftV101(); }
+function renderBudgetSummaryV101(){
+  const p=budgetRowsDataV101.reduce((a,r)=>a+numV101(r.planned),0);
+  const a=budgetRowsDataV101.reduce((x,r)=>x+numV101(r.actual),0);
+  const rem=p-a, rate=p?Math.round(a/p*1000)/10:0;
+  document.getElementById('budgetSummaryV101').innerHTML=
+    `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
+      <div style="border:1px solid #ddd;padding:10px;border-radius:8px">계획예산<br><strong>${moneyV10(p)}</strong></div>
+      <div style="border:1px solid #ddd;padding:10px;border-radius:8px">실제집행<br><strong>${moneyV10(a)}</strong></div>
+      <div style="border:1px solid #ddd;padding:10px;border-radius:8px">잔액<br><strong>${moneyV10(rem)}</strong></div>
+      <div style="border:1px solid #ddd;padding:10px;border-radius:8px">집행률<br><strong>${rate}%</strong></div>
+    </div>${rem<0?'<div style="color:#b91c1c;margin-top:8px">⚠ 계획예산을 초과했습니다.</div>':''}`;
+}
+function scheduleBudgetDraftV101(){
+  clearTimeout(budgetAutosaveTimerV101);
+  const st=document.getElementById('autosaveStateV101'); if(st) st.textContent='입력 중…';
+  budgetAutosaveTimerV101=setTimeout(()=>{
+    localStorage.setItem(budgetDraftKeyV101(),JSON.stringify({rows:budgetRowsDataV101,savedAt:new Date().toISOString()}));
+    if(st) st.textContent='임시저장 '+new Date().toLocaleTimeString();
+  },500);
+}
+function clearBudgetDraftV101(){ localStorage.removeItem(budgetDraftKeyV101()); const st=document.getElementById('autosaveStateV101'); if(st) st.textContent='임시저장 삭제됨'; }
+async function openBudgetManagerV101(projectId){
+  if(!projectId) return alert('사업을 먼저 선택해주세요.');
+  budgetProjectIdV101=projectId;
+  const pr=await sb.from('projects').select('project_name').eq('id',projectId).single();
+  document.getElementById('budgetProjectNameV101').textContent=pr.data?.project_name||'';
+  const rr=await sb.from('project_budget_items').select('*').eq('project_id',projectId).order('sort_order',{ascending:true});
+  budgetRowsDataV101=(rr.data||[]).map(x=>({id:x.id,item:x.item_name||'',basis:x.calculation_basis||'',planned:numV101(x.planned_amount),actual:numV101(x.actual_amount),note:x.note||''}));
+  const draft=localStorage.getItem(budgetDraftKeyV101());
+  if(draft){ try{ const d=JSON.parse(draft); if(Array.isArray(d.rows) && confirm('이전에 자동 임시저장된 예산 내용을 복원할까요?')) budgetRowsDataV101=d.rows; }catch(e){} }
+  renderBudgetRowsV101();
+  document.getElementById('budgetModalV101').style.display='flex';
+}
+function closeBudgetManagerV101(){ document.getElementById('budgetModalV101').style.display='none'; }
+async function saveBudgetManagerV101(){
+  if(!budgetProjectIdV101) return;
+  const uid=v81Profile?.id || (await sb.auth.getUser()).data.user?.id;
+  const del=await sb.from('project_budget_items').delete().eq('project_id',budgetProjectIdV101);
+  if(del.error) return alert('기존 예산항목 정리 실패: '+del.error.message);
+  const rows=budgetRowsDataV101.filter(r=>r.item||r.basis||numV101(r.planned)||numV101(r.actual)||r.note).map((r,i)=>({
+    project_id:budgetProjectIdV101,item_name:r.item||'예산항목',calculation_basis:r.basis||null,
+    planned_amount:numV101(r.planned),actual_amount:numV101(r.actual),note:r.note||null,sort_order:i,updated_by:uid
+  }));
+  if(rows.length){
+    const ins=await sb.from('project_budget_items').insert(rows);
+    if(ins.error) return alert('예산·정산 저장 실패: '+ins.error.message);
+  }
+  await sb.from('project_history').insert({project_id:budgetProjectIdV101,action:'BUDGET_UPDATED',snapshot:{budget_items:rows},changed_by:uid});
+  clearBudgetDraftV101();
+  alert('예산·정산이 저장되었습니다.');
+  await renderIntegratedProjectV10(budgetProjectIdV101);
+}
 
   initV8Auth();
 </script>
