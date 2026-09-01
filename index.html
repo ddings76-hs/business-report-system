@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4.2 DATA FIX)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4.3 LINK FIX)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -282,7 +282,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4.2 DATA FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4.3 LINK FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -2394,6 +2394,83 @@ async function verifyPlanResultLinkV104(projectId){
  if(r.error)return{ok:false,message:r.error.message}; const plan=(r.data||[]).find(x=>x.doc_type==='PLAN'),result=(r.data||[]).find(x=>x.doc_type==='RESULT');
  return{ok:!!plan,plan:!!plan,result:!!result,linked:!!(plan&&result&&plan.project_id===result.project_id),message:!plan?'계획서 없음':(!result?'결과보고서 미작성':'계획서와 결과보고서가 동일 사업에 정상 연결됨')};
 }
+
+
+// ===== v10.4.3 결과보고서 ↔ 저장 계획서 연결 수정 =====
+let currentResultLinkedProjectV1043 = null;
+
+async function findPlanForResultV1043(){
+  // 1) If dashboard opened this result, use the exact project first.
+  const exactId = window.currentCloudResultProjectId || currentResultLinkedProjectV1043;
+  if(exactId){
+    const q=await sb.from('project_documents')
+      .select('id,project_id,data,updated_at')
+      .eq('project_id',exactId).eq('doc_type','PLAN').maybeSingle();
+    if(!q.error && q.data) return q.data;
+  }
+
+  // 2) Match the result form's project name against projects, then get its PLAN.
+  const name=(document.getElementById('r_projName')?.value||'').trim();
+  if(name){
+    const pq=await sb.from('projects').select('id,project_name,updated_at')
+      .eq('project_name',name).order('updated_at',{ascending:false}).limit(5);
+    if(!pq.error && pq.data?.length){
+      for(const p of pq.data){
+        const dq=await sb.from('project_documents').select('id,project_id,data,updated_at')
+          .eq('project_id',p.id).eq('doc_type','PLAN').maybeSingle();
+        if(!dq.error && dq.data) return dq.data;
+      }
+    }
+  }
+
+  // 3) No reliable link: show recent saved plans for user selection.
+  const dq=await sb.from('project_documents').select('id,project_id,data,updated_at')
+    .eq('doc_type','PLAN').order('updated_at',{ascending:false}).limit(20);
+  if(dq.error) throw dq.error;
+  const plans=dq.data||[];
+  if(!plans.length) return null;
+  const labels=plans.map((d,i)=>`${i+1}. ${projectNameFromPlan(d.data)||'(사업명 없음)'} / ${new Date(d.updated_at).toLocaleString()}`).join('\n');
+  const pick=prompt('불러올 저장 계획서 번호를 입력하세요.\n\n'+labels);
+  const idx=Number(pick)-1;
+  return Number.isInteger(idx)&&idx>=0&&idx<plans.length ? plans[idx] : null;
+}
+
+async function loadSavedPlanIntoResultV1043(){
+  try{
+    if(!v8User) return alert('먼저 로그인하세요.');
+    const doc=await findPlanForResultV1043();
+    if(!doc) return alert('저장된 사업계획서를 찾지 못했거나 선택하지 않았습니다.');
+    currentResultLinkedProjectV1043=doc.project_id;
+    window.currentCloudResultProjectId=doc.project_id;
+    await applyPlanDataToResultV1043(doc.data||{});
+    const notice=document.getElementById('resultPlanLinkNoticeV1043');
+    if(notice) notice.innerHTML='✅ 연결된 사업계획서: <strong>'+esc(projectNameFromPlan(doc.data||{})||'-')+'</strong>';
+    alert('저장된 사업계획서를 결과보고서에 불러왔습니다.');
+  }catch(e){ console.error(e); alert('저장된 계획서 불러오기 오류: '+e.message); }
+}
+async function applyPlanDataToResultV1043(d){
+  const set=(id,v)=>{const el=document.getElementById(id);if(el){el.value=v??'';el.dispatchEvent(new Event('change',{bubbles:true}));}};
+  set('r_orgName',d.orgName||''); set('r_staff',d.staff||''); set('r_reviewer',d.reviewer||''); set('r_approver',d.approver||'');
+  set('r_projName',projectNameFromPlan(d)||'');
+  const om={};(Array.isArray(d.overview)?d.overview:[]).forEach(a=>{if(Array.isArray(a)&&a[0])om[a[0]]=a[1]||'';});
+  set('r_dateLoc',[om['사업일시']||om['운영일시']||om['일시']||'',om['사업장소']||om['장소']||''].filter(Boolean).join(' / '));
+  set('r_target',om['참여대상']||om['대상']||'');
+  set('r_content',(Array.isArray(d.programs)?d.programs:[]).map(a=>Array.isArray(a)&&a[0]?`${a[0]}: ${a[1]||''}`:'').filter(Boolean).join('\n'));
+  set('r_budgetSource',d.budgetSource||''); set('r_budgetCategory',d.budgetCategory||'');
+}
+
+// Replace the visible result-page button behavior regardless of the older function name.
+document.addEventListener('DOMContentLoaded',()=>{
+  const candidates=[...document.querySelectorAll('button')].filter(b=>(b.textContent||'').includes('저장된 계획서 불러오기'));
+  candidates.forEach(b=>{
+    b.onclick=(ev)=>{ev.preventDefault();loadSavedPlanIntoResultV1043();};
+  });
+  const result=document.getElementById('section-input-result');
+  if(result){
+    const warning=[...result.querySelectorAll('div')].find(x=>(x.textContent||'').includes('연결된 사업계획서가 없습니다'));
+    if(warning){warning.id='resultPlanLinkNoticeV1043';}
+  }
+});
 
   initV8Auth();
 </script>
