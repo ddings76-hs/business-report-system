@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.3.1 FIX)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -282,7 +282,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.3.1 FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -1676,26 +1676,18 @@ function filterDashboardV831(){
 function drawDashboardV831(rows){
  const b=document.getElementById('dashboardTableV831'),L={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'};
  if(!rows.length){b.innerHTML='<div style="padding:25px;text-align:center;border:1px solid #ddd">등록된 사업이 없습니다.</div>';return;}
- b.innerHTML=`<div style="overflow:auto"><table style="width:100%;min-width:1120px;border-collapse:collapse;font-size:12px;background:#fff"><tr>${['사업명','담당자','상태','계획서','결과보고서','최종수정자','최종수정일','관리'].map(x=>`<th style="border:1px solid #ddd;padding:8px">${x}</th>`).join('')}</tr>${rows.map(x=>{
-   const staff=x.plan?.data?.staff||x.result?.data?.staff||x.owner?.name||'-',ed=x.editor?.name||x.editor?.email||'-';
-   const safeName=String(x.project_name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-   return`<tr>
-    <td style="border:1px solid #ddd;padding:8px">${esc(x.project_name||'-')}</td>
-    <td style="border:1px solid #ddd;padding:8px">${esc(staff)}</td>
-    <td style="border:1px solid #ddd;padding:8px">${L[x.status]||x.status}</td>
-    <td style="border:1px solid #ddd;padding:8px">${x.plan?`<button class="btn btn-add" onclick="loadCloudDocument('${x.plan.id}')">열기</button>`:'미작성'}</td>
-    <td style="border:1px solid #ddd;padding:8px">${x.result?`<button class="btn btn-add" onclick="loadCloudDocument('${x.result.id}')">열기</button>`:(x.plan?`<button class="btn btn-result" onclick="openResultFromDashboardV1031('${x.id}')">결과보고서 작성</button>`:'계획서 필요')}</td>
-    <td style="border:1px solid #ddd;padding:8px">${esc(ed)}</td>
-    <td style="border:1px solid #ddd;padding:8px">${new Date(x.updated_at).toLocaleString()}</td>
-    <td style="border:1px solid #ddd;padding:8px;white-space:nowrap">
-      <button class="btn btn-plan" onclick="openProjectDetailV85('${x.id}')">사업상세</button>
-      <button class="btn" onclick="archiveProjectV103('${x.id}','${safeName}')">보관</button>
-      <button class="btn btn-del" onclick="deleteProjectV103('${x.id}','${safeName}')">사업삭제</button>
-      ${x.status==='draft'?`<button class="btn btn-result" onclick="requestProjectReviewV84('${x.id}')">검토요청</button>`:''}
-      <button class="btn btn-add" onclick="openReviewV84('${x.id}','${safeName}')">검토</button>
-      <button class="btn btn-add" onclick="changeProjectStatusV81('${x.id}','${x.status}')">상태</button>
-      <button class="btn btn-add" onclick="showHistoryV81('${x.id}')">이력</button>
-    </td></tr>`}).join('')}</table></div>`;
+ b.innerHTML=`<div style="overflow:auto"><table style="width:100%;min-width:1250px;border-collapse:collapse;font-size:12px;background:#fff"><tr>${['사업명','담당자','상태','계획서','결과보고서','연동상태','최종수정자','최종수정일','사업관리','삭제'].map(x=>`<th style="border:1px solid #ddd;padding:8px">${x}</th>`).join('')}</tr>${rows.map(x=>{
+ const staff=x.plan?.data?.staff||x.result?.data?.staff||x.owner?.name||'-',ed=x.editor?.name||x.editor?.email||'-';
+ const safeName=String(x.project_name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+ const linked=!!(x.plan&&x.result);
+ return`<tr>
+ <td style="border:1px solid #ddd;padding:8px">${esc(x.project_name||'-')}</td><td style="border:1px solid #ddd;padding:8px">${esc(staff)}</td><td style="border:1px solid #ddd;padding:8px">${L[x.status]||x.status}</td>
+ <td style="border:1px solid #ddd;padding:8px">${x.plan?`<button class="btn btn-add" onclick="loadCloudDocument('${x.plan.id}')">계획서 열기</button>`:'미작성'}</td>
+ <td style="border:1px solid #ddd;padding:8px">${x.result?`<button class="btn btn-add" onclick="loadCloudDocument('${x.result.id}')">결과보고서 열기</button>`:(x.plan?`<button class="btn btn-result" onclick="openResultFromDashboardV104('${x.id}')">결과보고서 작성</button>`:'계획서 필요')}</td>
+ <td style="border:1px solid #ddd;padding:8px;text-align:center">${linked?'✅ 계획↔결과':(x.plan?'⏳ 결과 미작성':'⚠ 계획 미작성')}</td>
+ <td style="border:1px solid #ddd;padding:8px">${esc(ed)}</td><td style="border:1px solid #ddd;padding:8px">${new Date(x.updated_at).toLocaleString()}</td>
+ <td style="border:1px solid #ddd;padding:8px;white-space:nowrap"><button class="btn btn-plan" onclick="openProjectDetailV85('${x.id}')">사업상세</button> <button class="btn" onclick="archiveProjectV103('${x.id}','${safeName}')">보관</button> ${x.status==='draft'?`<button class="btn btn-result" onclick="requestProjectReviewV84('${x.id}')">검토요청</button>`:''} <button class="btn btn-add" onclick="openReviewV84('${x.id}','${safeName}')">검토</button> <button class="btn btn-add" onclick="changeProjectStatusV81('${x.id}','${x.status}')">상태</button> <button class="btn btn-add" onclick="showHistoryV81('${x.id}')">이력</button></td>
+ <td style="border:1px solid #ddd;padding:8px;text-align:center;background:#fff7f7"><button class="btn btn-del" style="font-weight:700" onclick="deleteProjectEasyV104('${x.id}','${safeName}')">🗑 삭제</button></td></tr>`}).join('')}</table></div>`;
 }
 
 
@@ -2361,6 +2353,35 @@ async function openResultFromDashboardV1031(projectId){
 document.addEventListener('input',e=>{
   if(e.target?.classList?.contains('p-bg-calc')) calcBasisAmountV1031(e.target);
 },true);
+
+
+// ===== v10.4 계획서↔결과보고서 연동 검증 + 쉬운 삭제 =====
+async function openResultFromDashboardV104(projectId){
+ try{
+  const pr=await sb.from('project_documents').select('id,data').eq('project_id',projectId).eq('doc_type','PLAN').maybeSingle();
+  if(pr.error) throw pr.error; if(!pr.data) return alert('연동할 사업계획서가 없습니다.');
+  await cloudPlanToResult(projectId); window.currentCloudResultProjectId=projectId;
+  const dash=document.getElementById('dashboard-mode'); if(dash) dash.style.display='none';
+  document.querySelectorAll('.form-section').forEach(x=>x.classList.remove('active'));
+  const result=document.getElementById('section-input-result'); if(result){result.style.display='block';result.classList.add('active');}
+  const plan=document.getElementById('section-input-plan'); if(plan) plan.style.display='none';
+  const list=document.getElementById('section-input-list'); if(list) list.style.display='none';
+  document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active-plan','active-result','active-list'));
+  document.getElementById('btn-mode-result')?.classList.add('active-result'); window.scrollTo({top:0,behavior:'smooth'});
+ }catch(e){console.error(e);alert('계획서→결과보고서 연동 오류: '+e.message);}
+}
+async function deleteProjectEasyV104(projectId,projectName){
+ const role=await roleV103(); if(role!=='admin') return alert('사업 삭제는 관리자(admin)만 가능합니다.');
+ if(!confirm(`"${projectName}" 사업을 삭제하시겠습니까?\n\n계획서·결과보고서·예산·검토·변경이력이 함께 삭제됩니다.\n중요 사업은 삭제 대신 [보관]을 사용하세요.`)) return;
+ const typed=prompt(`삭제 확인: 사업명을 입력하세요.\n${projectName}`); if(typed!==projectName) return alert('사업명이 일치하지 않아 삭제하지 않았습니다.');
+ const r=await sb.rpc('admin_delete_project_v104',{target_project:projectId}); if(r.error) return alert('삭제 실패: '+r.error.message);
+ alert('사업이 삭제되었습니다.'); if(typeof loadDashboardV831==='function') await loadDashboardV831(); else if(typeof loadDashboardV83==='function') await loadDashboardV83();
+}
+async function verifyPlanResultLinkV104(projectId){
+ const r=await sb.from('project_documents').select('id,doc_type,project_id').eq('project_id',projectId);
+ if(r.error)return{ok:false,message:r.error.message}; const plan=(r.data||[]).find(x=>x.doc_type==='PLAN'),result=(r.data||[]).find(x=>x.doc_type==='RESULT');
+ return{ok:!!plan,plan:!!plan,result:!!result,linked:!!(plan&&result&&plan.project_id===result.project_id),message:!plan?'계획서 없음':(!result?'결과보고서 미작성':'계획서와 결과보고서가 동일 사업에 정상 연결됨')};
+}
 
   initV8Auth();
 </script>
