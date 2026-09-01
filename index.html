@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4.1 FIX)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4.2 DATA FIX)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -282,7 +282,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4.1 FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4.2 DATA FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -1942,41 +1942,51 @@ async function renderIntegratedProjectV10(projectId){
   const docs=dr.data||[], plan=docs.find(x=>x.doc_type==='PLAN'), result=docs.find(x=>x.doc_type==='RESULT');
   const pd=plan?.data||{}, rd=result?.data||{};
 
-  const staff=pickV10(pd,['staff','manager','personInCharge'])||pickV10(rd,['staff','manager','personInCharge'])||'-';
-  const purpose=pickV10(pd,['purpose','projectPurpose','objective'])||'-';
-  const period=pickV10(pd,['date','period','operationDate','schedule'])||'-';
+  // Current app stores overview/program/budget mainly as row arrays.
+  const rowMap=(rows)=>{const m={}; (Array.isArray(rows)?rows:[]).forEach(r=>{if(Array.isArray(r)&&r[0])m[String(r[0]).trim()]=r[1]??'';}); return m;};
+  const pom=rowMap(pd.overview), rom=rowMap(rd.overview);
+  const getRow=(m,keys)=>{for(const k of keys){if(m[k]!==undefined&&m[k]!==null&&m[k]!=='')return m[k];}return '';};
+  const staff=pd.staff||rd.staff||'-';
+  const purpose=getRow(pom,['사업목적','목적','추진목적'])||'-';
+  const date=getRow(pom,['사업일시','운영일시','일시','기간','운영기간']);
+  const loc=getRow(pom,['사업장소','장소']);
+  const period=[date,loc].filter(Boolean).join(' / ')||'-';
+  const targetText=getRow(pom,['참여대상','대상','사업대상'])||'';
+  const plannedPeople=firstNumV10(targetText||pd.targetCount||pd.participants||pd.target||pd.plannedParticipants);
+  const actualPeople=firstNumV10(rd.attendance||rd.actualParticipants||rd.participants||rd.participantCount||getRow(rom,['참여인원','실제참여','참석인원']));
+  const satRaw=rd.surveyScore||rd.satisfaction||rd.satisfactionScore||getRow(rom,['만족도','평균만족도']);
+  const sat=firstNumV10(satRaw);
+
   document.getElementById('v10BasicSummary').innerHTML=`
     <table style="width:100%;border-collapse:collapse;background:#fff">
       <tr><th style="border:1px solid #ddd;padding:8px;width:140px">사업명</th><td style="border:1px solid #ddd;padding:8px">${esc(p.project_name||'-')}</td></tr>
       <tr><th style="border:1px solid #ddd;padding:8px">담당자</th><td style="border:1px solid #ddd;padding:8px">${esc(String(staff))}</td></tr>
-      <tr><th style="border:1px solid #ddd;padding:8px">운영기간</th><td style="border:1px solid #ddd;padding:8px">${esc(String(period))}</td></tr>
+      <tr><th style="border:1px solid #ddd;padding:8px">운영기간/장소</th><td style="border:1px solid #ddd;padding:8px">${esc(String(period))}</td></tr>
       <tr><th style="border:1px solid #ddd;padding:8px">목적</th><td style="border:1px solid #ddd;padding:8px">${esc(String(purpose))}</td></tr>
     </table>`;
 
-  // Budget: tolerate current and future field names without breaking existing records.
-  const planBudget=firstNumV10(pickV10(pd,['budgetTotal','totalBudget','budget','total']));
-  const actualBudget=firstNumV10(pickV10(rd,['actualBudget','settlementTotal','totalExpense','budgetTotal','total']));
-  const rate=planBudget>0?Math.round(actualBudget/planBudget*1000)/10:0;
-  const remain=planBudget-actualBudget;
+  // Prefer normalized budget table; fall back to PLAN row-array budget.
+  const bs=await sb.from('project_budget_summary').select('*').eq('project_id',projectId).maybeSingle();
+  const planRows=normalizePlanBudgetV1031(pd);
+  const hasBudgetSummary=!!bs.data && Number(bs.data.planned_total||0)>0;
+  const planBudget=hasBudgetSummary?Number(bs.data.planned_total||0):Number(pd.budgetTotal||pd.totalBudget||planRows.total||0);
+  const actualBudget=bs.data?Number(bs.data.actual_total||0):Number(rd.actualBudget||rd.settlementTotal||rd.totalExpense||0);
+  const rate=planBudget>0?Math.round(actualBudget/planBudget*1000)/10:0, remain=planBudget-actualBudget;
   document.getElementById('v10BudgetBox').innerHTML=`
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px">
       ${[['계획예산',moneyV10(planBudget)],['실제집행',moneyV10(actualBudget)],['잔액',moneyV10(remain)],['집행률',rate+'%']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:13px"><div style="font-size:12px;color:#666">${x[0]}</div><strong style="font-size:20px">${x[1]}</strong></div>`).join('')}
-    </div>
-    <div style="margin-top:10px;font-size:12px;color:${remain<0?'#b91c1c':'#666'}">${remain<0?'⚠ 계획예산을 초과했습니다.':'계획 대비 실제 집행 현황입니다.'}</div>`;
-
-  const planCount=firstNumV10(pickV10(pd,['targetCount','participants','target','plannedParticipants']));
-  const actualCount=firstNumV10(pickV10(rd,['attendance','actualParticipants','participants','participantCount']));
-  const sat=pickV10(rd,['surveyScore','satisfaction','satisfactionScore'])||'-';
-  const achievement=planCount>0?Math.round(actualCount/planCount*1000)/10:0;
-  document.getElementById('v10PerformanceBox').innerHTML=`
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px">
-      ${[['계획인원',planCount+'명'],['실제참여',actualCount+'명'],['참여달성률',achievement+'%'],['만족도',String(sat)]].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:12px"><div style="font-size:12px;color:#666">${x[0]}</div><strong>${esc(x[1])}</strong></div>`).join('')}
     </div>`;
 
-  const prog=arrayV10(pickV10(pd,['programs','programList','scheduleItems']));
+  const achievement=plannedPeople>0?Math.round(actualPeople/plannedPeople*1000)/10:0;
+  document.getElementById('v10PerformanceBox').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px">
+      ${[['계획인원',plannedPeople+'명'],['실제참여',actualPeople+'명'],['참여달성률',achievement+'%'],['만족도',sat?String(sat):'-']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:12px"><div style="font-size:12px;color:#666">${x[0]}</div><strong>${esc(x[1])}</strong></div>`).join('')}
+    </div>`;
+
+  const prog=Array.isArray(pd.programs)?pd.programs:[];
   document.getElementById('v10ScheduleBox').innerHTML=prog.length?
-    `<table style="width:100%;border-collapse:collapse"><tr><th style="border:1px solid #ddd;padding:7px">계획 일정/프로그램</th><th style="border:1px solid #ddd;padding:7px">운영 실적</th></tr>${prog.map((x,i)=>`<tr><td style="border:1px solid #ddd;padding:7px">${esc(typeof x==='string'?x:JSON.stringify(x))}</td><td style="border:1px solid #ddd;padding:7px">${i<arrayV10(pickV10(rd,['programs','programList','scheduleItems'])).length?'실적 기록 있음':'-'}</td></tr>`).join('')}</table>`:
-    '<div style="color:#666">저장된 일정/프로그램 정보를 기존 문서에서 확인할 수 있습니다.</div>';
+    `<table style="width:100%;border-collapse:collapse"><tr><th style="border:1px solid #ddd;padding:7px">프로그램</th><th style="border:1px solid #ddd;padding:7px">계획내용</th></tr>${prog.map(x=>`<tr><td style="border:1px solid #ddd;padding:7px">${esc(Array.isArray(x)?(x[0]||''):String(x))}</td><td style="border:1px solid #ddd;padding:7px">${esc(Array.isArray(x)?(x[1]||''):'')}</td></tr>`).join('')}</table>`:
+    '<div style="color:#666">저장된 프로그램 정보가 없습니다.</div>';
 
   const rr=await sb.from('project_reviews').select('review_action,comment,created_at').eq('project_id',projectId).order('created_at',{ascending:false}).limit(10);
   document.getElementById('v10ReviewBox').innerHTML=(rr.data||[]).length?
@@ -2246,23 +2256,23 @@ function pctV103(actual,target){
 async function renderPerformanceV103(projectId){
   const dr=await sb.from('project_documents').select('doc_type,data').eq('project_id',projectId);
   const docs=dr.data||[], pd=docs.find(x=>x.doc_type==='PLAN')?.data||{}, rd=docs.find(x=>x.doc_type==='RESULT')?.data||{};
+  const mapRows=(rows)=>{const m={};(Array.isArray(rows)?rows:[]).forEach(r=>{if(Array.isArray(r)&&r[0])m[String(r[0]).trim()]=r[1]??'';});return m;};
+  const pm=mapRows(pd.overview), rm=mapRows(rd.overview);
+  const gv=(m,ks)=>{for(const k of ks)if(m[k]!==undefined&&m[k]!=='')return m[k];return '';};
+  const target=firstNumV10(gv(pm,['참여대상','대상','사업대상'])||pd.targetCount||pd.participants||pd.target||pd.plannedParticipants);
+  const actual=firstNumV10(rd.attendance||rd.actualParticipants||rd.participants||rd.participantCount||gv(rm,['참여인원','실제참여','참석인원']));
+  const satisfaction=firstNumV10(rd.surveyScore||rd.satisfaction||rd.satisfactionScore||gv(rm,['만족도','평균만족도']));
   const bs=await sb.from('project_budget_summary').select('*').eq('project_id',projectId).maybeSingle();
-  const target=firstNumV10(pickV10(pd,['targetCount','participants','target','plannedParticipants']));
-  const actual=firstNumV10(pickV10(rd,['attendance','actualParticipants','participants','participantCount']));
-  const satisfaction=firstNumV10(pickV10(rd,['surveyScore','satisfaction','satisfactionScore']));
-  const plannedBudget=Number(bs.data?.planned_total||firstNumV10(pickV10(pd,['budgetTotal','totalBudget','budget','total'])));
-  const actualBudget=Number(bs.data?.actual_total||firstNumV10(pickV10(rd,['actualBudget','settlementTotal','totalExpense','budgetTotal','total'])));
-  const participationRate=pctV103(actual,target);
-  const executionRate=plannedBudget>0?Math.round(actualBudget/plannedBudget*1000)/10:0;
-  const el=document.getElementById('v103PerformanceCompare'); if(!el) return;
-  el.innerHTML=`<h3 style="margin:0 0 8px">계획 대비 실적 자동분석</h3>
-    <table style="width:100%;border-collapse:collapse">
-      <tr><th style="border:1px solid #ddd;padding:7px">지표</th><th style="border:1px solid #ddd;padding:7px">계획</th><th style="border:1px solid #ddd;padding:7px">실적</th><th style="border:1px solid #ddd;padding:7px">달성/집행률</th></tr>
-      <tr><td style="border:1px solid #ddd;padding:7px">참여인원</td><td style="border:1px solid #ddd;padding:7px">${target}명</td><td style="border:1px solid #ddd;padding:7px">${actual}명</td><td style="border:1px solid #ddd;padding:7px"><strong>${participationRate}%</strong></td></tr>
-      <tr><td style="border:1px solid #ddd;padding:7px">예산</td><td style="border:1px solid #ddd;padding:7px">${moneyV10(plannedBudget)}</td><td style="border:1px solid #ddd;padding:7px">${moneyV10(actualBudget)}</td><td style="border:1px solid #ddd;padding:7px"><strong>${executionRate}%</strong></td></tr>
-      <tr><td style="border:1px solid #ddd;padding:7px">만족도</td><td style="border:1px solid #ddd;padding:7px">-</td><td style="border:1px solid #ddd;padding:7px">${satisfaction||'-'}</td><td style="border:1px solid #ddd;padding:7px">-</td></tr>
-    </table>
-    <div style="margin-top:8px;font-size:12px;color:#666">※ 저장된 계획서·결과보고서·예산 데이터를 기준으로 자동 계산합니다.</div>`;
+  const n=normalizePlanBudgetV1031(pd);
+  const plannedBudget=(bs.data&&Number(bs.data.planned_total||0)>0)?Number(bs.data.planned_total):Number(pd.budgetTotal||pd.totalBudget||n.total||0);
+  const actualBudget=bs.data?Number(bs.data.actual_total||0):Number(rd.actualBudget||rd.settlementTotal||rd.totalExpense||0);
+  const participationRate=pctV103(actual,target), executionRate=plannedBudget>0?Math.round(actualBudget/plannedBudget*1000)/10:0;
+  const el=document.getElementById('v103PerformanceCompare'); if(!el)return;
+  el.innerHTML=`<h3 style="margin:0 0 8px">계획 대비 실적 자동분석</h3><table style="width:100%;border-collapse:collapse">
+  <tr><th style="border:1px solid #ddd;padding:7px">지표</th><th style="border:1px solid #ddd;padding:7px">계획</th><th style="border:1px solid #ddd;padding:7px">실적</th><th style="border:1px solid #ddd;padding:7px">달성/집행률</th></tr>
+  <tr><td style="border:1px solid #ddd;padding:7px">참여인원</td><td style="border:1px solid #ddd;padding:7px">${target}명</td><td style="border:1px solid #ddd;padding:7px">${actual}명</td><td style="border:1px solid #ddd;padding:7px"><strong>${participationRate}%</strong></td></tr>
+  <tr><td style="border:1px solid #ddd;padding:7px">예산</td><td style="border:1px solid #ddd;padding:7px">${moneyV10(plannedBudget)}</td><td style="border:1px solid #ddd;padding:7px">${moneyV10(actualBudget)}</td><td style="border:1px solid #ddd;padding:7px"><strong>${executionRate}%</strong></td></tr>
+  <tr><td style="border:1px solid #ddd;padding:7px">만족도</td><td style="border:1px solid #ddd;padding:7px">-</td><td style="border:1px solid #ddd;padding:7px">${satisfaction||'-'}</td><td style="border:1px solid #ddd;padding:7px">-</td></tr></table>`;
 }
 const renderIntegratedProjectV103Base=renderIntegratedProjectV10;
 renderIntegratedProjectV10=async function(projectId){
