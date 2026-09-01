@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.1)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.3)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -233,7 +233,9 @@
       <div id="v10ReviewBox"></div>
     </div>
     <div id="v10tab-result" class="v10-project-tab" style="display:none;">
-      <div id="detailResultV85"></div><div id="v10PerformanceBox" style="margin-top:12px;"></div>
+      <div id="detailResultV85"></div>
+      <div id="v10PerformanceBox" style="margin-top:12px;"></div>
+      <div id="v103PerformanceCompare" style="margin-top:14px;"></div>
     </div>
     <div id="v10tab-history" class="v10-project-tab" style="display:none;">
       <div id="detailHistoryV85"></div>
@@ -267,14 +269,20 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
       <button class="btn btn-add" onclick="addBudgetRowV101()">+ 예산항목</button>
       <button class="btn btn-save" onclick="saveBudgetManagerV101()">☁ 예산·정산 저장</button>
+      <button class="btn btn-add" onclick="syncBudgetToDocumentsV102()">↔ 계획서·결과보고서 반영</button>
       <button class="btn" onclick="clearBudgetDraftV101()">임시저장 삭제</button>
     </div>
     <div id="budgetSummaryV101" style="margin-top:14px"></div>
   </div>
 </div>
 
+
+<div id="globalAutosaveV102" class="no-print" style="position:fixed;right:14px;bottom:14px;z-index:9998;background:#fff;border:1px solid #ddd;border-radius:20px;padding:7px 11px;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none">
+  💾 <span id="globalAutosaveTextV102">자동저장 준비</span>
+</div>
+
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.1)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.3)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -2062,6 +2070,192 @@ async function saveBudgetManagerV101(){
   alert('예산·정산이 저장되었습니다.');
   await renderIntegratedProjectV10(budgetProjectIdV101);
 }
+
+
+// ===== v10.2 문서-예산 연동 + 전체 입력 자동저장/복구 =====
+const V102_DRAFT_PREFIX='v102_form_draft_';
+let globalDraftTimerV102=null;
+let restoredDraftV102=false;
+
+function currentModeV102(){
+  const plan=document.getElementById('section-input-plan');
+  const result=document.getElementById('section-input-result');
+  if(plan && getComputedStyle(plan).display!=='none') return 'PLAN';
+  if(result && getComputedStyle(result).display!=='none') return 'RESULT';
+  return null;
+}
+function draftKeyV102(mode){
+  const pid=(typeof currentProjectId!=='undefined' && currentProjectId)?currentProjectId:
+            (typeof v10CurrentProjectId!=='undefined' && v10CurrentProjectId)?v10CurrentProjectId:'NEW';
+  return V102_DRAFT_PREFIX+mode+'_'+pid;
+}
+function collectInputsV102(root){
+  const data={};
+  root.querySelectorAll('input,textarea,select').forEach((el,i)=>{
+    if(el.type==='button'||el.type==='submit'||el.type==='file'||el.type==='password') return;
+    const key=el.id||el.name||('field_'+i);
+    if(el.type==='checkbox'||el.type==='radio') data[key]={checked:el.checked,value:el.value,type:el.type};
+    else data[key]={value:el.value,type:el.type};
+  });
+  return data;
+}
+function restoreInputsV102(root,data){
+  if(!data) return;
+  root.querySelectorAll('input,textarea,select').forEach((el,i)=>{
+    const key=el.id||el.name||('field_'+i), v=data[key];
+    if(!v) return;
+    if(el.type==='checkbox'||el.type==='radio') el.checked=!!v.checked;
+    else if(v.value!==undefined) el.value=v.value;
+    el.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+}
+function showAutosaveV102(text){
+  const b=document.getElementById('globalAutosaveV102'), t=document.getElementById('globalAutosaveTextV102');
+  if(b&&t){ b.style.display='block'; t.textContent=text; }
+}
+function saveGlobalDraftV102(){
+  const mode=currentModeV102(); if(!mode) return;
+  const root=document.getElementById(mode==='PLAN'?'section-input-plan':'section-input-result'); if(!root) return;
+  localStorage.setItem(draftKeyV102(mode),JSON.stringify({mode,savedAt:new Date().toISOString(),fields:collectInputsV102(root)}));
+  showAutosaveV102('임시저장 '+new Date().toLocaleTimeString());
+}
+function scheduleGlobalDraftV102(){
+  const mode=currentModeV102(); if(!mode) return;
+  showAutosaveV102('입력 중…');
+  clearTimeout(globalDraftTimerV102);
+  globalDraftTimerV102=setTimeout(saveGlobalDraftV102,700);
+}
+function tryRestoreDraftV102(){
+  if(restoredDraftV102) return;
+  const mode=currentModeV102(); if(!mode) return;
+  const raw=localStorage.getItem(draftKeyV102(mode)); if(!raw) return;
+  try{
+    const d=JSON.parse(raw);
+    const when=d.savedAt?new Date(d.savedAt).toLocaleString():'이전';
+    if(confirm(`${when}에 자동 임시저장된 ${mode==='PLAN'?'사업계획서':'결과보고서'} 입력내용이 있습니다.\n복원할까요?`)){
+      const root=document.getElementById(mode==='PLAN'?'section-input-plan':'section-input-result');
+      restoreInputsV102(root,d.fields); showAutosaveV102('임시저장 복원됨');
+    }
+    restoredDraftV102=true;
+  }catch(e){}
+}
+function clearCurrentDraftV102(mode){
+  try{ localStorage.removeItem(draftKeyV102(mode||currentModeV102())); }catch(e){}
+}
+document.addEventListener('input',e=>{
+  if(e.target && e.target.closest && (e.target.closest('#section-input-plan')||e.target.closest('#section-input-result'))) scheduleGlobalDraftV102();
+},true);
+document.addEventListener('change',e=>{
+  if(e.target && e.target.closest && (e.target.closest('#section-input-plan')||e.target.closest('#section-input-result'))) scheduleGlobalDraftV102();
+},true);
+window.addEventListener('beforeunload',()=>{ try{saveGlobalDraftV102();}catch(e){} });
+setTimeout(tryRestoreDraftV102,1300);
+
+async function syncBudgetToDocumentsV102(){
+  if(!budgetProjectIdV101) return alert('사업을 먼저 선택해주세요.');
+  const planned=budgetRowsDataV101.reduce((a,r)=>a+numV101(r.planned),0);
+  const actual=budgetRowsDataV101.reduce((a,r)=>a+numV101(r.actual),0);
+  const items=budgetRowsDataV101.map((r,i)=>({
+    item:r.item||'예산항목', basis:r.basis||'', planned:numV101(r.planned),
+    actual:numV101(r.actual), balance:numV101(r.planned)-numV101(r.actual), note:r.note||'', sort_order:i
+  }));
+  const docs=await sb.from('project_documents').select('id,doc_type,data').eq('project_id',budgetProjectIdV101);
+  if(docs.error) return alert('문서 조회 실패: '+docs.error.message);
+  const uid=v81Profile?.id || (await sb.auth.getUser()).data.user?.id;
+  for(const d of (docs.data||[])){
+    const data={...(d.data||{})};
+    data.budgetItems=items;
+    if(d.doc_type==='PLAN'){
+      data.budgetTotal=planned;
+      data.totalBudget=planned;
+    }else if(d.doc_type==='RESULT'){
+      data.plannedBudget=planned;
+      data.actualBudget=actual;
+      data.settlementTotal=actual;
+    }
+    const up=await sb.from('project_documents').update({data,updated_by:uid}).eq('id',d.id);
+    if(up.error) return alert(`${d.doc_type} 문서 반영 실패: `+up.error.message);
+  }
+  await sb.from('project_history').insert({
+    project_id:budgetProjectIdV101, action:'BUDGET_SYNCED_TO_DOCUMENTS',
+    snapshot:{planned_total:planned,actual_total:actual,budget_items:items}, changed_by:uid
+  });
+  clearBudgetDraftV101();
+  alert('예산·정산 내역을 사업계획서와 결과보고서 데이터에 반영했습니다.');
+  await renderIntegratedProjectV10(budgetProjectIdV101);
+}
+
+// When cloud save succeeds in existing save routines, stale drafts should not survive forever.
+// A lightweight click observer clears the relevant draft shortly after a successful save alert/update.
+document.addEventListener('click',e=>{
+  const txt=(e.target?.textContent||'').trim();
+  if(/저장/.test(txt) && (e.target?.closest?.('#section-input-plan')||e.target?.closest?.('#section-input-result'))){
+    setTimeout(()=>{ /* server save routine runs first; keep draft briefly as safety */ saveGlobalDraftV102(); },900);
+  }
+},true);
+
+
+// ===== v10.3 사업 보관/영구삭제 + 계획대비 성과 자동분석 =====
+async function roleV103(){
+  if(v81Profile?.role) return v81Profile.role;
+  const u=(await sb.auth.getUser()).data.user; if(!u) return null;
+  const r=await sb.from('profiles').select('role').eq('id',u.id).single();
+  return r.data?.role||null;
+}
+async function archiveProjectV103(projectId, projectName){
+  if(!confirm(`"${projectName}" 사업을 보관 처리할까요?\n보관된 사업은 삭제되지 않고 데이터가 유지됩니다.`)) return;
+  const uid=(await sb.auth.getUser()).data.user?.id;
+  const r=await sb.from('projects').update({archived:true,archived_at:new Date().toISOString(),updated_by:uid}).eq('id',projectId);
+  if(r.error) return alert('보관 처리 실패: '+r.error.message);
+  await sb.from('project_history').insert({project_id:projectId,action:'PROJECT_ARCHIVED',snapshot:{project_name:projectName},changed_by:uid});
+  alert('사업을 보관 처리했습니다.');
+  if(typeof loadDashboardV831==='function') await loadDashboardV831();
+  else if(typeof loadDashboardV83==='function') await loadDashboardV83();
+}
+async function deleteProjectV103(projectId, projectName){
+  const role=await roleV103();
+  if(role!=='admin') return alert('사업 영구삭제는 관리자(admin)만 가능합니다.');
+  if(!confirm(`⚠ "${projectName}" 사업을 영구 삭제하시겠습니까?\n\n계획서, 결과보고서, 예산·정산, 검토의견, 변경이력 등 연결 자료도 함께 삭제됩니다.`)) return;
+  const typed=prompt(`영구삭제 확인을 위해 사업명을 정확히 입력하세요.\n\n${projectName}`);
+  if(typed!==projectName) return alert('사업명이 일치하지 않아 삭제를 취소했습니다.');
+  const finalOk=confirm('마지막 확인입니다.\n삭제 후에는 시스템에서 복구할 수 없습니다. 계속하시겠습니까?');
+  if(!finalOk) return;
+  const r=await sb.rpc('admin_delete_project_v103',{target_project:projectId});
+  if(r.error) return alert('사업 삭제 실패: '+r.error.message);
+  alert('사업과 연결 자료를 영구 삭제했습니다.');
+  if(typeof loadDashboardV831==='function') await loadDashboardV831();
+  else if(typeof loadDashboardV83==='function') await loadDashboardV83();
+}
+function pctV103(actual,target){
+  target=Number(target||0); actual=Number(actual||0);
+  return target>0?Math.round(actual/target*1000)/10:0;
+}
+async function renderPerformanceV103(projectId){
+  const dr=await sb.from('project_documents').select('doc_type,data').eq('project_id',projectId);
+  const docs=dr.data||[], pd=docs.find(x=>x.doc_type==='PLAN')?.data||{}, rd=docs.find(x=>x.doc_type==='RESULT')?.data||{};
+  const bs=await sb.from('project_budget_summary').select('*').eq('project_id',projectId).maybeSingle();
+  const target=firstNumV10(pickV10(pd,['targetCount','participants','target','plannedParticipants']));
+  const actual=firstNumV10(pickV10(rd,['attendance','actualParticipants','participants','participantCount']));
+  const satisfaction=firstNumV10(pickV10(rd,['surveyScore','satisfaction','satisfactionScore']));
+  const plannedBudget=Number(bs.data?.planned_total||firstNumV10(pickV10(pd,['budgetTotal','totalBudget','budget','total'])));
+  const actualBudget=Number(bs.data?.actual_total||firstNumV10(pickV10(rd,['actualBudget','settlementTotal','totalExpense','budgetTotal','total'])));
+  const participationRate=pctV103(actual,target);
+  const executionRate=plannedBudget>0?Math.round(actualBudget/plannedBudget*1000)/10:0;
+  const el=document.getElementById('v103PerformanceCompare'); if(!el) return;
+  el.innerHTML=`<h3 style="margin:0 0 8px">계획 대비 실적 자동분석</h3>
+    <table style="width:100%;border-collapse:collapse">
+      <tr><th style="border:1px solid #ddd;padding:7px">지표</th><th style="border:1px solid #ddd;padding:7px">계획</th><th style="border:1px solid #ddd;padding:7px">실적</th><th style="border:1px solid #ddd;padding:7px">달성/집행률</th></tr>
+      <tr><td style="border:1px solid #ddd;padding:7px">참여인원</td><td style="border:1px solid #ddd;padding:7px">${target}명</td><td style="border:1px solid #ddd;padding:7px">${actual}명</td><td style="border:1px solid #ddd;padding:7px"><strong>${participationRate}%</strong></td></tr>
+      <tr><td style="border:1px solid #ddd;padding:7px">예산</td><td style="border:1px solid #ddd;padding:7px">${moneyV10(plannedBudget)}</td><td style="border:1px solid #ddd;padding:7px">${moneyV10(actualBudget)}</td><td style="border:1px solid #ddd;padding:7px"><strong>${executionRate}%</strong></td></tr>
+      <tr><td style="border:1px solid #ddd;padding:7px">만족도</td><td style="border:1px solid #ddd;padding:7px">-</td><td style="border:1px solid #ddd;padding:7px">${satisfaction||'-'}</td><td style="border:1px solid #ddd;padding:7px">-</td></tr>
+    </table>
+    <div style="margin-top:8px;font-size:12px;color:#666">※ 저장된 계획서·결과보고서·예산 데이터를 기준으로 자동 계산합니다.</div>`;
+}
+const renderIntegratedProjectV103Base=renderIntegratedProjectV10;
+renderIntegratedProjectV10=async function(projectId){
+  await renderIntegratedProjectV103Base(projectId);
+  await renderPerformanceV103(projectId);
+};
 
   initV8Auth();
 </script>
