@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4.3 LINK FIX)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.5)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -218,6 +218,8 @@
 
     <div id="v10tab-basic" class="v10-project-tab">
       <div id="v10BasicSummary"></div>
+      <div id="canonicalStatusV105" style="margin-top:10px"></div>
+      <div style="margin-top:8px"><button class="btn btn-result" onclick="diagnoseAndMigrateV105(v10CurrentProjectId)">🔧 사업 데이터 진단·동기화</button></div>
     </div>
     <div id="v10tab-plan" class="v10-project-tab" style="display:none;">
       <div id="detailPlanV85"></div>
@@ -282,7 +284,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.4.3 LINK FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.5)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -1935,63 +1937,49 @@ function arrayV10(v){ return Array.isArray(v)?v:[]; }
 
 async function renderIntegratedProjectV10(projectId){
   v10CurrentProjectId=projectId;
-  const pr=await sb.from('projects').select('*').eq('id',projectId).single();
-  if(pr.error) return;
+  const pr=await sb.from('projects').select('*').eq('id',projectId).single(); if(pr.error)return;
   const p=pr.data;
   const dr=await sb.from('project_documents').select('*').eq('project_id',projectId);
   const docs=dr.data||[], plan=docs.find(x=>x.doc_type==='PLAN'), result=docs.find(x=>x.doc_type==='RESULT');
   const pd=plan?.data||{}, rd=result?.data||{};
+  const rowMap=(rows)=>{const m={};(Array.isArray(rows)?rows:[]).forEach(r=>{if(Array.isArray(r)&&r[0])m[String(r[0]).trim()]=r[1]??'';});return m;};
+  const pm=rowMap(pd.overview), rm=rowMap(rd.overview);
+  const gv=(m,ks)=>{for(const k of ks){if(m[k]!==undefined&&m[k]!==null&&m[k]!=='')return m[k];}return '';};
+  const first=(...vs)=>vs.find(v=>v!==undefined&&v!==null&&String(v).trim()!=='')||'';
 
-  // Current app stores overview/program/budget mainly as row arrays.
-  const rowMap=(rows)=>{const m={}; (Array.isArray(rows)?rows:[]).forEach(r=>{if(Array.isArray(r)&&r[0])m[String(r[0]).trim()]=r[1]??'';}); return m;};
-  const pom=rowMap(pd.overview), rom=rowMap(rd.overview);
-  const getRow=(m,keys)=>{for(const k of keys){if(m[k]!==undefined&&m[k]!==null&&m[k]!=='')return m[k];}return '';};
-  const staff=pd.staff||rd.staff||'-';
-  const purpose=getRow(pom,['사업목적','목적','추진목적'])||'-';
-  const date=getRow(pom,['사업일시','운영일시','일시','기간','운영기간']);
-  const loc=getRow(pom,['사업장소','장소']);
-  const period=[date,loc].filter(Boolean).join(' / ')||'-';
-  const targetText=getRow(pom,['참여대상','대상','사업대상'])||'';
+  // PLAN source first, RESULT inherited fields second.
+  const staff=first(pd.staff,rd.staff,'-');
+  const purpose=first(gv(pm,['사업목적','목적','추진목적']),rd.purpose,gv(rm,['사업목적','목적','추진목적']),'-');
+  const planDate=gv(pm,['사업일시','운영일시','일시','기간','운영기간']);
+  const planLoc=gv(pm,['사업장소','장소']);
+  const resultDateLoc=first(rd.dateLoc,rd.r_dateLoc,gv(rm,['사업일시','운영일시','일시','기간','운영기간']));
+  const period=first([planDate,planLoc].filter(Boolean).join(' / '),resultDateLoc,'-');
+  const targetText=first(gv(pm,['참여대상','대상','사업대상']),rd.target,rd.r_target,gv(rm,['참여대상','대상','사업대상']));
   const plannedPeople=firstNumV10(targetText||pd.targetCount||pd.participants||pd.target||pd.plannedParticipants);
-  const actualPeople=firstNumV10(rd.attendance||rd.actualParticipants||rd.participants||rd.participantCount||getRow(rom,['참여인원','실제참여','참석인원']));
-  const satRaw=rd.surveyScore||rd.satisfaction||rd.satisfactionScore||getRow(rom,['만족도','평균만족도']);
-  const sat=firstNumV10(satRaw);
+  const actualPeople=firstNumV10(rd.attendance||rd.actualParticipants||rd.participants||rd.participantCount||gv(rm,['참여인원','실제참여','참석인원']));
+  const sat=firstNumV10(rd.surveyScore||rd.satisfaction||rd.satisfactionScore||gv(rm,['만족도','평균만족도']));
 
-  document.getElementById('v10BasicSummary').innerHTML=`
-    <table style="width:100%;border-collapse:collapse;background:#fff">
-      <tr><th style="border:1px solid #ddd;padding:8px;width:140px">사업명</th><td style="border:1px solid #ddd;padding:8px">${esc(p.project_name||'-')}</td></tr>
-      <tr><th style="border:1px solid #ddd;padding:8px">담당자</th><td style="border:1px solid #ddd;padding:8px">${esc(String(staff))}</td></tr>
-      <tr><th style="border:1px solid #ddd;padding:8px">운영기간/장소</th><td style="border:1px solid #ddd;padding:8px">${esc(String(period))}</td></tr>
-      <tr><th style="border:1px solid #ddd;padding:8px">목적</th><td style="border:1px solid #ddd;padding:8px">${esc(String(purpose))}</td></tr>
-    </table>`;
+  document.getElementById('v10BasicSummary').innerHTML=`<table style="width:100%;border-collapse:collapse;background:#fff">
+  <tr><th style="border:1px solid #ddd;padding:8px;width:140px">사업명</th><td style="border:1px solid #ddd;padding:8px">${esc(p.project_name||'-')}</td></tr>
+  <tr><th style="border:1px solid #ddd;padding:8px">담당자</th><td style="border:1px solid #ddd;padding:8px">${esc(String(staff))}</td></tr>
+  <tr><th style="border:1px solid #ddd;padding:8px">운영기간/장소</th><td style="border:1px solid #ddd;padding:8px">${esc(String(period))}</td></tr>
+  <tr><th style="border:1px solid #ddd;padding:8px">목적</th><td style="border:1px solid #ddd;padding:8px">${esc(String(purpose))}</td></tr></table>
+  <div style="font-size:11px;color:#666;margin-top:6px">연동: 계획서 ${plan?'✅':'❌'} / 결과보고서 ${result?'✅':'❌'} / 동일 사업 ID ${plan&&result&&plan.project_id===result.project_id?'✅':'-'}</div>`;
 
-  // Prefer normalized budget table; fall back to PLAN row-array budget.
   const bs=await sb.from('project_budget_summary').select('*').eq('project_id',projectId).maybeSingle();
   const planRows=normalizePlanBudgetV1031(pd);
-  const hasBudgetSummary=!!bs.data && Number(bs.data.planned_total||0)>0;
-  const planBudget=hasBudgetSummary?Number(bs.data.planned_total||0):Number(pd.budgetTotal||pd.totalBudget||planRows.total||0);
+  const planBudget=(bs.data&&Number(bs.data.planned_total||0)>0)?Number(bs.data.planned_total):Number(pd.budgetTotal||pd.totalBudget||planRows.total||0);
   const actualBudget=bs.data?Number(bs.data.actual_total||0):Number(rd.actualBudget||rd.settlementTotal||rd.totalExpense||0);
-  const rate=planBudget>0?Math.round(actualBudget/planBudget*1000)/10:0, remain=planBudget-actualBudget;
-  document.getElementById('v10BudgetBox').innerHTML=`
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px">
-      ${[['계획예산',moneyV10(planBudget)],['실제집행',moneyV10(actualBudget)],['잔액',moneyV10(remain)],['집행률',rate+'%']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:13px"><div style="font-size:12px;color:#666">${x[0]}</div><strong style="font-size:20px">${x[1]}</strong></div>`).join('')}
-    </div>`;
+  const rate=planBudget>0?Math.round(actualBudget/planBudget*1000)/10:0,remain=planBudget-actualBudget;
+  document.getElementById('v10BudgetBox').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px">${[['계획예산',moneyV10(planBudget)],['실제집행',moneyV10(actualBudget)],['잔액',moneyV10(remain)],['집행률',rate+'%']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:13px"><div style="font-size:12px;color:#666">${x[0]}</div><strong style="font-size:20px">${x[1]}</strong></div>`).join('')}</div>`;
 
   const achievement=plannedPeople>0?Math.round(actualPeople/plannedPeople*1000)/10:0;
-  document.getElementById('v10PerformanceBox').innerHTML=`
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px">
-      ${[['계획인원',plannedPeople+'명'],['실제참여',actualPeople+'명'],['참여달성률',achievement+'%'],['만족도',sat?String(sat):'-']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:12px"><div style="font-size:12px;color:#666">${x[0]}</div><strong>${esc(x[1])}</strong></div>`).join('')}
-    </div>`;
+  document.getElementById('v10PerformanceBox').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px">${[['계획인원',plannedPeople+'명'],['실제참여',actualPeople+'명'],['참여달성률',achievement+'%'],['만족도',sat?String(sat):'-']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:12px"><div style="font-size:12px;color:#666">${x[0]}</div><strong>${esc(x[1])}</strong></div>`).join('')}</div>`;
 
   const prog=Array.isArray(pd.programs)?pd.programs:[];
-  document.getElementById('v10ScheduleBox').innerHTML=prog.length?
-    `<table style="width:100%;border-collapse:collapse"><tr><th style="border:1px solid #ddd;padding:7px">프로그램</th><th style="border:1px solid #ddd;padding:7px">계획내용</th></tr>${prog.map(x=>`<tr><td style="border:1px solid #ddd;padding:7px">${esc(Array.isArray(x)?(x[0]||''):String(x))}</td><td style="border:1px solid #ddd;padding:7px">${esc(Array.isArray(x)?(x[1]||''):'')}</td></tr>`).join('')}</table>`:
-    '<div style="color:#666">저장된 프로그램 정보가 없습니다.</div>';
-
+  document.getElementById('v10ScheduleBox').innerHTML=prog.length?`<table style="width:100%;border-collapse:collapse"><tr><th style="border:1px solid #ddd;padding:7px">프로그램</th><th style="border:1px solid #ddd;padding:7px">계획내용</th></tr>${prog.map(x=>`<tr><td style="border:1px solid #ddd;padding:7px">${esc(Array.isArray(x)?(x[0]||''):String(x))}</td><td style="border:1px solid #ddd;padding:7px">${esc(Array.isArray(x)?(x[1]||''):'')}</td></tr>`).join('')}</table>`:'<div style="color:#666">저장된 프로그램 정보가 없습니다.</div>';
   const rr=await sb.from('project_reviews').select('review_action,comment,created_at').eq('project_id',projectId).order('created_at',{ascending:false}).limit(10);
-  document.getElementById('v10ReviewBox').innerHTML=(rr.data||[]).length?
-    rr.data.map(x=>`<div style="padding:8px;border-bottom:1px solid #eee"><small>${new Date(x.created_at).toLocaleString()}</small><br>${esc(x.comment||x.review_action)}</div>`).join(''):
-    '<div style="color:#666">등록된 검토 의견이 없습니다.</div>';
+  document.getElementById('v10ReviewBox').innerHTML=(rr.data||[]).length?rr.data.map(x=>`<div style="padding:8px;border-bottom:1px solid #eee"><small>${new Date(x.created_at).toLocaleString()}</small><br>${esc(x.comment||x.review_action)}</div>`).join(''):'<div style="color:#666">등록된 검토 의견이 없습니다.</div>';
 }
 
 // Extend the existing project-detail entry point without changing stored data.
@@ -2471,6 +2459,139 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(warning){warning.id='resultPlanLinkNoticeV1043';}
   }
 });
+
+
+// v10.4.4: repair existing RESULT linkage/data in-place using the PLAN of the same project.
+async function repairPlanResultDataV1044(projectId){
+  try{
+    const q=await sb.from('project_documents').select('id,doc_type,data').eq('project_id',projectId);
+    if(q.error)throw q.error;
+    const plan=(q.data||[]).find(x=>x.doc_type==='PLAN'),result=(q.data||[]).find(x=>x.doc_type==='RESULT');
+    if(!plan)return alert('이 사업에는 저장된 계획서가 없습니다.');
+    if(!result)return alert('아직 결과보고서가 없습니다. [결과보고서 작성]을 먼저 실행하세요.');
+    const pd=plan.data||{},rd={...(result.data||{})};
+    const om={};(Array.isArray(pd.overview)?pd.overview:[]).forEach(a=>{if(Array.isArray(a)&&a[0])om[a[0]]=a[1]||'';});
+    rd.orgName=rd.orgName||pd.orgName||'';
+    rd.staff=rd.staff||pd.staff||'';
+    rd.reviewer=rd.reviewer||pd.reviewer||'';
+    rd.approver=rd.approver||pd.approver||'';
+    rd.projName=rd.projName||projectNameFromPlan(pd)||'';
+    rd.dateLoc=rd.dateLoc||[om['사업일시']||om['운영일시']||om['일시']||'',om['사업장소']||om['장소']||''].filter(Boolean).join(' / ');
+    rd.target=rd.target||om['참여대상']||om['대상']||'';
+    rd.content=rd.content||(Array.isArray(pd.programs)?pd.programs:[]).map(a=>Array.isArray(a)&&a[0]?`${a[0]}: ${a[1]||''}`:'').filter(Boolean).join('\n');
+    rd.budgetSource=rd.budgetSource||pd.budgetSource||''; rd.budgetCategory=rd.budgetCategory||pd.budgetCategory||'';
+    rd.linkedPlanDocumentId=plan.id; rd.linkedProjectId=projectId;
+    const u=(await sb.auth.getUser()).data.user;
+    const up=await sb.from('project_documents').update({data:rd,updated_by:u?.id}).eq('id',result.id);
+    if(up.error)throw up.error;
+    await sb.from('project_history').insert({project_id:projectId,document_id:result.id,action:'REPAIR_PLAN_RESULT_LINK',snapshot:{linked_plan_document_id:plan.id},changed_by:u?.id});
+    alert('계획서↔결과보고서 연결 데이터를 복구했습니다.');
+    await renderIntegratedProjectV10(projectId);
+  }catch(e){console.error(e);alert('연동 복구 오류: '+e.message);}
+}
+
+
+const openProjectDetailV1044Base=openProjectDetailV85;
+openProjectDetailV85=async function(projectId){
+  await openProjectDetailV1044Base(projectId);
+  const box=document.getElementById('detailActionsV85');
+  if(box && !document.getElementById('repairLinkBtnV1044')){
+    const b=document.createElement('button'); b.id='repairLinkBtnV1044'; b.className='btn btn-result';
+    b.textContent='🔗 계획↔결과 연동 복구'; b.onclick=()=>repairPlanResultDataV1044(projectId); box.appendChild(b);
+  }
+};
+
+
+// ===== v10.5 표준 사업 데이터(Single Source of Truth) =====
+function rowsMapV105(rows){
+  const m={}; (Array.isArray(rows)?rows:[]).forEach(r=>{if(Array.isArray(r)&&r[0])m[String(r[0]).trim()]=r[1]??'';}); return m;
+}
+function firstV105(...vals){ return vals.find(v=>v!==undefined&&v!==null&&String(v).trim()!=='') ?? ''; }
+function numberV105(v){ return firstNumV10(v); }
+function extractCanonicalV105(pd={},rd={},budgetSummary=null){
+  const pm=rowsMapV105(pd.overview), rm=rowsMapV105(rd.overview);
+  const gv=(m,ks)=>{for(const k of ks)if(m[k]!==undefined&&m[k]!==null&&m[k]!=='')return m[k];return '';};
+  const planBudgetRows=normalizePlanBudgetV1031(pd);
+  const plannedBudget=(budgetSummary&&Number(budgetSummary.planned_total||0)>0)
+    ?Number(budgetSummary.planned_total):Number(pd.budgetTotal||pd.totalBudget||planBudgetRows.total||0);
+  const actualBudget=budgetSummary?Number(budgetSummary.actual_total||0):Number(rd.actualBudget||rd.settlementTotal||rd.totalExpense||0);
+  return {
+    purpose:firstV105(gv(pm,['사업목적','목적','추진목적']),pd.purpose,rd.purpose,gv(rm,['사업목적','목적','추진목적'])),
+    operation_date:firstV105(gv(pm,['사업일시','운영일시','일시','기간','운영기간']),pd.operationDate),
+    location:firstV105(gv(pm,['사업장소','장소']),pd.location),
+    planned_participants:numberV105(firstV105(gv(pm,['참여대상','대상','사업대상']),pd.targetCount,pd.plannedParticipants,pd.target)),
+    actual_participants:numberV105(firstV105(rd.attendance,rd.actualParticipants,rd.participantCount,gv(rm,['참여인원','실제참여','참석인원']))),
+    planned_budget:plannedBudget,
+    actual_budget:actualBudget,
+    satisfaction_score:Number(firstV105(rd.surveyScore,rd.satisfactionScore,rd.satisfaction,gv(rm,['만족도','평균만족도']))||0),
+    manager_name:firstV105(pd.staff,rd.staff),
+    source_version:'v10.5'
+  };
+}
+async function getCanonicalV105(projectId){
+  const r=await sb.from('project_metrics').select('*').eq('project_id',projectId).maybeSingle();
+  if(r.error) throw r.error; return r.data;
+}
+async function migrateCanonicalV105(projectId,silent=false){
+  const d=await sb.from('project_documents').select('id,doc_type,data').eq('project_id',projectId);
+  if(d.error)throw d.error;
+  const pd=(d.data||[]).find(x=>x.doc_type==='PLAN')?.data||{}, rd=(d.data||[]).find(x=>x.doc_type==='RESULT')?.data||{};
+  const bs=await sb.from('project_budget_summary').select('*').eq('project_id',projectId).maybeSingle();
+  const c=extractCanonicalV105(pd,rd,bs.data);
+  const u=(await sb.auth.getUser()).data.user;
+  const up=await sb.from('project_metrics').upsert({
+    project_id:projectId,...c,updated_by:u?.id,updated_at:new Date().toISOString()
+  },{onConflict:'project_id'}).select().single();
+  if(up.error)throw up.error;
+  await sb.from('project_history').insert({project_id:projectId,action:'CANONICAL_DATA_SYNC',snapshot:c,changed_by:u?.id});
+  if(!silent) alert('사업 데이터를 표준 구조로 진단·동기화했습니다.');
+  return up.data;
+}
+function statusCardV105(label,value,ok){
+  return `<div style="border:1px solid #ddd;border-radius:7px;padding:8px"><small>${label}</small><br><strong>${ok?'✅':'⚠'} ${esc(String(value||'미확인'))}</strong></div>`;
+}
+async function diagnoseAndMigrateV105(projectId){
+  try{
+    const c=await migrateCanonicalV105(projectId,false);
+    renderCanonicalStatusV105(c);
+    await renderIntegratedProjectV105(projectId,c);
+  }catch(e){console.error(e);alert('데이터 진단 오류: '+e.message);}
+}
+function renderCanonicalStatusV105(c){
+  const el=document.getElementById('canonicalStatusV105'); if(!el)return;
+  el.innerHTML=`<div style="font-size:12px;font-weight:700;margin-bottom:5px">표준 데이터 연결상태</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:6px">
+  ${statusCardV105('계획인원',c?.planned_participants?c.planned_participants+'명':'',!!c?.planned_participants)}
+  ${statusCardV105('실제참여',c?.actual_participants?c.actual_participants+'명':'',!!c?.actual_participants)}
+  ${statusCardV105('계획예산',c?.planned_budget?moneyV10(c.planned_budget):'',!!c?.planned_budget)}
+  ${statusCardV105('실제집행',c?.actual_budget?moneyV10(c.actual_budget):'',!!c?.actual_budget)}
+  ${statusCardV105('만족도',c?.satisfaction_score||'',!!c?.satisfaction_score)}
+  </div>`;
+}
+async function renderIntegratedProjectV105(projectId,c){
+  c=c||await getCanonicalV105(projectId);
+  if(!c){ c=await migrateCanonicalV105(projectId,true); }
+  renderCanonicalStatusV105(c);
+  const pr=await sb.from('projects').select('project_name').eq('id',projectId).single();
+  const basic=document.getElementById('v10BasicSummary');
+  if(basic) basic.innerHTML=`<table style="width:100%;border-collapse:collapse;background:#fff">
+    <tr><th style="border:1px solid #ddd;padding:8px;width:140px">사업명</th><td style="border:1px solid #ddd;padding:8px">${esc(pr.data?.project_name||'-')}</td></tr>
+    <tr><th style="border:1px solid #ddd;padding:8px">담당자</th><td style="border:1px solid #ddd;padding:8px">${esc(c.manager_name||'-')}</td></tr>
+    <tr><th style="border:1px solid #ddd;padding:8px">운영일시</th><td style="border:1px solid #ddd;padding:8px">${esc(c.operation_date||'-')}</td></tr>
+    <tr><th style="border:1px solid #ddd;padding:8px">장소</th><td style="border:1px solid #ddd;padding:8px">${esc(c.location||'-')}</td></tr>
+    <tr><th style="border:1px solid #ddd;padding:8px">목적</th><td style="border:1px solid #ddd;padding:8px">${esc(c.purpose||'-')}</td></tr></table>`;
+  const pb=Number(c.planned_budget||0),ab=Number(c.actual_budget||0),rem=pb-ab,br=pb?Math.round(ab/pb*1000)/10:0;
+  const bb=document.getElementById('v10BudgetBox'); if(bb)bb.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px">${[['계획예산',moneyV10(pb)],['실제집행',moneyV10(ab)],['잔액',moneyV10(rem)],['집행률',br+'%']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:13px"><small>${x[0]}</small><br><strong style="font-size:20px">${x[1]}</strong></div>`).join('')}</div>`;
+  const pp=Number(c.planned_participants||0),ap=Number(c.actual_participants||0),ar=pp?Math.round(ap/pp*1000)/10:0;
+  const pf=document.getElementById('v10PerformanceBox'); if(pf)pf.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px">${[['계획인원',pp+'명'],['실제참여',ap+'명'],['참여달성률',ar+'%'],['만족도',c.satisfaction_score||'-']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:12px"><small>${x[0]}</small><br><strong>${x[1]}</strong></div>`).join('')}</div>`;
+  const cmp=document.getElementById('v103PerformanceCompare'); if(cmp)cmp.innerHTML=`<h3>계획 대비 실적 자동분석</h3><table style="width:100%;border-collapse:collapse"><tr><th style="border:1px solid #ddd;padding:7px">지표</th><th style="border:1px solid #ddd;padding:7px">계획</th><th style="border:1px solid #ddd;padding:7px">실적</th><th style="border:1px solid #ddd;padding:7px">달성/집행률</th></tr><tr><td style="border:1px solid #ddd;padding:7px">참여인원</td><td style="border:1px solid #ddd;padding:7px">${pp}명</td><td style="border:1px solid #ddd;padding:7px">${ap}명</td><td style="border:1px solid #ddd;padding:7px">${ar}%</td></tr><tr><td style="border:1px solid #ddd;padding:7px">예산</td><td style="border:1px solid #ddd;padding:7px">${moneyV10(pb)}</td><td style="border:1px solid #ddd;padding:7px">${moneyV10(ab)}</td><td style="border:1px solid #ddd;padding:7px">${br}%</td></tr><tr><td style="border:1px solid #ddd;padding:7px">만족도</td><td style="border:1px solid #ddd;padding:7px">-</td><td style="border:1px solid #ddd;padding:7px">${c.satisfaction_score||'-'}</td><td style="border:1px solid #ddd;padding:7px">-</td></tr></table>`;
+}
+// After legacy detail rendering, overwrite core summary with canonical data.
+const renderIntegratedProjectV105Base=renderIntegratedProjectV10;
+renderIntegratedProjectV10=async function(projectId){
+  await renderIntegratedProjectV105Base(projectId);
+  try{await renderIntegratedProjectV105(projectId);}catch(e){console.error('v10.5 canonical render',e);}
+};
 
   initV8Auth();
 </script>
