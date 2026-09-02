@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.8.2 DOCUMENT RENDER FIX)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.8.4 TAB CONTENT FIX)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -284,7 +284,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.8.2 DOCUMENT RENDER FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.8.4 TAB CONTENT FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -3235,6 +3235,153 @@ function refreshPlanOutputV1082(){
 document.addEventListener('click',e=>{
  const b=e.target.closest('button'); if(!b)return;
  if(/사업계획서.*통합 생성|계획서.*생성/.test((b.textContent||'').replace(/\s+/g,' '))) refreshPlanOutputV1082();
+},true);
+
+
+// ===== v10.8.3: 구형 I. 사업 개요 입력영역 DOM 제거 =====
+// 표준폼은 유지하고, 구형 .p-ov-row 영역만 실제 화면 DOM에서 제거한다.
+// II. 주요 프로그램 및 세부일정 / III. 소요 예산(안) 및 재원은 건드리지 않는다.
+function removeLegacyPlanOverviewV1083(){
+ const sec=document.getElementById('section-input-plan');
+ const standard=document.getElementById('standardPlanV106');
+ if(!sec||!standard)return;
+
+ const legacyRows=[...sec.querySelectorAll('.p-ov-row')].filter(r=>!r.closest('#standardPlanV106'));
+ if(!legacyRows.length)return;
+
+ // 구형 행이 들어있는 표만 제거
+ const tables=[...new Set(legacyRows.map(r=>r.closest('table')).filter(Boolean))];
+ tables.forEach(t=>{
+   if(!t.closest('#standardPlanV106')) t.remove();
+ });
+ // 표가 아닌 형태의 잔여 행 제거
+ legacyRows.forEach(r=>{if(r.isConnected&&!r.closest('#standardPlanV106'))r.remove();});
+
+ // 구형 I. 사업 개요 제목 및 +항목추가 버튼 제거.
+ // 단, 표준폼 내부와 II/III 영역은 제외.
+ [...sec.querySelectorAll('h1,h2,h3,h4,.section-title,button')].forEach(el=>{
+   if(el.closest('#standardPlanV106'))return;
+   const t=(el.textContent||'').replace(/\s+/g,' ').trim();
+   if(/^Ⅰ?\s*\.?\s*사업 개요$/.test(t)||/^I\s*\.\s*사업 개요$/.test(t)){
+      el.remove();
+   } else if(/항목 추가/.test(t)){
+      // 구형 overview 표 바로 주변의 추가버튼만 제거
+      const parent=el.parentElement;
+      if(parent && !/주요 프로그램|소요 예산/.test(parent.textContent||'')) el.remove();
+   }
+ });
+}
+
+// 구형 overview가 없어도 기존 저장/생성기가 깨지지 않도록
+// getPlanData의 overview는 표준폼 데이터로 직접 생성한다.
+const getPlanDataV1083Base=getPlanData;
+getPlanData=function(){
+ const d=getPlanDataV1083Base();
+ const st=getStandardPlanV106();
+ d.standard=st;
+ d.projectName=st.project_name||'';
+ d.targetCount=Number(st.planned_participants||0);
+ d.plannedParticipants=Number(st.planned_participants||0);
+ d.overview=[
+  ['사업명',st.project_name||''],
+  ['추진배경 및 필요성',st.background||''],
+  ['사업목적',st.purpose||''],
+  ['기대효과',st.expected_effect||''],
+  ['운영일시',st.operation_date||''],
+  ['참여대상',st.target_group||''],
+  ['계획인원',Number(st.planned_participants||0)+'명'],
+  ['주요내용',st.content||''],
+  ['운영장소',st.location||''],
+  ['운영방법',st.operation_method||''],
+  ['평가·환류 계획',st.evaluation_plan||''],
+  ...(st.custom_fields||[]).map(x=>[x.label||'',x.value||'']).filter(x=>x[0])
+ ];
+ return d;
+};
+
+// 생성된 사업계획서 I. 사업 개요도 표준 데이터로 직접 렌더링
+function forceGeneratedOverviewFromStandardV1083(){
+ const rows=getPlanData().overview;
+ [...document.querySelectorAll('table')].forEach(table=>{
+   const txt=(table.textContent||'').replace(/\s+/g,' ');
+   const context=(table.parentElement?.textContent||'');
+   if(!context.includes('사업계획서'))return;
+   if(!(txt.includes('사업명')&&(txt.includes('사업목적')||txt.includes('참여대상'))))return;
+   if(/산출 근거|금액\(원\)|세부일정/.test(txt))return;
+   const body=table.querySelector('tbody')||table;
+   const head=table.querySelector('thead');
+   body.innerHTML=rows.map(([k,v])=>`<tr><th style="border:1px solid #222;padding:7px;width:25%">${esc(k)}</th><td style="border:1px solid #222;padding:7px;white-space:pre-wrap">${esc(String(v??''))}</td></tr>`).join('');
+   if(head)table.insertBefore(head,table.firstChild);
+ });
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ removeLegacyPlanOverviewV1083();
+ setTimeout(removeLegacyPlanOverviewV1083,100);
+});
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ const t=(b.textContent||'').replace(/\s+/g,' ');
+ if(/사업계획서.*통합 생성|계획서.*생성/.test(t)){
+   setTimeout(forceGeneratedOverviewFromStandardV1083,30);
+   setTimeout(forceGeneratedOverviewFromStandardV1083,180);
+ }
+},true);
+
+
+// ===== v10.8.4: I. 사업 개요 탭 콘텐츠를 표준폼으로 완전 교체 =====
+function replacePlanOverviewTabV1084(){
+ const sec=document.getElementById('section-input-plan');
+ const std=document.getElementById('standardPlanV106');
+ if(!sec||!std)return;
+
+ // 화면에 보이는 구형 사업개요 영역을 텍스트/구조 기준으로 찾아 제거
+ const legacyTables=[...sec.querySelectorAll('table')].filter(t=>{
+   if(t.closest('#standardPlanV106'))return false;
+   const tx=(t.textContent||'').replace(/\s+/g,' ');
+   return tx.includes('항목명') && tx.includes('내용') && tx.includes('삭제');
+ });
+ legacyTables.forEach(t=>{
+   // 해당 표와 같은 구형 overview 블록의 제목/추가버튼까지 제거
+   const wrap=t.closest('.tab-content,.card,.section,.panel') || t.parentElement;
+   if(wrap && !wrap.contains(std)){
+     const wt=(wrap.textContent||'').replace(/\s+/g,' ');
+     if(wt.includes('사업 개요') && !wt.includes('주요 프로그램 및 세부일정') && !wt.includes('소요 예산')){
+       wrap.remove(); return;
+     }
+   }
+   const prev=t.previousElementSibling;
+   if(prev && /사업 개요|항목 추가/.test(prev.textContent||'')) prev.remove();
+   const parent=t.parentElement;
+   t.remove();
+   if(parent){
+     [...parent.querySelectorAll('button')].forEach(b=>{
+       if(/항목 추가/.test(b.textContent||''))b.remove();
+     });
+     [...parent.querySelectorAll('h1,h2,h3,h4,.section-title')].forEach(h=>{
+       if(/사업 개요/.test(h.textContent||''))h.remove();
+     });
+   }
+ });
+
+ // 탭 I 클릭 시 표준폼이 보이도록, 표준폼을 첫 탭 영역 앞에 유지
+ std.style.display='';
+ std.hidden=false;
+}
+function watchLegacyOverviewV1084(){
+ replacePlanOverviewTabV1084();
+ const sec=document.getElementById('section-input-plan');
+ if(!sec)return;
+ new MutationObserver(()=>replacePlanOverviewTabV1084()).observe(sec,{childList:true,subtree:true});
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ setTimeout(watchLegacyOverviewV1084,0);
+ setTimeout(replacePlanOverviewTabV1084,250);
+ setTimeout(replacePlanOverviewTabV1084,800);
+});
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button,.tab-btn');if(!b)return;
+ const t=(b.textContent||'').replace(/\s+/g,' ');
+ if(/Ⅰ\.\s*사업 개요|I\.\s*사업 개요/.test(t)) setTimeout(replacePlanOverviewTabV1084,0);
 },true);
 
   initV8Auth();
