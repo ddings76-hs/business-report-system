@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.8.4 TAB CONTENT FIX)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.8.5 STANDARD SOURCE REBUILD)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -284,7 +284,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.8.4 TAB CONTENT FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.8.5 STANDARD SOURCE REBUILD)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -1232,7 +1232,191 @@
 
   function exportDoc(containerId, filename) {
     let header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>";
-    let sourceHTML = header + document.getElementById(containerId).innerHTML + "</body></html>";
+    let sourceHTML = header + document.getElementById(containerId).innerHTML + "
+<script>
+// ===== v10.8.5 STANDARD SOURCE REBUILD =====
+// 목표:
+// 1) I. 사업 개요 화면에는 표준 입력폼만 표시
+// 2) 저장/불러오기/문서생성 모두 standard 객체를 단일 원본으로 사용
+// 3) II. 프로그램/일정, III. 예산은 기존 입력 구조 유지
+
+(function(){
+  function esc1085(v){
+    if (typeof esc === 'function') return esc(String(v ?? ''));
+    return String(v ?? '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function getStd1085(){
+    if (typeof getStandardPlanV106 === 'function') return getStandardPlanV106() || {};
+    return {};
+  }
+
+  function stdRows1085(){
+    const x = getStd1085();
+    const rows = [
+      ['사업명', x.project_name],
+      ['추진배경 및 필요성', x.background],
+      ['사업목적', x.purpose],
+      ['기대효과', x.expected_effect],
+      ['운영일시', x.operation_date],
+      ['참여대상', x.target_group],
+      ['계획인원', (x.planned_participants === '' || x.planned_participants == null) ? '' : Number(x.planned_participants||0)+'명'],
+      ['주요내용', x.content],
+      ['운영장소', x.location],
+      ['운영방법', x.operation_method],
+      ['평가·환류 계획', x.evaluation_plan]
+    ];
+    (Array.isArray(x.custom_fields) ? x.custom_fields : []).forEach(v=>{
+      if(v && (v.label || v.value)) rows.push([v.label || '', v.value || '']);
+    });
+    return rows;
+  }
+
+  // 구형 I.사업개요만 제거. II/III 영역은 절대 건드리지 않음.
+  function purgeLegacyOverview1085(){
+    const sec = document.getElementById('section-input-plan');
+    const std = document.getElementById('standardPlanV106');
+    if(!sec || !std) return;
+
+    [...sec.querySelectorAll('table')].forEach(t=>{
+      if(t.closest('#standardPlanV106')) return;
+      const tx=(t.textContent||'').replace(/\s+/g,' ');
+      if(tx.includes('항목명') && tx.includes('내용') && tx.includes('삭제')){
+        t.remove();
+      }
+    });
+
+    [...sec.querySelectorAll('button')].forEach(b=>{
+      if(b.closest('#standardPlanV106')) return;
+      const tx=(b.textContent||'').replace(/\s+/g,' ').trim();
+      if(/^\+\s*항목 추가$/.test(tx)) b.remove();
+    });
+
+    [...sec.querySelectorAll('h1,h2,h3,h4,.section-title')].forEach(h=>{
+      if(h.closest('#standardPlanV106')) return;
+      const tx=(h.textContent||'').replace(/\s+/g,' ').trim();
+      if(/^Ⅰ\s*\.\s*사업 개요$/.test(tx) || /^I\s*\.\s*사업 개요$/.test(tx)) h.remove();
+    });
+
+    // 표준폼은 항상 표시
+    std.hidden=false;
+    std.style.display='block';
+  }
+
+  // 표준폼을 상단 탭 바로 아래, 기관/담당/검토/결재 영역보다 앞에 두지 않고
+  // 기존 입력 섹션 내에서 첫 번째 핵심 입력영역으로 보장.
+  function mountStandard1085(){
+    const sec=document.getElementById('section-input-plan');
+    const std=document.getElementById('standardPlanV106');
+    if(!sec || !std) return;
+    purgeLegacyOverview1085();
+    std.hidden=false;
+    std.style.display='block';
+  }
+
+  // 저장 직전 표준 데이터가 최종값이 되도록 serializer를 마지막으로 재정의.
+  if(typeof getPlanData === 'function'){
+    const oldGetPlanData1085 = getPlanData;
+    getPlanData = function(){
+      let d={};
+      try { d=oldGetPlanData1085() || {}; } catch(e) { console.warn('legacy plan serializer skipped',e); }
+      const st=getStd1085();
+      d.standard=st;
+      d.projectName=st.project_name || '';
+      d.targetCount=Number(st.planned_participants || 0);
+      d.plannedParticipants=Number(st.planned_participants || 0);
+      d.overview=stdRows1085().map(v=>[v[0], v[1] ?? '']);
+      return d;
+    };
+  }
+
+  // 생성 문서의 I.사업개요를 표준 데이터로 강제 교체.
+  function replaceGeneratedOverview1085(){
+    const rows=stdRows1085().filter(v=>v[0] && String(v[1]??'').trim()!=='');
+    const html='<table style="width:100%;border-collapse:collapse">'+rows.map(([k,v])=>
+      '<tr><th style="width:25%;border:1px solid #222;padding:7px">'+esc1085(k)+'</th>'+
+      '<td style="border:1px solid #222;padding:7px;white-space:pre-wrap">'+esc1085(v)+'</td></tr>'
+    ).join('')+'</table>';
+
+    const roots=[...document.querySelectorAll(
+      '#output-plan,#plan-output,#generated-plan,.generated-document,.output-area,.doc-preview'
+    )];
+
+    // 출력 컨테이너 id가 다른 구버전도 대응
+    if(!roots.length){
+      [...document.querySelectorAll('div,section,article')].forEach(el=>{
+        const tx=el.textContent||'';
+        if(tx.includes('[사업계획서]') && tx.includes('사업 개요')) roots.push(el);
+      });
+    }
+
+    roots.forEach(root=>{
+      if(!(root.textContent||'').includes('사업계획서')) return;
+      const heads=[...root.querySelectorAll('h1,h2,h3,h4,h5,p,div')].filter(el=>{
+        const tx=(el.textContent||'').replace(/\s+/g,' ').trim();
+        return /^Ⅰ\s*\.\s*사업 개요/.test(tx) || /^I\s*\.\s*사업 개요/.test(tx);
+      });
+
+      heads.forEach(h=>{
+        let n=h.nextElementSibling;
+        while(n && n.tagName!=='TABLE'){
+          if(/Ⅱ\s*\.|II\s*\./.test((n.textContent||'').trim())) break;
+          n=n.nextElementSibling;
+        }
+        if(n && n.tagName==='TABLE') n.outerHTML=html;
+        else h.insertAdjacentHTML('afterend',html);
+      });
+    });
+  }
+
+  // 버튼 클릭 capture 단계에서 표준값을 먼저 고정하고, 기존 생성 후 결과를 교체.
+  document.addEventListener('click', function(e){
+    const b=e.target.closest('button');
+    if(!b) return;
+    const tx=(b.textContent||'').replace(/\s+/g,' ');
+
+    if(/사업계획서.*통합 생성|계획서.*생성|작성 내용 DB 저장/.test(tx)){
+      try{
+        if(typeof syncStandardToLegacyV1061==='function') syncStandardToLegacyV1061();
+      }catch(err){ console.warn(err); }
+    }
+
+    if(/사업계획서.*통합 생성|계획서.*생성/.test(tx)){
+      setTimeout(replaceGeneratedOverview1085,30);
+      setTimeout(replaceGeneratedOverview1085,180);
+      setTimeout(replaceGeneratedOverview1085,500);
+    }
+
+    if(/새 사업계획서 작성/.test(tx)){
+      setTimeout(()=>{
+        if(typeof applyStandardPlanV106==='function') applyStandardPlanV106({});
+        if(typeof customPlanFieldsV106!=='undefined'){
+          customPlanFieldsV106=[];
+          if(typeof renderCustomPlanFieldsV106==='function') renderCustomPlanFieldsV106();
+        }
+        mountStandard1085();
+      },0);
+    }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setTimeout(mountStandard1085,20);
+    setTimeout(mountStandard1085,250);
+
+    const sec=document.getElementById('section-input-plan');
+    if(sec){
+      new MutationObserver(()=>mountStandard1085()).observe(sec,{childList:true,subtree:true});
+    }
+  });
+
+  window.replaceGeneratedOverview1085=replaceGeneratedOverview1085;
+  window.mountStandard1085=mountStandard1085;
+})();
+</script>
+
+</body></html>";
     let source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
     let a = document.createElement("a");
     document.body.appendChild(a);
