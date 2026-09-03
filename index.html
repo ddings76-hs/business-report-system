@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.8.6 DIRECT GENERATOR FIX)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.9 SURVEY BUILDER)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -284,7 +284,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.8.6 DIRECT GENERATOR FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.9 SURVEY BUILDER)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -872,40 +872,43 @@
     document.getElementById('out_p_reviewer').innerText = reviewer;
     document.getElementById('out_p_approver').innerText = approver;
 
-    // 1. 사업개요 매핑
-    let keys = document.querySelectorAll('.p-ov-key'), vals = document.querySelectorAll('.p-ov-val');
+    // 1. 사업개요/기안문 매핑 — v10.8.8: 표준 입력폼을 단일 원본으로 직접 사용
+    const stdPlan = (typeof getStandardPlanV106 === 'function' ? getStandardPlanV106() : {}) || {};
     let summary = '', tbl = '<tr><th style="width:25%;">항목</th><th>내용</th></tr>';
-    let firstProjName = "사업계획(안)";
-    let overviewMap = {};
+    let firstProjName = (stdPlan.project_name || '').trim() || "사업계획(안)";
 
-    for(let i=0; i<keys.length; i++) {
-      if(keys[i].value.trim()) {
-        let k = keys[i].value.trim(), v = vals[i].value.trim();
-        overviewMap[k] = v;
-        if(k === '사업명' || (firstProjName === "사업계획(안)" && i === 0)) firstProjName = v;
-        tbl += `<tr><th class="td-center">${esc(k)}</th><td>${esc(v).replaceAll('\n','<br>')}</td></tr>`;
-      }
-    }
+    const overviewRows = [
+      ['사업명', stdPlan.project_name],
+      ['추진배경 및 필요성', stdPlan.background],
+      ['사업목적', stdPlan.purpose],
+      ['기대효과', stdPlan.expected_effect],
+      ['운영일시', stdPlan.operation_date],
+      ['참여대상', stdPlan.target_group],
+      ['계획인원', (stdPlan.planned_participants === '' || stdPlan.planned_participants == null) ? '' : Number(stdPlan.planned_participants || 0) + '명'],
+      ['주요내용', stdPlan.content],
+      ['운영장소', stdPlan.location],
+      ['운영방법', stdPlan.operation_method],
+      ['평가·환류 계획', stdPlan.evaluation_plan],
+      ...((stdPlan.custom_fields || []).map(x => [x.label || '', x.value || '']))
+    ].filter(x => x[0] && String(x[1] ?? '').trim());
 
-    // 기안문에는 핵심 항목만 선별하여 가/나/다 형식으로 출력
-    const pick = (...names) => {
-      for (const n of names) if (overviewMap[n]) return overviewMap[n];
-      return '';
-    };
+    overviewRows.forEach(([k,v]) => {
+      tbl += `<tr><th class="td-center" style="font-size:13px;">${esc(k)}</th><td style="font-size:13px;line-height:1.65;">${esc(String(v)).replaceAll('\n','<br>')}</td></tr>`;
+    });
+
+    // 기안문도 같은 표준 입력폼에서 직접 생성
     let draftItems = [
-      ['사업명', pick('사업명')],
-      ['사업목적', pick('사업목적','목적')],
-      ['운영일시', pick('운영일시','사업일시','일시')],
-      ['신청방법', pick('신청방법','접수방법','모집방법')],
-      ['교육내용', pick('교육내용','주요내용','프로그램내용')],
+      ['사업명', stdPlan.project_name || ''],
+      ['사업목적', stdPlan.purpose || ''],
+      ['운영일시', stdPlan.operation_date || ''],
+      ['참여대상', stdPlan.target_group || ''],
+      ['계획인원', (stdPlan.planned_participants === '' || stdPlan.planned_participants == null) ? '' : Number(stdPlan.planned_participants || 0) + '명'],
+      ['교육내용', stdPlan.content || ''],
+      ['운영장소', stdPlan.location || ''],
+      ['운영방법', stdPlan.operation_method || ''],
       ['재원', document.getElementById('p_budgetSource').value],
       ['소요예산', calcPlanBudget().toLocaleString() + '원']
     ];
-    // 교육내용이 사업개요에 없으면 주요 프로그램을 간략 연결
-    if(!draftItems[4][1] && window.planProgramVisible !== false) {
-      let pk = document.querySelectorAll('.p-prog-key'), pv = document.querySelectorAll('.p-prog-val');
-      draftItems[4][1] = Array.from(pk).map((x,i)=> x.value.trim() ? `${x.value.trim()}: ${pv[i].value.trim()}` : '').filter(Boolean).join(', ');
-    }
     const ga = ['가','나','다','라','마','바','사','아','자','차','카','타','파','하'];
     draftItems.filter(x=>x[1]).forEach((x,i)=>{
       summary += `<div class="doc-list-item">${ga[i]}. ${esc(x[0])} : ${esc(x[1]).replaceAll('\n','<br>')}</div>`;
@@ -3480,6 +3483,199 @@ document.addEventListener('click',e=>{
    }
  },true);
  window.patchPlanOverviewFromStandardV1086=patchOutput;
+})();
+</script>
+
+<script>
+// ===== v10.8.7 계획서 글자크기 통일 + 기안문 표준폼 직접연계 =====
+(function(){
+ const E=v=>typeof esc==='function'?esc(String(v??'')):String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+ function std(){
+   return (typeof getStandardPlanV106==='function'?getStandardPlanV106():{})||{};
+ }
+ function budgetTotal(){
+   try{return typeof calcPlanBudget==='function'?Number(calcPlanBudget()||0):0}catch(e){return 0}
+ }
+ function source(){
+   const e=document.getElementById('p_budgetSource');
+   return e?.value?.trim()||'';
+ }
+
+ // 계획서 I. 사업개요 출력 글꼴을 II/III 본문과 동일 계열/크기로 고정
+ function normalizePlanOverviewFont1087(){
+   const root=document.getElementById('output-plan-container');
+   if(!root)return;
+   const tables=[...root.querySelectorAll('table')];
+   tables.forEach(t=>{
+     const tx=(t.textContent||'').replace(/\s+/g,' ');
+     if(tx.includes('사업명') && tx.includes('추진배경 및 필요성') && !/산출 근거|금액\(원\)|세부일정/.test(tx)){
+       t.style.fontFamily="'Batang','바탕',serif";
+       t.style.fontSize="13px";
+       [...t.querySelectorAll('th,td')].forEach(c=>{
+         c.style.fontFamily="'Batang','바탕',serif";
+         c.style.fontSize="13px";
+         c.style.lineHeight="1.65";
+         c.style.fontWeight=c.tagName==='TH'?'600':'400';
+       });
+     }
+   });
+ }
+
+ // 실제 기안문은 기존 overviewMap을 사용하지 않고 표준폼에서 직접 생성/교체
+ function patchDraft1087(){
+   const root=document.getElementById('output-plan-container');
+   if(!root)return;
+   const x=std();
+
+   // 기안문 영역에서 "- 아 래 -" 텍스트를 가진 가장 작은 요소 탐색
+   const all=[...root.querySelectorAll('div,p,h1,h2,h3,h4')];
+   const below=all.find(el=>{
+     const t=(el.textContent||'').replace(/\s+/g,'').replace(/-/g,'');
+     return t==='아래' && el.children.length===0;
+   });
+   if(!below)return;
+
+   // 기안문에 필요한 표준값
+   const items=[
+     ['사업명',x.project_name],
+     ['사업목적',x.purpose],
+     ['운영일시',x.operation_date],
+     ['참여대상',x.target_group],
+     ['계획인원',x.planned_participants!==''&&x.planned_participants!=null?Number(x.planned_participants||0)+'명':''],
+     ['교육내용',x.content],
+     ['운영장소',x.location],
+     ['운영방법',x.operation_method],
+     ['재원',source()],
+     ['소요예산',budgetTotal().toLocaleString()+'원']
+   ].filter(v=>String(v[1]??'').trim());
+
+   const ga=['가','나','다','라','마','바','사','아','자','차'];
+   const holder=document.createElement('div');
+   holder.id='draft-standard-items-v1087';
+   holder.style.cssText="font-family:'Batang','바탕',serif;font-size:13px;line-height:1.9;margin:12px 0 20px;";
+   holder.innerHTML=items.map((v,i)=>`<div>${ga[i]}. ${E(v[0])} : ${E(v[1])}</div>`).join('');
+
+   // "-아래-" 다음부터 '붙임' 전까지 기존 가/나/다 항목 제거
+   let n=below.nextElementSibling;
+   while(n){
+     const txt=(n.textContent||'').trim();
+     if(/^붙임/.test(txt))break;
+     const next=n.nextElementSibling;
+     n.remove();n=next;
+   }
+   below.insertAdjacentElement('afterend',holder);
+
+   // 기안문 제목도 표준 사업명으로 맞춤
+   const titleCandidates=[...root.querySelectorAll('p,div,strong')].filter(el=>{
+     const t=(el.textContent||'').trim();
+     return el.children.length===0 && (/제목/.test(t)||/운영 계획\(안\)/.test(t));
+   });
+   titleCandidates.forEach(el=>{
+     const t=(el.textContent||'').trim();
+     if(t.startsWith('제목')) el.textContent='제목    '+(x.project_name||'사업계획')+' 운영 계획(안)';
+   });
+ }
+
+ function apply1087(){
+   normalizePlanOverviewFont1087();
+   patchDraft1087();
+ }
+
+ document.addEventListener('click',e=>{
+   const b=e.target.closest('button');if(!b)return;
+   const t=(b.textContent||'').replace(/\s+/g,' ');
+   if(/사업계획서.*기안문.*통합 생성|사업계획서.*통합 생성/.test(t)){
+     setTimeout(apply1087,60);
+     setTimeout(apply1087,220);
+     setTimeout(apply1087,500);
+   }
+ },true);
+
+ window.applyPlanDraftStandardV1087=apply1087;
+})();
+</script>
+
+<script>
+// ===== v10.9 자체 설문 시스템 1단계: 설문 생성기 =====
+(function(){
+ let surveyQuestionsV109=[];
+ const qTypes={rating5:'5점 척도',single:'객관식',multi:'복수선택',short:'단답형',long:'장문형'};
+ function E(v){return String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+ function currentProjectId(){
+   return window.currentProjectId || window.selectedProjectId || window.loadedProjectId || null;
+ }
+ function ensureUI(){
+   const sr=document.getElementById('standardResultV107');
+   if(!sr || document.getElementById('surveyBuilderV109')) return;
+   const box=document.createElement('div');
+   box.id='surveyBuilderV109';
+   box.style.cssText='border:2px solid #6b46c1;border-radius:10px;padding:16px;margin:18px 0;background:#fff';
+   box.innerHTML=`
+    <h2 style="margin:0 0 8px;color:#553c9a">Ⅱ. 자체 설문 만들기</h2>
+    <div style="font-size:12px;color:#666;margin-bottom:12px">사업별 만족도 설문을 만들고 문항을 저장합니다. 다음 단계에서 응답 링크·QR·자동통계를 연결합니다.</div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:10px">
+      <input id="sv109_title" placeholder="설문명 예: 프로그램 만족도 조사">
+      <input id="sv109_start" type="date"><input id="sv109_end" type="date">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <button type="button" class="btn btn-add" onclick="addSurveyQuestionV109('rating5')">+ 5점 척도</button>
+      <button type="button" class="btn btn-add" onclick="addSurveyQuestionV109('single')">+ 객관식</button>
+      <button type="button" class="btn btn-add" onclick="addSurveyQuestionV109('multi')">+ 복수선택</button>
+      <button type="button" class="btn btn-add" onclick="addSurveyQuestionV109('short')">+ 단답형</button>
+      <button type="button" class="btn btn-add" onclick="addSurveyQuestionV109('long')">+ 장문형</button>
+    </div>
+    <div id="sv109_questions"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button type="button" class="btn btn-save" onclick="saveSurveyV109()">💾 설문 저장</button>
+      <button type="button" class="btn btn-plan" onclick="previewSurveyV109()">👁 설문 미리보기</button>
+    </div>
+    <div id="sv109_msg" style="font-size:12px;margin-top:8px"></div>
+    <div id="sv109_preview" style="margin-top:12px"></div>`;
+   sr.insertAdjacentElement('afterend',box);
+ }
+ function render(){
+   const root=document.getElementById('sv109_questions'); if(!root)return;
+   root.innerHTML=surveyQuestionsV109.map((q,i)=>`
+    <div style="border:1px solid #ccc;border-radius:8px;padding:10px;margin:8px 0">
+      <div style="display:flex;gap:8px;align-items:center">
+       <b style="min-width:58px">Q${i+1}</b>
+       <input style="flex:1" value="${E(q.text)}" placeholder="질문을 입력하세요" oninput="surveyQuestionsV109[${i}].text=this.value">
+       <span style="font-size:12px">${qTypes[q.type]}</span>
+       <label style="font-size:12px"><input type="checkbox" ${q.required?'checked':''} onchange="surveyQuestionsV109[${i}].required=this.checked"> 필수</label>
+       <button type="button" onclick="surveyQuestionsV109.splice(${i},1);renderSurveyV109()">삭제</button>
+      </div>
+      ${(q.type==='single'||q.type==='multi')?`<input style="width:100%;margin-top:7px" value="${E((q.options||[]).join(', '))}" placeholder="선택지: 매우 만족, 만족, 보통..." oninput="surveyQuestionsV109[${i}].options=this.value.split(',').map(x=>x.trim()).filter(Boolean)">`:''}
+    </div>`).join('');
+ }
+ window.surveyQuestionsV109=surveyQuestionsV109;
+ window.renderSurveyV109=render;
+ window.addSurveyQuestionV109=function(type){surveyQuestionsV109.push({type,text:'',required:true,options:type==='single'||type==='multi'?['매우 만족','만족','보통','불만족','매우 불만족']:[]});render();}
+ window.previewSurveyV109=function(){
+   const root=document.getElementById('sv109_preview'); if(!root)return;
+   root.innerHTML='<div style="border-top:1px solid #ddd;padding-top:10px"><b>설문 미리보기</b>'+
+    surveyQuestionsV109.map((q,i)=>`<div style="margin:12px 0"><div>${i+1}. ${E(q.text||'(질문 미입력)')} ${q.required?'<b>*</b>':''}</div><div style="color:#777;font-size:12px">${qTypes[q.type]}</div></div>`).join('')+'</div>';
+ }
+ window.saveSurveyV109=async function(){
+   const msg=document.getElementById('sv109_msg');
+   try{
+     if(typeof supabaseClient==='undefined' && typeof sb==='undefined') throw new Error('Supabase 연결 객체를 찾을 수 없습니다.');
+     const client=(typeof supabaseClient!=='undefined'?supabaseClient:sb);
+     const title=document.getElementById('sv109_title').value.trim();
+     if(!title) throw new Error('설문명을 입력하세요.');
+     if(!surveyQuestionsV109.length) throw new Error('문항을 1개 이상 추가하세요.');
+     if(surveyQuestionsV109.some(q=>!q.text.trim())) throw new Error('비어 있는 질문이 있습니다.');
+     const {data:{user}}=await client.auth.getUser();
+     if(!user) throw new Error('로그인이 필요합니다.');
+     const payload={project_id:currentProjectId(),title,start_date:document.getElementById('sv109_start').value||null,end_date:document.getElementById('sv109_end').value||null,status:'draft',created_by:user.id};
+     const {data:sv,error}=await client.from('surveys').insert(payload).select().single(); if(error)throw error;
+     const qs=surveyQuestionsV109.map((q,i)=>({survey_id:sv.id,sort_order:i+1,question_text:q.text,question_type:q.type,required:q.required,options:q.options||[]}));
+     const {error:qe}=await client.from('survey_questions').insert(qs); if(qe)throw qe;
+     msg.textContent='설문이 저장되었습니다. 설문 ID: '+sv.id;
+   }catch(e){msg.textContent='설문 저장 오류: '+e.message; console.error(e);}
+ }
+ document.addEventListener('DOMContentLoaded',()=>{setTimeout(ensureUI,200);setTimeout(ensureUI,700)});
+ new MutationObserver(()=>ensureUI()).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 </body>
