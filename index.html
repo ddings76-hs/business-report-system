@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.9.1b PUBLIC SURVEY BOOT FIX)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.2 PLAN OPEN SOURCE FIX)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -284,7 +284,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.9.1b PUBLIC SURVEY BOOT FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.2 PLAN OPEN SOURCE FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -1405,7 +1405,7 @@
     if(x.doc_type==='PLAN') {
       window.currentCloudPlanProjectId=x.project_id;
       p_orgName.value=d.orgName||''; p_staff.value=d.staff||''; p_reviewer.value=d.reviewer||''; p_approver.value=d.approver||'';
-      setRows('p_overviewTbody',d.overview,['p-overview-key','p-overview-val'],'addOverviewRow');
+      setRows('p_overviewTbody',d.overview,['p-ov-key','p-ov-val'],'addOverviewRow');
       setRows('p_progTbody',d.programs,['p-prog-key','p-prog-val'],'addProgRow');
       setRows('p_schedTbody',d.schedule,['p-sch-time','p-sch-val'],'addScheduleRow');
       setPlanSectionVisible('program', d.programVisible !== false, false);
@@ -4572,12 +4572,12 @@ html.public-survey-mode #publicSurveyV1091 { display:block !important; }
    const st=typeof getStandardPlanV106==='function'?getStandardPlanV106():{};
    return {
     project_name:st.project_name||val(['sp_project_name','p_project_name']),
-    target:st.target||val(['sp_target','sp_participants_target']),
+    target:st.target_group||st.target||val(['sp_target_group','sp_target','sp_participants_target']),
     planned_participants:st.planned_participants||val(['sp_planned_participants']),
-    main_content:st.main_content||val(['sp_main_content']),
+    main_content:st.content||st.main_content||val(['sp_content','sp_main_content']),
     operation_date:st.operation_date||val(['sp_operation_date']),
     location:st.location||val(['sp_location']),
-    method:st.method||val(['sp_method']),
+    method:st.operation_method||st.method||val(['sp_operation_method','sp_method']),
     background:st.background||val(['sp_background']),
     purpose:st.purpose||val(['sp_purpose']),
     expected_effect:st.expected_effect||val(['sp_expected_effect']),
@@ -4634,10 +4634,9 @@ html.public-survey-mode #publicSurveyV1091 { display:block !important; }
   const baseLoad = window.loadCloudDocument;
 
   window.loadCloudDocument = async function(docId){
-    // Load/populate the saved document first.
-    await baseLoad(docId);
-
     try{
+      // Load/populate the saved document first.
+      await baseLoad(docId);
       const client =
         (typeof supabaseClient !== 'undefined' && supabaseClient) ||
         (typeof sb !== 'undefined' && sb);
