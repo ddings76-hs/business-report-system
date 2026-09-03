@@ -3877,5 +3877,754 @@ html.public-survey-mode #publicSurveyV1091 { display:block !important; }
   window.addEventListener('load',()=>setTimeout(forcePublicSurvey,0),{once:true});
 })();
 </script>
+
+<script>
+// ===== v10.9.2 설문 지속성/목록/재불러오기 FIX =====
+(function(){
+ const C=()=>typeof supabaseClient!=='undefined'?supabaseClient:(typeof sb!=='undefined'?sb:null);
+ const E=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ let activeSurveyIdV1092=null;
+
+ function pid(){
+   return window.currentProjectId||window.selectedProjectId||window.loadedProjectId||null;
+ }
+ function ensurePanel(){
+   const b=document.getElementById('surveyBuilderV109'); if(!b||document.getElementById('sv1092_saved'))return;
+   b.insertAdjacentHTML('beforeend',`
+    <div id="sv1092_saved" style="margin-top:16px;border-top:1px solid #ddd;padding-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+       <b>저장된 설문</b><button type="button" onclick="loadSurveyListV1092()">↻ 목록 새로고침</button>
+      </div>
+      <div id="sv1092_list" style="margin-top:8px;font-size:12px">불러오는 중...</div>
+    </div>`);
+   loadSurveyListV1092();
+ }
+
+ window.loadSurveyListV1092=async function(){
+   const root=document.getElementById('sv1092_list'); if(!root)return;
+   try{
+    const c=C(); if(!c)throw new Error('Supabase 연결 없음');
+    let q=c.from('surveys').select('id,title,status,created_at,public_token,project_id').order('created_at',{ascending:false}).limit(30);
+    const p=pid(); if(p)q=q.eq('project_id',p);
+    const {data,error}=await q;if(error)throw error;
+    if(!data?.length){root.textContent='저장된 설문이 없습니다.';return;}
+    root.innerHTML=data.map(x=>`<div style="border:1px solid #ddd;padding:8px;margin:6px 0;border-radius:6px">
+      <b>${E(x.title)}</b> · ${E(x.status)}
+      <button type="button" style="float:right" onclick="openSurveyV1092('${x.id}')">불러오기</button>
+    </div>`).join('');
+   }catch(e){root.textContent='설문 목록 오류: '+e.message}
+ }
+
+ window.openSurveyV1092=async function(id){
+   try{
+    const c=C();
+    const {data:sv,error}=await c.from('surveys').select('*').eq('id',id).single();if(error)throw error;
+    const {data:qs,error:qe}=await c.from('survey_questions').select('*').eq('survey_id',id).order('sort_order');if(qe)throw qe;
+    activeSurveyIdV1092=id;
+    document.getElementById('sv109_title').value=sv.title||'';
+    document.getElementById('sv109_start').value=sv.start_date||'';
+    document.getElementById('sv109_end').value=sv.end_date||'';
+    surveyQuestionsV109.splice(0,surveyQuestionsV109.length,...(qs||[]).map(q=>({
+      id:q.id,type:q.question_type,text:q.question_text,required:q.required,options:q.options||[]
+    })));
+    renderSurveyV109();
+    document.getElementById('sv109_msg').textContent='저장된 설문을 불러왔습니다.';
+   }catch(e){document.getElementById('sv109_msg').textContent='설문 불러오기 오류: '+e.message}
+ }
+
+ // 기존 saveSurveyV109는 항상 INSERT라 같은 설문을 계속 새로 만들게 됨.
+ // v10.9.2에서는 불러온 설문이면 UPDATE + 문항 재저장.
+ const oldSave=window.saveSurveyV109;
+ window.saveSurveyV109=async function(){
+   if(!activeSurveyIdV1092){ await oldSave(); setTimeout(loadSurveyListV1092,300); return; }
+   const msg=document.getElementById('sv109_msg');
+   try{
+    const c=C(),title=document.getElementById('sv109_title').value.trim();
+    if(!title)throw new Error('설문명을 입력하세요.');
+    if(!surveyQuestionsV109.length)throw new Error('문항을 1개 이상 추가하세요.');
+    const {error}=await c.from('surveys').update({
+      title,start_date:document.getElementById('sv109_start').value||null,
+      end_date:document.getElementById('sv109_end').value||null,updated_at:new Date().toISOString()
+    }).eq('id',activeSurveyIdV1092);if(error)throw error;
+    const {error:de}=await c.from('survey_questions').delete().eq('survey_id',activeSurveyIdV1092);if(de)throw de;
+    const qs=surveyQuestionsV109.map((q,i)=>({survey_id:activeSurveyIdV1092,sort_order:i+1,question_text:q.text,question_type:q.type,required:q.required,options:q.options||[]}));
+    const {error:ie}=await c.from('survey_questions').insert(qs);if(ie)throw ie;
+    msg.textContent='설문 수정사항을 저장했습니다.';
+    await loadSurveyListV1092();
+   }catch(e){msg.textContent='설문 저장 오류: '+e.message}
+ }
+
+ window.newSurveyV1092=function(){
+   activeSurveyIdV1092=null;
+   document.getElementById('sv109_title').value='';
+   document.getElementById('sv109_start').value='';
+   document.getElementById('sv109_end').value='';
+   surveyQuestionsV109.splice(0);renderSurveyV109();
+   document.getElementById('sv109_msg').textContent='새 설문 작성 상태입니다.';
+ }
+
+ function addNewButton(){
+   const b=document.getElementById('surveyBuilderV109'); if(!b||document.getElementById('sv1092_new'))return;
+   const h=b.querySelector('h2'); if(h)h.insertAdjacentHTML('afterend','<button id="sv1092_new" type="button" onclick="newSurveyV1092()" style="float:right">+ 새 설문</button>');
+ }
+ document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{ensurePanel();addNewButton()},500)});
+ new MutationObserver(()=>{ensurePanel();addNewButton()}).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+// ===== v10.9.3 응답관리 + 자동통계 + 결과보고서 반영 =====
+(function(){
+ const C=()=>typeof supabaseClient!=='undefined'?supabaseClient:(typeof sb!=='undefined'?sb:null);
+ const E=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ let analyticsSurveyV1093=null, analyticsDataV1093=null;
+
+ function ensureAnalytics(){
+   const b=document.getElementById('surveyBuilderV109'); if(!b||document.getElementById('sv1093_analytics'))return;
+   b.insertAdjacentHTML('beforeend',`
+    <div id="sv1093_analytics" style="margin-top:18px;border-top:2px solid #07845f;padding-top:14px">
+     <h3 style="margin:0 0 8px;color:#06705a">설문 응답관리 · 자동통계</h3>
+     <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" onclick="analyzeLoadedSurveyV1093()">📊 불러온 설문 통계</button>
+      <button type="button" onclick="applySurveyToResultV1093()">✅ 결과보고서에 반영</button>
+     </div>
+     <div id="sv1093_summary" style="margin-top:10px"></div>
+    </div>`);
+ }
+ // 기존 불러오기 함수를 감싸 현재 설문 ID를 확보
+ function wrapOpen(){
+   if(window.__wrappedOpenV1093 || typeof window.openSurveyV1092!=='function')return;
+   const old=window.openSurveyV1092;
+   window.openSurveyV1092=async function(id){
+     const r=await old(id); analyticsSurveyV1093=id;
+     setTimeout(()=>analyzeLoadedSurveyV1093(),150); return r;
+   };
+   window.__wrappedOpenV1093=true;
+ }
+ window.analyzeLoadedSurveyV1093=async function(){
+   const root=document.getElementById('sv1093_summary');
+   try{
+    if(!analyticsSurveyV1093)throw new Error('먼저 저장된 설문에서 [불러오기]를 눌러주세요.');
+    const c=C();
+    const {data:qs,error:qe}=await c.from('survey_questions').select('*').eq('survey_id',analyticsSurveyV1093).order('sort_order');if(qe)throw qe;
+    const {data:rs,error:re}=await c.from('survey_responses').select('id,submitted_at').eq('survey_id',analyticsSurveyV1093).order('submitted_at',{ascending:false});if(re)throw re;
+    const rids=(rs||[]).map(x=>x.id);
+    let ans=[];
+    if(rids.length){
+      const {data,error}=await c.from('survey_answers').select('response_id,question_id,answer').in('response_id',rids);if(error)throw error;
+      ans=data||[];
+    }
+    let ratingValues=[];
+    const details=(qs||[]).map(q=>{
+      const aa=ans.filter(a=>a.question_id===q.id).map(a=>a.answer);
+      if(q.question_type==='rating5'){
+        const nums=aa.map(Number).filter(n=>Number.isFinite(n)&&n>=1&&n<=5); ratingValues.push(...nums);
+        const avg=nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:0;
+        const sat=nums.length?nums.filter(n=>n>=4).length/nums.length*100:0;
+        return {q,type:q.question_type,count:nums.length,avg,sat,answers:nums};
+      }
+      if(q.question_type==='single'||q.question_type==='multi'){
+        const flat=aa.flatMap(v=>Array.isArray(v)?v:[v]).filter(Boolean), counts={};
+        flat.forEach(v=>counts[v]=(counts[v]||0)+1);
+        return {q,type:q.question_type,count:aa.length,counts,answers:aa};
+      }
+      return {q,type:q.question_type,count:aa.length,answers:aa.filter(v=>String(v??'').trim())};
+    });
+    const overall=ratingValues.length?ratingValues.reduce((a,b)=>a+b,0)/ratingValues.length:0;
+    const satisfaction=ratingValues.length?ratingValues.filter(n=>n>=4).length/ratingValues.length*100:0;
+    analyticsDataV1093={responseCount:(rs||[]).length,overall,satisfaction,details};
+    root.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div style="border:1px solid #ddd;padding:10px"><small>응답자 수</small><br><b>${(rs||[]).length}명</b></div>
+      <div style="border:1px solid #ddd;padding:10px"><small>5점 평균</small><br><b>${overall?overall.toFixed(2):'-'} / 5.00</b></div>
+      <div style="border:1px solid #ddd;padding:10px"><small>만족률(4~5점)</small><br><b>${ratingValues.length?satisfaction.toFixed(1)+'%':'-'}</b></div>
+     </div>`+details.map((d,i)=>{
+       let x='';
+       if(d.type==='rating5')x=`평균 ${d.avg.toFixed(2)}점 · 만족률 ${d.sat.toFixed(1)}% · 응답 ${d.count}건`;
+       else if(d.counts)x=Object.entries(d.counts).map(([k,v])=>`${E(k)} ${v}건`).join(' / ');
+       else x=d.answers.length?d.answers.map(v=>`• ${E(v)}`).join('<br>'):'응답 없음';
+       return `<div style="border-bottom:1px solid #eee;padding:10px 0"><b>Q${i+1}. ${E(d.q.question_text)}</b><div style="margin-top:5px">${x}</div></div>`;
+     }).join('');
+   }catch(e){root.textContent='통계 오류: '+e.message}
+ }
+ window.applySurveyToResultV1093=function(){
+   const root=document.getElementById('sv1093_summary');
+   try{
+    if(!analyticsDataV1093)throw new Error('먼저 설문 통계를 불러오세요.');
+    const d=analyticsDataV1093;
+    // 표준 결과폼 만족도에 자동 반영
+    const sat=document.getElementById('sr_satisfaction');
+    if(sat && d.overall){sat.value=d.overall.toFixed(2);sat.dispatchEvent(new Event('input',{bubbles:true}));}
+    // 기존 결과보고서 설문 텍스트 영역 중 사용 가능한 필드에 요약 반영
+    const summary=`응답자 ${d.responseCount}명 / 평균 만족도 ${d.overall?d.overall.toFixed(2)+'점':''} / 만족률 ${d.satisfaction?d.satisfaction.toFixed(1)+'%':''}`;
+    const candidates=['r_surveySummary','r_survey_result','result_survey_summary','sr_survey_summary'];
+    for(const id of candidates){const el=document.getElementById(id);if(el){el.value=summary;el.dispatchEvent(new Event('input',{bubbles:true}));break;}}
+    root.insertAdjacentHTML('afterbegin','<div style="padding:8px;background:#e9fff5;margin-bottom:8px">결과보고서 표준 만족도에 설문 평균을 반영했습니다.</div>');
+   }catch(e){root.insertAdjacentHTML('afterbegin','<div style="color:#b00">'+E(e.message)+'</div>')}
+ }
+ function boot(){ensureAnalytics();wrapOpen()}
+ document.addEventListener('DOMContentLoaded',()=>{setTimeout(boot,600);setTimeout(boot,1200)});
+ new MutationObserver(boot).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+<style>
+/* v10.9.4: 기존 구글폼 수동영역은 제거하고 자체 설문 통계가 단일 원본 */
+#surveyResultUnifiedV1094{border:2px solid #07845f;border-radius:10px;padding:16px;background:#fff;margin:12px 0}
+#surveyResultUnifiedV1094 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+#surveyResultUnifiedV1094 .card{border:1px solid #ddd;padding:10px}
+@media(max-width:800px){#surveyResultUnifiedV1094 .cards{grid-template-columns:1fr 1fr}}
+</style>
+<script>
+// ===== v10.9.4 설문결과 단일원본 + 결과보고서 본문 직접연계 =====
+(function(){
+ const C=()=>typeof supabaseClient!=='undefined'?supabaseClient:(typeof sb!=='undefined'?sb:null);
+ const E=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ let selectedSurvey=null, stats=null;
+
+ function renameTab(){
+   document.querySelectorAll('button,a,.tab-btn').forEach(el=>{
+     const t=(el.textContent||'').replace(/\s+/g,' ').trim();
+     if(t.includes('설문 결과')&&t.includes('구글폼')) el.textContent=t.replace(/\s*\(구글폼 연동\)\s*/,'');
+   });
+ }
+ function findSurveyPanel(){
+   const tabs=[...document.querySelectorAll('button,a,.tab-btn')];
+   const tab=tabs.find(x=>(x.textContent||'').includes('Ⅱ. 설문 결과'));
+   if(!tab)return null;
+   const oc=tab.getAttribute('onclick')||'';
+   const m=oc.match(/['"]([^'"]+)['"]/);
+   if(m){const p=document.getElementById(m[1]);if(p)return p;}
+   // 결과 섹션 내 두 번째 탭패널 fallback
+   const sec=document.getElementById('section-input-result');
+   if(!sec)return null;
+   const panels=[...sec.querySelectorAll('.tab-content,.tab-panel')];
+   return panels[1]||null;
+ }
+ function buildUnified(){
+   renameTab();
+   const p=findSurveyPanel(); if(!p||document.getElementById('surveyResultUnifiedV1094'))return;
+   // 기존 수동/구글폼 입력 UI를 실제 DOM에서 제거
+   p.innerHTML=`<div id="surveyResultUnifiedV1094">
+    <h2 style="margin-top:0;color:#06705a">Ⅱ. 설문 결과</h2>
+    <p style="font-size:12px;color:#666">자체 설문 응답을 단일 원본으로 사용합니다. 설문을 선택하면 실제 응답 통계가 자동 계산됩니다.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <select id="sv1094_select" style="min-width:260px"><option value="">설문 선택</option></select>
+      <button type="button" onclick="loadSurveyStatsV1094()">↻ 응답 새로고침</button>
+      <button type="button" onclick="applySurveyResultV1094()">✅ 결과보고서에 반영</button>
+    </div>
+    <div id="sv1094_stats" style="margin-top:12px">설문을 선택하세요.</div>
+   </div>`;
+   loadSurveyOptions();
+ }
+ async function loadSurveyOptions(){
+   const sel=document.getElementById('sv1094_select');if(!sel)return;
+   try{
+    const c=C(); let q=c.from('surveys').select('id,title,status,created_at,project_id').order('created_at',{ascending:false});
+    const pid=window.currentProjectId||window.selectedProjectId||window.loadedProjectId||null;
+    if(pid)q=q.eq('project_id',pid);
+    const {data,error}=await q;if(error)throw error;
+    sel.innerHTML='<option value="">설문 선택</option>'+(data||[]).map(x=>`<option value="${x.id}">${E(x.title)} · ${E(x.status)}</option>`).join('');
+    sel.onchange=()=>loadSurveyStatsV1094();
+   }catch(e){sel.innerHTML='<option>설문 조회 오류</option>'}
+ }
+ window.loadSurveyStatsV1094=async function(){
+   const sel=document.getElementById('sv1094_select'),root=document.getElementById('sv1094_stats');
+   try{
+    if(!sel?.value)throw new Error('설문을 선택하세요.');
+    const c=C(),sid=sel.value;
+    const {data:sv,error:se}=await c.from('surveys').select('*').eq('id',sid).single();if(se)throw se;
+    const {data:qs,error:qe}=await c.from('survey_questions').select('*').eq('survey_id',sid).order('sort_order');if(qe)throw qe;
+    const {data:rs,error:re}=await c.from('survey_responses').select('id').eq('survey_id',sid);if(re)throw re;
+    const ids=(rs||[]).map(x=>x.id);let aa=[];
+    if(ids.length){const {data,error}=await c.from('survey_answers').select('*').in('response_id',ids);if(error)throw error;aa=data||[];}
+    const detail=(qs||[]).map(q=>{
+      const vals=aa.filter(a=>a.question_id===q.id).map(a=>a.answer);
+      if(q.question_type==='rating5'){
+       const n=vals.map(Number).filter(x=>x>=1&&x<=5);
+       return {q,type:'rating5',avg:n.length?n.reduce((a,b)=>a+b,0)/n.length:0,sat:n.length?n.filter(x=>x>=4).length/n.length*100:0,count:n.length,vals:n};
+      }
+      if(q.question_type==='single'||q.question_type==='multi'){
+       const f=vals.flatMap(v=>Array.isArray(v)?v:[v]).filter(Boolean),counts={};f.forEach(v=>counts[v]=(counts[v]||0)+1);
+       return {q,type:q.question_type,count:vals.length,counts,vals};
+      }
+      return {q,type:q.question_type,count:vals.length,vals:vals.filter(v=>String(v??'').trim())};
+    });
+    const ratings=detail.flatMap(d=>d.type==='rating5'?d.vals:[]);
+    const avg=ratings.length?ratings.reduce((a,b)=>a+b,0)/ratings.length:0;
+    const sat=ratings.length?ratings.filter(x=>x>=4).length/ratings.length*100:0;
+    // 실제 참여인원 우선, 없으면 계획인원
+    const actual=Number(document.getElementById('sr_actual_participants')?.value||document.getElementById('sr_actual_count')?.value||0);
+    const planned=Number(document.getElementById('sr_planned_participants')?.value||document.getElementById('sp_planned_participants')?.value||0);
+    const denominator=actual||planned||0, responseRate=denominator?(rs.length/denominator*100):0;
+    selectedSurvey=sv;stats={responseCount:rs.length,denominator,responseRate,avg,sat,detail};
+    root.innerHTML=`<div class="cards">
+      <div class="card"><small>응답자</small><br><b>${rs.length}명</b></div>
+      <div class="card"><small>참여인원</small><br><b>${denominator||'-'}${denominator?'명':''}</b></div>
+      <div class="card"><small>응답률</small><br><b>${denominator?responseRate.toFixed(1)+'%':'-'}</b></div>
+      <div class="card"><small>종합 만족도</small><br><b>${ratings.length?avg.toFixed(2)+' / 5.00':'-'}</b></div>
+      <div class="card"><small>만족률(4~5점)</small><br><b>${ratings.length?sat.toFixed(1)+'%':'-'}</b></div>
+     </div>`+detail.map((d,i)=>{
+      let body='';
+      if(d.type==='rating5')body=`평균 ${d.avg.toFixed(2)}점 · 만족률 ${d.sat.toFixed(1)}% · ${d.count}건`;
+      else if(d.counts)body=Object.entries(d.counts).map(([k,v])=>`${E(k)} ${v}건`).join(' / ');
+      else body=d.vals.length?d.vals.map(v=>`• ${E(v)}`).join('<br>'):'응답 없음';
+      return `<div style="padding:10px 0;border-bottom:1px solid #eee"><b>Q${i+1}. ${E(d.q.question_text)}</b><div>${body}</div></div>`;
+     }).join('');
+   }catch(e){root.textContent=e.message}
+ }
+ window.applySurveyResultV1094=function(){
+   const root=document.getElementById('sv1094_stats');
+   try{
+    if(!stats)throw new Error('먼저 설문 통계를 불러오세요.');
+    const satEl=document.getElementById('sr_satisfaction');
+    if(satEl&&stats.avg){satEl.value=stats.avg.toFixed(2);satEl.dispatchEvent(new Event('input',{bubbles:true}));}
+    window.surveyReportDataV1094={survey:selectedSurvey,stats};
+    root.insertAdjacentHTML('afterbegin','<div style="background:#e9fff5;padding:8px;margin-bottom:8px">설문 통계를 결과보고서 생성 데이터로 반영했습니다.</div>');
+   }catch(e){root.insertAdjacentHTML('afterbegin','<div style="color:#b00">'+E(e.message)+'</div>')}
+ }
+
+ // 결과보고서 생성 후 기존 설문 결과 출력부를 실제 통계표로 교체
+ function patchGeneratedResult(){
+   if(!window.surveyReportDataV1094)return;
+   const d=window.surveyReportDataV1094.stats;
+   const roots=[...document.querySelectorAll('div,section,article')].filter(x=>(x.textContent||'').includes('[사업 결과보고서]')||(x.textContent||'').includes('[사업결과보고서]'));
+   roots.forEach(r=>{
+    const hs=[...r.querySelectorAll('h2,h3,h4,p,div')];
+    const h=hs.find(x=>/설문.*결과/.test((x.textContent||'').trim())&&x.children.length===0);
+    if(!h)return;
+    let n=h.nextElementSibling;
+    while(n){const t=(n.textContent||'').trim();if(/^Ⅲ|^III/.test(t))break;const nx=n.nextElementSibling;n.remove();n=nx;}
+    const box=document.createElement('div');
+    box.innerHTML=`<table class="out-table" style="width:100%;border-collapse:collapse;font-size:13px">
+     <tr><th>응답자</th><td>${d.responseCount}명</td><th>응답률</th><td>${d.denominator?d.responseRate.toFixed(1)+'%':'-'}</td></tr>
+     <tr><th>종합 만족도</th><td>${d.avg?d.avg.toFixed(2)+' / 5.00':'-'}</td><th>만족률</th><td>${d.avg?d.sat.toFixed(1)+'%':'-'}</td></tr>
+    </table>`+d.detail.map((x,i)=>`<p style="font-size:13px"><b>${i+1}. ${E(x.q.question_text)}</b><br>${
+      x.type==='rating5'?`평균 ${x.avg.toFixed(2)}점 / 만족률 ${x.sat.toFixed(1)}%`:
+      x.counts?Object.entries(x.counts).map(([k,v])=>`${E(k)} ${v}건`).join(' / '):
+      x.vals.map(v=>`• ${E(v)}`).join('<br>')
+    }</p>`).join('');
+    h.insertAdjacentElement('afterend',box);
+   });
+ }
+ document.addEventListener('click',e=>{
+   const b=e.target.closest('button');if(!b)return;
+   const t=(b.textContent||'').replace(/\s+/g,' ');
+   if(/결과보고서.*생성|통합 생성/.test(t)){setTimeout(patchGeneratedResult,80);setTimeout(patchGeneratedResult,350);}
+ },true);
+
+ function boot(){renameTab();buildUnified()}
+ document.addEventListener('DOMContentLoaded',()=>{setTimeout(boot,500);setTimeout(boot,1200)});
+ new MutationObserver(boot).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+<style>
+/* ===== v10.9.5 설문 결과 단일원본/점수화 ===== */
+#surveyResultUnifiedV1095{border:2px solid #07845f;border-radius:10px;padding:16px;background:#fff;margin:12px 0}
+#surveyResultUnifiedV1095 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+#surveyResultUnifiedV1095 .card{border:1px solid #ddd;padding:10px;border-radius:6px}
+@media(max-width:800px){#surveyResultUnifiedV1095 .cards{grid-template-columns:1fr 1fr}}
+</style>
+<script>
+// ===== v10.9.5: 구글폼 레거시 제거 + 만족도 객관식 호환 + 결과보고서 단일원본 =====
+(function(){
+ const C=()=>typeof supabaseClient!=='undefined'?supabaseClient:(typeof sb!=='undefined'?sb:null);
+ const E=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ let ST=null, SV=null;
+
+ // 과거 객관식 만족도도 점수화
+ function score(v){
+   if(v===null||v===undefined)return null;
+   const raw=String(v).trim();
+   const n=Number(raw);
+   if(Number.isFinite(n)&&n>=1&&n<=5)return n;
+   const x=raw.replace(/\s+/g,'');
+   const map={
+     '매우만족':5,'매우만족함':5,'매우그렇다':5,'매우좋음':5,
+     '만족':4,'만족함':4,'그렇다':4,'좋음':4,
+     '보통':3,'보통이다':3,
+     '불만족':2,'불만족함':2,'그렇지않다':2,'나쁨':2,
+     '매우불만족':1,'매우불만족함':1,'전혀그렇지않다':1,'매우나쁨':1
+   };
+   return Object.prototype.hasOwnProperty.call(map,x)?map[x]:null;
+ }
+ function isSatisfactionQuestion(q,vals){
+   if(q.question_type==='rating5')return true;
+   if(q.question_type!=='single')return false;
+   const opts=(q.options||[]).map(x=>String(x));
+   const all=[...opts,...vals.map(x=>String(x))].filter(Boolean);
+   if(!all.length)return false;
+   const scored=all.map(score).filter(x=>x!==null).length;
+   // 선택지/응답 대부분이 1~5 또는 만족도 표준문구면 만족도 문항으로 판단
+   return scored/all.length>=0.75;
+ }
+
+ function findResultSection(){
+   return document.getElementById('section-input-result') ||
+          [...document.querySelectorAll('section,div')].find(x=>(x.textContent||'').includes('사업 결과 개요')&&(x.textContent||'').includes('예산 정산'));
+ }
+ function resultTabs(){
+   const sec=findResultSection()||document;
+   return [...sec.querySelectorAll('button,a,.tab-btn')].filter(x=>{
+     const t=(x.textContent||'').replace(/\s+/g,' ').trim();
+     return /^Ⅱ\.\s*설문 결과/.test(t)||t.includes('설문 결과 (구글폼 연동)');
+   });
+ }
+ function locatePanel(tab){
+   const oc=tab?.getAttribute('onclick')||'';
+   const ids=[...oc.matchAll(/['"]([^'"]+)['"]/g)].map(m=>m[1]);
+   for(const id of ids){const p=document.getElementById(id);if(p)return p;}
+   const target=tab?.getAttribute('data-target')||tab?.getAttribute('aria-controls');
+   if(target){const p=document.querySelector(target.startsWith('#')?target:'#'+target);if(p)return p;}
+   const sec=findResultSection(); if(!sec)return null;
+   const panels=[...sec.querySelectorAll('.tab-content,.tab-panel,[role="tabpanel"]')];
+   return panels[1]||null;
+ }
+ function replaceLegacy(){
+   for(const tab of resultTabs()){
+     tab.textContent='Ⅱ. 설문 결과';
+     const p=locatePanel(tab); if(!p)continue;
+     if(p.querySelector('#surveyResultUnifiedV1095'))continue;
+     // 실제 레거시 Google Form/수동 입력 DOM을 통째로 교체
+     p.innerHTML=`<div id="surveyResultUnifiedV1095">
+       <h2 style="margin:0 0 6px;color:#06705a">Ⅱ. 설문 결과</h2>
+       <div style="font-size:12px;color:#666;margin-bottom:10px">자체 설문 응답을 결과보고서의 단일 원본으로 사용합니다.</div>
+       <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select id="sv1095_select" style="min-width:280px"><option value="">설문 선택</option></select>
+        <button type="button" onclick="loadStatsV1095()">↻ 응답 새로고침</button>
+        <button type="button" onclick="applyStatsV1095()">✅ 결과보고서에 반영</button>
+       </div>
+       <div id="sv1095_stats" style="margin-top:12px">설문을 선택하세요.</div>
+      </div>`;
+     loadOptions();
+   }
+ }
+ async function loadOptions(){
+   const sel=document.getElementById('sv1095_select');if(!sel)return;
+   try{
+    let q=C().from('surveys').select('id,title,status,created_at,project_id').order('created_at',{ascending:false});
+    const pid=window.currentProjectId||window.selectedProjectId||window.loadedProjectId||null;
+    if(pid)q=q.eq('project_id',pid);
+    const {data,error}=await q;if(error)throw error;
+    sel.innerHTML='<option value="">설문 선택</option>'+(data||[]).map(x=>`<option value="${x.id}">${E(x.title)} · ${E(x.status)}</option>`).join('');
+    sel.onchange=()=>loadStatsV1095();
+   }catch(e){sel.innerHTML='<option value="">설문 조회 오류</option>'}
+ }
+
+ window.loadStatsV1095=async function(){
+   const sel=document.getElementById('sv1095_select'),root=document.getElementById('sv1095_stats');
+   try{
+    if(!sel?.value)throw new Error('설문을 선택하세요.');
+    const c=C(),sid=sel.value;
+    const {data:sv,error:se}=await c.from('surveys').select('*').eq('id',sid).single();if(se)throw se;
+    const {data:qs,error:qe}=await c.from('survey_questions').select('*').eq('survey_id',sid).order('sort_order');if(qe)throw qe;
+    const {data:rs,error:re}=await c.from('survey_responses').select('id').eq('survey_id',sid);if(re)throw re;
+    const ids=(rs||[]).map(x=>x.id);let aa=[];
+    if(ids.length){const {data,error}=await c.from('survey_answers').select('*').in('response_id',ids);if(error)throw error;aa=data||[];}
+
+    let allScores=[];
+    const detail=(qs||[]).map(q=>{
+      const vals=aa.filter(a=>a.question_id===q.id).map(a=>a.answer);
+      if(isSatisfactionQuestion(q,vals)){
+        const nums=vals.map(score).filter(n=>n!==null); allScores.push(...nums);
+        const avg=nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:0;
+        const sat=nums.length?nums.filter(n=>n>=4).length/nums.length*100:0;
+        const counts={}; vals.forEach(v=>{if(v!==null&&v!==undefined&&String(v)!=='')counts[String(v)]=(counts[String(v)]||0)+1});
+        return {q,type:'satisfaction',count:nums.length,avg,sat,counts,vals:nums};
+      }
+      if(q.question_type==='single'||q.question_type==='multi'){
+        const f=vals.flatMap(v=>Array.isArray(v)?v:[v]).filter(Boolean),counts={};f.forEach(v=>counts[v]=(counts[v]||0)+1);
+        return {q,type:q.question_type,count:vals.length,counts,vals};
+      }
+      return {q,type:q.question_type,count:vals.length,vals:vals.filter(v=>String(v??'').trim())};
+    });
+    const avg=allScores.length?allScores.reduce((a,b)=>a+b,0)/allScores.length:0;
+    const sat=allScores.length?allScores.filter(n=>n>=4).length/allScores.length*100:0;
+
+    const actual=Number(document.getElementById('sr_actual_participants')?.value||document.getElementById('sr_actual_count')?.value||0);
+    const planned=Number(document.getElementById('sr_planned_participants')?.value||document.getElementById('sp_planned_participants')?.value||0);
+    const denom=actual||planned||0, rate=denom?rs.length/denom*100:0;
+    SV=sv;ST={responseCount:rs.length,denominator:denom,responseRate:rate,avg,sat,detail};
+
+    root.innerHTML=`<div class="cards">
+      <div class="card"><small>응답자 수</small><br><b>${rs.length}명</b></div>
+      <div class="card"><small>참여인원</small><br><b>${denom?denom+'명':'-'}</b></div>
+      <div class="card"><small>응답률</small><br><b>${denom?rate.toFixed(1)+'%':'-'}</b></div>
+      <div class="card"><small>5점 평균</small><br><b>${allScores.length?avg.toFixed(2)+' / 5.00':'-'}</b></div>
+      <div class="card"><small>만족률(4~5점)</small><br><b>${allScores.length?sat.toFixed(1)+'%':'-'}</b></div>
+     </div>`+detail.map((d,i)=>{
+       let body='';
+       if(d.type==='satisfaction')body=`${Object.entries(d.counts).map(([k,v])=>`${E(k)} ${v}건`).join(' / ')}<br><b>평균 ${d.avg.toFixed(2)}점 · 만족률 ${d.sat.toFixed(1)}%</b>`;
+       else if(d.counts)body=Object.entries(d.counts).map(([k,v])=>`${E(k)} ${v}건`).join(' / ');
+       else body=d.vals.length?d.vals.map(v=>`• ${E(v)}`).join('<br>'):'응답 없음';
+       return `<div style="padding:10px 0;border-bottom:1px solid #eee"><b>Q${i+1}. ${E(d.q.question_text)}</b><div style="margin-top:5px">${body}</div></div>`;
+     }).join('');
+   }catch(e){root.textContent='통계 오류: '+e.message}
+ };
+
+ window.applyStatsV1095=function(){
+   const root=document.getElementById('sv1095_stats');
+   try{
+    if(!ST)throw new Error('먼저 설문을 선택해 통계를 불러오세요.');
+    const satEl=document.getElementById('sr_satisfaction');
+    if(satEl&&ST.avg){satEl.value=ST.avg.toFixed(2);satEl.dispatchEvent(new Event('input',{bubbles:true}));}
+    window.surveyReportDataV1095={survey:SV,stats:ST};
+    root.insertAdjacentHTML('afterbegin','<div style="background:#e9fff5;padding:8px;margin-bottom:8px">설문 통계를 결과보고서 단일 데이터로 반영했습니다.</div>');
+   }catch(e){root.insertAdjacentHTML('afterbegin','<div style="color:#b00">'+E(e.message)+'</div>')}
+ };
+
+ function patchOutput(){
+   const pack=window.surveyReportDataV1095;if(!pack)return;
+   const d=pack.stats;
+   const roots=[...document.querySelectorAll('div,section,article')].filter(x=>{
+     const t=x.textContent||'';return t.includes('[사업 결과보고서]')||t.includes('[사업결과보고서]');
+   });
+   roots.forEach(r=>{
+    const hs=[...r.querySelectorAll('h2,h3,h4,p,div')];
+    const h=hs.find(x=>/설문.*결과/.test((x.textContent||'').trim())&&x.children.length===0);
+    if(!h)return;
+    let n=h.nextElementSibling;
+    while(n){const nx=n.nextElementSibling;if(/^Ⅲ|^III/.test((n.textContent||'').trim()))break;n.remove();n=nx;}
+    const box=document.createElement('div');
+    box.setAttribute('data-survey-v1095','1');
+    box.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:13px" border="1" cellpadding="7">
+      <tr><th>응답자 수</th><td>${d.responseCount}명</td><th>응답률</th><td>${d.denominator?d.responseRate.toFixed(1)+'%':'-'}</td></tr>
+      <tr><th>종합 만족도</th><td>${d.avg?d.avg.toFixed(2)+' / 5.00':'-'}</td><th>만족률</th><td>${d.avg?d.sat.toFixed(1)+'%':'-'}</td></tr>
+     </table>`+d.detail.map((x,i)=>`<p style="font-size:13px"><b>${i+1}. ${E(x.q.question_text)}</b><br>${
+       x.type==='satisfaction'?`${Object.entries(x.counts).map(([k,v])=>`${E(k)} ${v}건`).join(' / ')}<br>평균 ${x.avg.toFixed(2)}점 / 만족률 ${x.sat.toFixed(1)}%`:
+       x.counts?Object.entries(x.counts).map(([k,v])=>`${E(k)} ${v}건`).join(' / '):
+       x.vals.map(v=>`• ${E(v)}`).join('<br>')
+     }</p>`).join('');
+    h.insertAdjacentElement('afterend',box);
+   });
+ }
+ document.addEventListener('click',e=>{
+   const b=e.target.closest('button');if(!b)return;
+   const t=(b.textContent||'').replace(/\s+/g,' ');
+   if(/결과보고서.*생성|통합 생성/.test(t)){setTimeout(patchOutput,100);setTimeout(patchOutput,400);}
+ },true);
+
+ function boot(){replaceLegacy()}
+ document.addEventListener('DOMContentLoaded',()=>{setTimeout(boot,300);setTimeout(boot,900);setTimeout(boot,1600)});
+ new MutationObserver(()=>boot()).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+// ===== v10.9.6 실제 결과보고서 설문 탭 SOURCE FIX =====
+(function(){
+ const C=()=>typeof supabaseClient!=='undefined'?supabaseClient:(typeof sb!=='undefined'?sb:null);
+ const E=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ let PACK=null;
+
+ function score(v){
+   const x=String(v??'').trim().replace(/\s+/g,'');
+   const n=Number(x); if(Number.isFinite(n)&&n>=1&&n<=5)return n;
+   return ({'매우만족':5,'만족':4,'보통':3,'불만족':2,'매우불만족':1,
+            '매우그렇다':5,'그렇다':4,'그렇지않다':2,'전혀그렇지않다':1})[x] ?? null;
+ }
+ function resultRoot(){
+   return document.getElementById('section-input-result') ||
+     [...document.querySelectorAll('div,section')].find(x=>{
+       const t=x.textContent||''; return t.includes('Ⅰ. 사업 결과 개요')&&t.includes('Ⅲ. 예산 정산');
+     });
+ }
+ function surveyTab(){
+   const root=resultRoot()||document;
+   return [...root.querySelectorAll('button')].find(b=>{
+     const t=(b.textContent||'').replace(/\s+/g,' ').trim();
+     return t.includes('Ⅱ.')&&t.includes('설문 결과');
+   });
+ }
+ function actualPanel(tab){
+   // Visible panel after legacy handler has run: use geometry + content signatures.
+   const root=resultRoot(); if(!root)return null;
+   const candidates=[...root.querySelectorAll('div')].filter(d=>{
+     const t=d.textContent||'';
+     return (t.includes('구글 폼 응답 연동 설정') || t.includes('만족도 설문 결과 요약')) &&
+            !d.querySelector('#surveyResultUnifiedV1096');
+   });
+   if(candidates.length){
+     // choose smallest matching container, avoiding whole section
+     candidates.sort((a,b)=>a.querySelectorAll('*').length-b.querySelectorAll('*').length);
+     return candidates[0];
+   }
+   return null;
+ }
+ async function options(){
+   const sel=document.getElementById('sv1096_select'); if(!sel)return;
+   let q=C().from('surveys').select('id,title,status,project_id,created_at').order('created_at',{ascending:false});
+   const pid=window.currentProjectId||window.selectedProjectId||window.loadedProjectId||null;
+   if(pid)q=q.eq('project_id',pid);
+   const {data,error}=await q;
+   if(error){sel.innerHTML='<option>설문 조회 오류</option>';return;}
+   sel.innerHTML='<option value="">설문 선택</option>'+(data||[]).map(x=>`<option value="${x.id}">${E(x.title)} · ${E(x.status)}</option>`).join('');
+   sel.onchange=window.loadSurveyStatsV1096;
+ }
+ function mount(){
+   const tab=surveyTab(); if(!tab)return;
+   tab.textContent='Ⅱ. 설문 결과';
+   const p=actualPanel(tab); if(!p)return;
+   // Remove the actual legacy Google Form/manual UI and replace at its source container.
+   p.innerHTML=`<div id="surveyResultUnifiedV1096" style="border:2px solid #07845f;border-radius:9px;padding:16px;background:#fff">
+    <h2 style="color:#06705a;margin-top:0">Ⅱ. 설문 결과</h2>
+    <p style="font-size:12px;color:#666">자체 설문 실제 응답을 단일 원본으로 사용합니다.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <select id="sv1096_select" style="min-width:280px"><option>설문 불러오는 중...</option></select>
+      <button type="button" onclick="loadSurveyStatsV1096()">↻ 응답 새로고침</button>
+      <button type="button" onclick="applySurveyStatsV1096()">✅ 결과보고서에 반영</button>
+    </div>
+    <div id="sv1096_view" style="margin-top:12px">설문을 선택하세요.</div>
+   </div>`;
+   options();
+ }
+ window.loadSurveyStatsV1096=async function(){
+   const sel=document.getElementById('sv1096_select'), view=document.getElementById('sv1096_view');
+   try{
+    if(!sel?.value)throw new Error('설문을 선택하세요.');
+    const c=C(), sid=sel.value;
+    const [{data:sv,error:se},{data:qs,error:qe},{data:rs,error:re}]=await Promise.all([
+      c.from('surveys').select('*').eq('id',sid).single(),
+      c.from('survey_questions').select('*').eq('survey_id',sid).order('sort_order'),
+      c.from('survey_responses').select('id').eq('survey_id',sid)
+    ]);
+    if(se)throw se;if(qe)throw qe;if(re)throw re;
+    const ids=(rs||[]).map(r=>r.id); let aa=[];
+    if(ids.length){const {data,error}=await c.from('survey_answers').select('*').in('response_id',ids);if(error)throw error;aa=data||[];}
+    let scores=[];
+    const detail=(qs||[]).map(q=>{
+      const vals=aa.filter(a=>a.question_id===q.id).map(a=>a.answer);
+      const flat=vals.flatMap(v=>Array.isArray(v)?v:[v]).filter(v=>v!==null&&v!==undefined&&String(v)!=='');
+      const sc=flat.map(score).filter(v=>v!==null);
+      const opts=(q.options||[]).map(score).filter(v=>v!==null);
+      const satisfaction=q.question_type==='rating5' ||
+        (q.question_type==='single' && ((q.options||[]).length>=3 && opts.length/(q.options||[]).length>=.75));
+      if(satisfaction){
+        scores.push(...sc);
+        const avg=sc.length?sc.reduce((a,b)=>a+b,0)/sc.length:0;
+        const sat=sc.length?sc.filter(x=>x>=4).length/sc.length*100:0;
+        const counts={};flat.forEach(v=>counts[v]=(counts[v]||0)+1);
+        return {q,kind:'sat',avg,sat,counts};
+      }
+      if(q.question_type==='single'||q.question_type==='multi'){
+        const counts={};flat.forEach(v=>counts[v]=(counts[v]||0)+1);return {q,kind:'choice',counts};
+      }
+      return {q,kind:'text',vals:flat};
+    });
+    const avg=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;
+    const sat=scores.length?scores.filter(x=>x>=4).length/scores.length*100:0;
+    const actual=Number(document.getElementById('sr_actual_participants')?.value||document.getElementById('sr_actual_count')?.value||0);
+    const planned=Number(document.getElementById('sr_planned_participants')?.value||document.getElementById('sp_planned_participants')?.value||0);
+    const denom=actual||planned||0, rate=denom?(rs.length/denom*100):0;
+    PACK={survey:sv,responseCount:rs.length,avg,sat,denom,rate,detail};
+    view.innerHTML=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+      <div style="border:1px solid #ddd;padding:10px">응답자 수<br><b>${rs.length}명</b></div>
+      <div style="border:1px solid #ddd;padding:10px">참여인원<br><b>${denom?denom+'명':'-'}</b></div>
+      <div style="border:1px solid #ddd;padding:10px">응답률<br><b>${denom?rate.toFixed(1)+'%':'-'}</b></div>
+      <div style="border:1px solid #ddd;padding:10px">5점 평균<br><b>${scores.length?avg.toFixed(2)+' / 5.00':'-'}</b></div>
+      <div style="border:1px solid #ddd;padding:10px">만족률(4~5점)<br><b>${scores.length?sat.toFixed(1)+'%':'-'}</b></div>
+    </div>`+detail.map((d,i)=>`<div style="padding:10px 0;border-bottom:1px solid #eee"><b>Q${i+1}. ${E(d.q.question_text)}</b><br>${
+      d.kind==='sat'?`${Object.entries(d.counts).map(([k,v])=>`${E(k)} ${v}건`).join(' / ')}<br><b>평균 ${d.avg.toFixed(2)}점 · 만족률 ${d.sat.toFixed(1)}%</b>`:
+      d.kind==='choice'?Object.entries(d.counts).map(([k,v])=>`${E(k)} ${v}건`).join(' / '):
+      d.vals.map(v=>`• ${E(v)}`).join('<br>')
+    }</div>`).join('');
+   }catch(e){view.textContent='통계 오류: '+e.message}
+ }
+ window.applySurveyStatsV1096=function(){
+   const v=document.getElementById('sv1096_view');
+   if(!PACK){v.insertAdjacentHTML('afterbegin','<div style="color:#b00">먼저 통계를 불러오세요.</div>');return;}
+   const el=document.getElementById('sr_satisfaction');
+   if(el&&PACK.avg){el.value=PACK.avg.toFixed(2);el.dispatchEvent(new Event('input',{bubbles:true}));}
+   window.surveyReportDataV1096=PACK;
+   v.insertAdjacentHTML('afterbegin','<div style="background:#e8fff4;padding:8px;margin-bottom:8px">결과보고서에 설문 통계를 반영했습니다.</div>');
+ }
+
+ // 중요: 레거시 onclick이 패널을 다시 그린 다음 우리가 교체
+ document.addEventListener('click',e=>{
+   const b=e.target.closest('button');if(!b)return;
+   const t=(b.textContent||'').replace(/\s+/g,' ').trim();
+   if(t.includes('설문 결과')){setTimeout(mount,0);setTimeout(mount,80);setTimeout(mount,250);}
+ },true);
+
+ function cleanupTopDuplicate(){
+   // 결과 입력탭 밖에 남은 v10.9.3 구형 통계 블록 제거(중복 UI 방지)
+   const root=resultRoot();
+   document.querySelectorAll('#sv1093_analytics,#surveyResultUnifiedV1094,#surveyResultUnifiedV1095').forEach(x=>{
+     if(!root || !root.contains(x) || x.id==='sv1093_analytics') x.remove();
+   });
+ }
+ document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{cleanupTopDuplicate();mount()},700)});
+})();
+</script>
+
+<style>
+#aiPlanV110{border:2px solid #2563eb;border-radius:10px;padding:14px;margin:14px 0;background:#f8fbff}
+#aiPlanV110 .ai-actions{display:flex;gap:8px;flex-wrap:wrap}
+#aiPlanV110 button{padding:8px 12px}
+</style>
+<script>
+// ===== v11.0 AI 사업계획서 초안 작성 =====
+(function(){
+ const E=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ function val(ids){for(const id of ids){const e=document.getElementById(id);if(e&&String(e.value||'').trim())return e.value.trim()}return ''}
+ function set(ids,v){for(const id of ids){const e=document.getElementById(id);if(e){e.value=v||'';e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true}}return false}
+ function data(){
+   const st=typeof getStandardPlanV106==='function'?getStandardPlanV106():{};
+   return {
+    project_name:st.project_name||val(['sp_project_name','p_project_name']),
+    target:st.target||val(['sp_target','sp_participants_target']),
+    planned_participants:st.planned_participants||val(['sp_planned_participants']),
+    main_content:st.main_content||val(['sp_main_content']),
+    operation_date:st.operation_date||val(['sp_operation_date']),
+    location:st.location||val(['sp_location']),
+    method:st.method||val(['sp_method']),
+    background:st.background||val(['sp_background']),
+    purpose:st.purpose||val(['sp_purpose']),
+    expected_effect:st.expected_effect||val(['sp_expected_effect']),
+    evaluation_plan:st.evaluation_plan||val(['sp_evaluation_plan'])
+   };
+ }
+ function mount(){
+   const std=document.getElementById('standardPlanV106'); if(!std||document.getElementById('aiPlanV110'))return;
+   const box=document.createElement('div');box.id='aiPlanV110';
+   box.innerHTML=`<b style="color:#1d4ed8">✨ AI 사업계획 초안</b>
+    <div style="font-size:12px;color:#666;margin:5px 0 10px">사업명·대상·주요내용 등 현재 입력값을 근거로 표준항목 초안을 작성합니다. 생성 후 내용을 검토한 뒤 적용하세요.</div>
+    <div class="ai-actions">
+      <button type="button" onclick="generatePlanAIV110()">✨ AI 초안 작성</button>
+      <button type="button" id="aiApplyV110" onclick="applyPlanAIV110()" disabled>✅ 표준폼에 적용</button>
+    </div><div id="aiMsgV110" style="margin-top:8px;font-size:12px"></div>
+    <div id="aiPreviewV110" style="margin-top:10px"></div>`;
+   std.insertAdjacentElement('beforebegin',box);
+ }
+ let draft=null;
+ window.generatePlanAIV110=async function(){
+   const msg=document.getElementById('aiMsgV110'),pre=document.getElementById('aiPreviewV110');
+   try{
+    const d=data(); if(!d.project_name)throw new Error('사업명을 먼저 입력하세요.');
+    const c=typeof supabaseClient!=='undefined'?supabaseClient:(typeof sb!=='undefined'?sb:null);
+    if(!c)throw new Error('Supabase 연결을 찾을 수 없습니다.');
+    msg.textContent='AI 초안을 작성하고 있습니다...';pre.innerHTML='';
+    const {data:res,error}=await c.functions.invoke('ai-plan-draft-v11',{body:d});
+    if(error)throw error;if(!res?.draft)throw new Error(res?.error||'AI 응답 형식이 올바르지 않습니다.');
+    draft=res.draft;
+    const rows=[['추진배경 및 필요성',draft.background],['사업목적',draft.purpose],['기대효과',draft.expected_effect],['운영방법',draft.method],['평가·환류 계획',draft.evaluation_plan]];
+    pre.innerHTML=rows.map(([k,v])=>`<div style="border:1px solid #ddd;padding:9px;margin:6px 0"><b>${k}</b><div style="white-space:pre-wrap;margin-top:5px">${E(v)}</div></div>`).join('');
+    document.getElementById('aiApplyV110').disabled=false;msg.textContent='AI 초안이 생성되었습니다. 내용을 확인한 후 적용하세요.';
+   }catch(e){msg.textContent='AI 초안 오류: '+(e.message||e);console.error(e)}
+ }
+ window.applyPlanAIV110=function(){
+   if(!draft)return;
+   set(['sp_background','sp_background_need','sp_need'],draft.background);
+   set(['sp_purpose'],draft.purpose);
+   set(['sp_expected_effect','sp_effect'],draft.expected_effect);
+   set(['sp_method','sp_operation_method'],draft.method);
+   set(['sp_evaluation_plan','sp_evaluation'],draft.evaluation_plan);
+   if(typeof syncStandardToLegacyV1061==='function')try{syncStandardToLegacyV1061()}catch(_){}
+   document.getElementById('aiMsgV110').textContent='표준 입력폼에 적용했습니다. 반드시 담당자가 내용을 검토한 후 저장하세요.';
+ }
+ document.addEventListener('DOMContentLoaded',()=>{setTimeout(mount,500);setTimeout(mount,1200)});
+ new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
