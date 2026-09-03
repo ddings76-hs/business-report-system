@@ -94,6 +94,10 @@
     .form-section.print-parent > .print-target { display: block !important; }
 
     .doc-sheet { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
+    .doc-approval-container, .doc-approval-row { break-inside: avoid; page-break-inside: avoid; }
+    .doc-sheet table thead { display: table-header-group; }
+    .doc-sheet table tfoot { display: table-footer-group; }
+    .doc-sheet tr { break-inside: avoid; page-break-inside: avoid; }
     .tag-plan, .tag-result { display: none !important; }
   }
 
@@ -861,6 +865,18 @@
 
   // [오류 수정완료] 사업계획서 생성 함수
   function generatePlanDocs() {
+    const stdCheck=(typeof getStandardPlanV106==='function'?getStandardPlanV106():{})||{};
+    const requiredPlan=[
+      ['사업명',stdCheck.project_name,'sp_project_name'],
+      ['운영일시',stdCheck.operation_date,'sp_operation_date'],
+      ['참여대상',stdCheck.target_group,'sp_target_group']
+    ];
+    const missPlan=requiredPlan.find(x=>!String(x[1]??'').trim());
+    if(missPlan){
+      alert(missPlan[0]+'을(를) 입력해 주세요.');
+      const el=document.getElementById(missPlan[2]);if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}
+      return;
+    }
     let org = document.getElementById('p_orgName').value;
     let staff = document.getElementById('p_staff').value;
     let reviewer = document.getElementById('p_reviewer').value;
@@ -948,6 +964,18 @@
 
   // 사업 결과보고서 생성 함수
   function generateResultDocs() {
+    const srCheck=(typeof getStandardResultV107==='function'?getStandardResultV107():{})||{};
+    const requiredResult=[
+      ['사업명',srCheck.project_name||document.getElementById('r_projName')?.value,'sr_project_name'],
+      ['실제 운영일시',srCheck.actual_date||srCheck.operation_date||document.getElementById('r_dateLoc')?.value,'sr_actual_date'],
+      ['실제 참여대상',srCheck.actual_target||document.getElementById('r_actualTarget')?.value,'sr_actual_target']
+    ];
+    const missResult=requiredResult.find(x=>!String(x[1]??'').trim());
+    if(missResult){
+      alert(missResult[0]+'을(를) 입력해 주세요.');
+      const el=document.getElementById(missResult[2]);if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}
+      return;
+    }
     let pName = document.getElementById('r_projName').value;
     let dateLoc = document.getElementById('r_dateLoc').value;
     let actualTarget = document.getElementById('r_actualTarget').value;
@@ -2318,15 +2346,39 @@ renderIntegratedProjectV10=async function(projectId){
 
 
 // ===== v10.3.1 긴급 수정: 4개 사용자 확인사항 =====
+function safeArithmeticV115(expr){
+  const raw=String(expr||'').replace(/\s+/g,'');
+  const tokens=raw.match(/\d+(?:\.\d+)?|[()+\-*/]/g);
+  if(!tokens || tokens.join('')!==raw) return null;
+  let pos=0;
+  function primary(){
+    const t=tokens[pos++];
+    if(t==='('){const v=addSub();if(tokens[pos++]!==')')throw 0;return v;}
+    if(t==='+')return primary();
+    if(t==='-')return -primary();
+    const n=Number(t);if(!Number.isFinite(n))throw 0;return n;
+  }
+  function mulDiv(){
+    let v=primary();
+    while(tokens[pos]==='*'||tokens[pos]==='/'){
+      const op=tokens[pos++],r=primary();if(op==='/'&&r===0)throw 0;
+      v=op==='*'?v*r:v/r;
+    }return v;
+  }
+  function addSub(){
+    let v=mulDiv();
+    while(tokens[pos]==='+'||tokens[pos]==='-'){
+      const op=tokens[pos++],r=mulDiv();v=op==='+'?v+r:v-r;
+    }return v;
+  }
+  try{const v=addSub();return pos===tokens.length&&Number.isFinite(v)?v:null;}catch(_){return null;}
+}
 function evalBudgetBasisV1031(text){
   let t=String(text||'').replace(/,/g,'').replace(/원|명|개|회|식|건|세트|박스|대|시간|일|개월|회기/g,'');
   t=t.replace(/[×xX＊*]/g,'*').replace(/[÷]/g,'/').replace(/[＋]/g,'+').replace(/[－–—]/g,'-');
-  // 금액 계산용 숫자/사칙연산/괄호만 허용
   if(!t.trim() || /[^0-9+\-*/().\s]/.test(t)) return null;
-  try{
-    const v=Function('"use strict";return ('+t+')')();
-    return Number.isFinite(v) && v>=0 ? Math.round(v) : null;
-  }catch(e){ return null; }
+  const v=safeArithmeticV115(t);
+  return v!==null&&v>=0?Math.round(v):null;
 }
 function calcBasisAmountV1031(input){
   const row=input.closest('tr'); if(!row) return;
@@ -3003,12 +3055,9 @@ function calcBasisV108(text){
   if(!text) return 0;
   let x=String(text).replace(/,/g,'').replace(/원|명|회|개|식|건|일|시간|개월/g,'')
     .replace(/[×xX]/g,'*').replace(/[÷]/g,'/').replace(/\s+/g,'');
-  // 안전을 위해 숫자/사칙연산/괄호/소수점만 허용
   if(!/^[0-9+\-*/().]+$/.test(x)) return 0;
-  try{
-    const n=Function('"use strict";return ('+x+')')();
-    return Number.isFinite(Number(n)) && Number(n)>=0 ? Math.round(Number(n)) : 0;
-  }catch(e){return 0;}
+  const n=safeArithmeticV115(x);
+  return n!==null&&n>=0?Math.round(n):0;
 }
 function bindAutoCalcV108(root, basisSelectors, amountSelectors, totalCallback){
   if(!root)return;
@@ -4623,7 +4672,7 @@ html.public-survey-mode #publicSurveyV1091 { display:block !important; }
    document.getElementById('aiMsgV110').textContent='표준 입력폼에 적용했습니다. 반드시 담당자가 내용을 검토한 후 저장하세요.';
  }
  document.addEventListener('DOMContentLoaded',()=>{setTimeout(mount,500);setTimeout(mount,1200)});
- new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true});
+ const aiRootV115=document.getElementById('section-input-plan');if(aiRootV115)new MutationObserver(mount).observe(aiRootV115,{childList:true,subtree:true});
 })();
 </script>
 
