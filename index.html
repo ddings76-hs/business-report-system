@@ -4626,5 +4626,68 @@ html.public-survey-mode #publicSurveyV1091 { display:block !important; }
  new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+<script>
+// ===== v11.1 PLAN open/render source-link fix =====
+(function(){
+  if (typeof window.loadCloudDocument !== 'function') return;
+  const baseLoad = window.loadCloudDocument;
+
+  window.loadCloudDocument = async function(docId){
+    // Load/populate the saved document first.
+    await baseLoad(docId);
+
+    try{
+      const client =
+        (typeof supabaseClient !== 'undefined' && supabaseClient) ||
+        (typeof sb !== 'undefined' && sb);
+      if(!client) return;
+
+      const q = await client
+        .from('project_documents')
+        .select('doc_type,data')
+        .eq('id', docId)
+        .single();
+
+      if(q.error || q.data?.doc_type !== 'PLAN') return;
+
+      const d = q.data.data || {};
+
+      // Make the fixed standard form the single source again after DB load.
+      if(typeof applyStandardPlanV106 === 'function'){
+        const std = d.standard ||
+          (typeof standardFromLegacyV106 === 'function'
+            ? standardFromLegacyV106(d)
+            : null);
+        if(std) applyStandardPlanV106(std);
+      }
+
+      if(typeof syncStandardToLegacyV1061 === 'function'){
+        try{ syncStandardToLegacyV1061(); }catch(_){}
+      }
+
+      // Open PLAN mode, then regenerate the printable plan from the loaded form.
+      if(typeof switchMode === 'function') switchMode('PLAN');
+
+      // Allow DOM/value bindings from the load routine to settle first.
+      await new Promise(resolve => setTimeout(resolve, 80));
+
+      if(typeof generatePlanDocs === 'function'){
+        generatePlanDocs();
+      }
+
+      const out = document.getElementById('output-plan-container');
+      if(out){
+        out.style.display = 'block';
+        setTimeout(() => {
+          try{ out.scrollIntoView({behavior:'smooth', block:'start'}); }catch(_){}
+        }, 50);
+      }
+    }catch(e){
+      console.error('v11.1 계획서 열기/출력 연동 오류:', e);
+    }
+  };
+})();
+</script>
 </body>
 </html>
