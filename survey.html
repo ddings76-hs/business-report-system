@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>사업 만족도 설문</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{margin:0;background:#f5f7fa;font-family:Arial,'Noto Sans KR',sans-serif;color:#222}
+main{max-width:720px;margin:24px auto;background:#fff;padding:24px;border-radius:14px;box-shadow:0 2px 12px #0001}
+h1{color:#173f78} .q{padding:16px 0;border-bottom:1px solid #ddd} label{display:block;margin:9px 0}
+input[type=text],textarea{width:100%;box-sizing:border-box;padding:10px;margin-top:8px}
+button{margin-top:22px;padding:12px 24px;border:0;border-radius:7px;background:#1d4ed8;color:white;font-weight:700}
+.msg{margin-top:18px}
+</style></head><body><main id="app"><h2>설문을 불러오는 중입니다...</h2></main>
+<script>
+const sb=supabase.createClient('https://quienpvidvkjvtiwyhoq.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1aWVucHZpZHZranZ0aXd5aG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMzE0MzIsImV4cCI6MjEwMzgwNzQzMn0.Q2SvpeN2s_okehjVhjNeKpqBCc2ml7EBcmvDMJ4tqKE');
+const E=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const token=new URLSearchParams(location.search).get('survey');
+function qhtml(q){
+ const n='q_'+q.id, r=q.required?' *':'';
+ if(q.question_type==='rating5')return `<div class="q"><b>${E(q.question_text)}${r}</b>${[1,2,3,4,5].map(v=>`<label><input type="radio" name="${n}" value="${v}"> ${v}점</label>`).join('')}</div>`;
+ if(q.question_type==='single')return `<div class="q"><b>${E(q.question_text)}${r}</b>${(q.options||[]).map(v=>`<label><input type="radio" name="${n}" value="${E(v)}"> ${E(v)}</label>`).join('')}</div>`;
+ if(q.question_type==='multi')return `<div class="q"><b>${E(q.question_text)}${r}</b>${(q.options||[]).map(v=>`<label><input type="checkbox" name="${n}" value="${E(v)}"> ${E(v)}</label>`).join('')}</div>`;
+ if(q.question_type==='long')return `<div class="q"><b>${E(q.question_text)}${r}</b><textarea name="${n}" rows="4"></textarea></div>`;
+ return `<div class="q"><b>${E(q.question_text)}${r}</b><input type="text" name="${n}"></div>`;
+}
+function answer(q){
+ const n='q_'+q.id;
+ if(q.question_type==='multi')return [...document.querySelectorAll(`[name="${n}"]:checked`)].map(x=>x.value);
+ if(q.question_type==='rating5'||q.question_type==='single')return document.querySelector(`[name="${n}"]:checked`)?.value||'';
+ return document.querySelector(`[name="${n}"]`)?.value?.trim()||'';
+}
+(async()=>{
+ const app=document.getElementById('app');
+ try{
+  if(!token)throw new Error('설문 주소가 올바르지 않습니다.');
+  const {data:sv,error}=await sb.from('surveys').select('id,title,description,status,start_date,end_date').eq('public_token',token).single();
+  if(error||!sv)throw new Error('설문을 찾을 수 없습니다.');
+  if(sv.status!=='open')throw new Error('현재 응답을 받지 않는 설문입니다.');
+  const {data:qs,error:qe}=await sb.from('survey_questions').select('*').eq('survey_id',sv.id).order('sort_order');
+  if(qe)throw qe;
+  app.innerHTML=`<h1>${E(sv.title)}</h1>${sv.description?`<p>${E(sv.description)}</p>`:''}<form id="f">${qs.map(qhtml).join('')}<button>응답 제출</button></form><div class="msg" id="msg"></div>`;
+  document.getElementById('f').onsubmit=async e=>{
+   e.preventDefault(); const msg=document.getElementById('msg');
+   try{
+    const answers=qs.map(q=>({question_id:q.id,answer:answer(q)}));
+    for(let i=0;i<qs.length;i++){const a=answers[i].answer;if(qs[i].required&&(a===''||a==null||(Array.isArray(a)&&!a.length)))throw new Error(`${i+1}번 문항은 필수입니다.`)}
+    const {error:re}=await sb.rpc('submit_public_survey_v1091',{p_token:token,p_answers:answers}); if(re)throw re;
+    document.getElementById('f').style.display='none';msg.innerHTML='<h2>응답이 제출되었습니다.</h2><p>설문에 참여해 주셔서 감사합니다.</p>';
+   }catch(err){msg.textContent='제출 오류: '+err.message}
+  };
+ }catch(err){app.innerHTML='<h2>설문 안내</h2><p>'+E(err.message)+'</p>'}
+})();
+</script></body></html>

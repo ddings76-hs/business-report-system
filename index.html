@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.9 SURVEY BUILDER)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.9.1b PUBLIC SURVEY BOOT FIX)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -284,7 +284,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.9 SURVEY BUILDER)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v10.9.1b PUBLIC SURVEY BOOT FIX)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -3676,6 +3676,205 @@ document.addEventListener('click',e=>{
  }
  document.addEventListener('DOMContentLoaded',()=>{setTimeout(ensureUI,200);setTimeout(ensureUI,700)});
  new MutationObserver(()=>ensureUI()).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+<style>
+#publicSurveyV1091{max-width:720px;margin:35px auto;padding:22px;background:#fff;border:1px solid #ddd;border-radius:12px}
+#publicSurveyV1091 .q{padding:14px 0;border-bottom:1px solid #eee}
+#publicSurveyV1091 label{display:block;margin:6px 0}
+#publicSurveyV1091 input[type=text],#publicSurveyV1091 textarea{width:100%;box-sizing:border-box;padding:9px}
+#sv1091_manage{margin-top:14px;border-top:1px solid #ddd;padding-top:12px}
+</style>
+<script>
+// ===== v10.9.1 설문 배포 + 공개 응답 + QR =====
+(function(){
+ const E=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const client=()=>typeof supabaseClient!=='undefined'?supabaseClient:(typeof sb!=='undefined'?sb:null);
+
+ async function latestSurvey(){
+   const c=client(); if(!c)return null;
+   const pid=window.currentProjectId||window.selectedProjectId||window.loadedProjectId||null;
+   let q=c.from('surveys').select('*').order('created_at',{ascending:false}).limit(1);
+   if(pid) q=q.eq('project_id',pid);
+   const {data,error}=await q; if(error)throw error;
+   return data?.[0]||null;
+ }
+ function manageUI(){
+   const b=document.getElementById('surveyBuilderV109'); if(!b||document.getElementById('sv1091_manage'))return;
+   b.insertAdjacentHTML('beforeend',`
+    <div id="sv1091_manage">
+      <b>설문 배포</b>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+       <button type="button" class="btn btn-plan" onclick="publishLatestSurveyV1091()">🚀 최신 설문 배포</button>
+       <button type="button" class="btn btn-add" onclick="showSurveyLinkV1091()">🔗 응답 링크/QR</button>
+       <button type="button" onclick="closeLatestSurveyV1091()">🔒 설문 마감</button>
+      </div>
+      <div id="sv1091_info" style="margin-top:10px;font-size:12px"></div>
+    </div>`);
+ }
+ function publicUrl(token){
+   // v10.9.1a: 미리보기/sandbox 주소가 아니라 실제 GitHub Pages 배포주소로 고정
+   const u=new URL('https://ddings76-hs.github.io/business-report-system/survey.html');
+   u.searchParams.set('survey',token);
+   return u.toString();
+ }
+ window.publishLatestSurveyV1091=async function(){
+   const info=document.getElementById('sv1091_info');
+   try{
+    const sv=await latestSurvey(); if(!sv)throw new Error('저장된 설문이 없습니다.');
+    const {error}=await client().from('surveys').update({status:'open',updated_at:new Date().toISOString()}).eq('id',sv.id); if(error)throw error;
+    info.innerHTML='배포 완료: '+E(publicUrl(sv.public_token));
+   }catch(e){info.textContent='배포 오류: '+e.message}
+ }
+ window.closeLatestSurveyV1091=async function(){
+   const info=document.getElementById('sv1091_info');
+   try{
+    const sv=await latestSurvey(); if(!sv)throw new Error('저장된 설문이 없습니다.');
+    const {error}=await client().from('surveys').update({status:'closed',updated_at:new Date().toISOString()}).eq('id',sv.id); if(error)throw error;
+    info.textContent='설문을 마감했습니다.';
+   }catch(e){info.textContent='마감 오류: '+e.message}
+ }
+ window.showSurveyLinkV1091=async function(){
+   const info=document.getElementById('sv1091_info');
+   try{
+    const sv=await latestSurvey(); if(!sv)throw new Error('저장된 설문이 없습니다.');
+    const url=publicUrl(sv.public_token);
+    const qr='https://quickchart.io/qr?size=180&text='+encodeURIComponent(url);
+    info.innerHTML=`<div><b>응답 링크</b><br><input style="width:80%" value="${E(url)}" readonly>
+      <button type="button" onclick="navigator.clipboard.writeText('${E(url)}')">복사</button></div>
+      <div style="margin-top:8px"><img src="${qr}" width="180" height="180" alt="설문 QR"></div>`;
+   }catch(e){info.textContent='링크 오류: '+e.message}
+ }
+
+ async function renderPublic(){
+   const token=new URLSearchParams(location.search).get('survey'); if(!token)return false;
+   // 로그인 UI를 포함한 기존 앱을 감추고 공개 설문만 표시
+   [...document.body.children].forEach(x=>x.style.display='none');
+   const wrap=document.createElement('div'); wrap.id='publicSurveyV1091'; wrap.style.display='block';
+   document.body.appendChild(wrap);
+   try{
+    const c=client(); if(!c)throw new Error('설문 서버 연결 실패');
+    const {data:sv,error}=await c.from('surveys').select('id,title,description,status,start_date,end_date').eq('public_token',token).single();
+    if(error||!sv)throw new Error('설문을 찾을 수 없습니다.');
+    if(sv.status!=='open')throw new Error('현재 응답을 받지 않는 설문입니다.');
+    const {data:qs,error:qe}=await c.from('survey_questions').select('*').eq('survey_id',sv.id).order('sort_order'); if(qe)throw qe;
+    wrap.innerHTML=`<h1>${E(sv.title)}</h1><p>${E(sv.description||'')}</p><form id="svPublicForm">${
+      qs.map(q=>questionHTML(q)).join('')
+    }<button type="submit" style="margin-top:18px;padding:11px 20px">응답 제출</button></form><div id="svPublicMsg"></div>`;
+    document.getElementById('svPublicForm').onsubmit=async e=>{
+      e.preventDefault(); const msg=document.getElementById('svPublicMsg');
+      try{
+       const answers=qs.map(q=>({question_id:q.id,answer:readAnswer(q)}));
+       for(let i=0;i<qs.length;i++) if(qs[i].required && (answers[i].answer==='' || answers[i].answer==null || (Array.isArray(answers[i].answer)&&!answers[i].answer.length))) throw new Error(`${i+1}번 문항은 필수입니다.`);
+       const {data:rid,error:re}=await c.rpc('submit_public_survey_v1091',{p_token:token,p_answers:answers}); if(re)throw re;
+       document.getElementById('svPublicForm').style.display='none'; msg.innerHTML='<h2>응답이 제출되었습니다.</h2><p>참여해 주셔서 감사합니다.</p>';
+      }catch(err){msg.textContent='제출 오류: '+err.message}
+    };
+   }catch(e){wrap.innerHTML='<h2>설문 안내</h2><p>'+E(e.message)+'</p>'}
+   return true;
+ }
+ function questionHTML(q){
+   const n='q_'+q.id, req=q.required?' *':'';
+   if(q.question_type==='rating5') return `<div class="q"><b>${E(q.question_text)}${req}</b>${[1,2,3,4,5].map(v=>`<label><input type="radio" name="${n}" value="${v}"> ${v}점</label>`).join('')}</div>`;
+   if(q.question_type==='single') return `<div class="q"><b>${E(q.question_text)}${req}</b>${(q.options||[]).map(v=>`<label><input type="radio" name="${n}" value="${E(v)}"> ${E(v)}</label>`).join('')}</div>`;
+   if(q.question_type==='multi') return `<div class="q"><b>${E(q.question_text)}${req}</b>${(q.options||[]).map(v=>`<label><input type="checkbox" name="${n}" value="${E(v)}"> ${E(v)}</label>`).join('')}</div>`;
+   if(q.question_type==='long') return `<div class="q"><b>${E(q.question_text)}${req}</b><textarea name="${n}" rows="4"></textarea></div>`;
+   return `<div class="q"><b>${E(q.question_text)}${req}</b><input type="text" name="${n}"></div>`;
+ }
+ function readAnswer(q){
+   const n='q_'+q.id;
+   if(q.question_type==='multi')return [...document.querySelectorAll(`[name="${n}"]:checked`)].map(x=>x.value);
+   if(q.question_type==='rating5'||q.question_type==='single')return document.querySelector(`[name="${n}"]:checked`)?.value||'';
+   return document.querySelector(`[name="${n}"]`)?.value?.trim()||'';
+ }
+ document.addEventListener('DOMContentLoaded',async()=>{if(await renderPublic())return;setTimeout(manageUI,300);setTimeout(manageUI,900)});
+ new MutationObserver(()=>{if(!new URLSearchParams(location.search).get('survey'))manageUI()}).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+<style id="publicSurveyBootStyleV1091b">
+html.public-survey-mode body > * { display:none !important; }
+html.public-survey-mode #publicSurveyV1091 { display:block !important; }
+</style>
+<script>
+// ===== v10.9.1b PUBLIC SURVEY BOOT FIX =====
+(function(){
+  const token=new URLSearchParams(location.search).get('survey');
+  if(!token) return;
+  document.documentElement.classList.add('public-survey-mode');
+
+  function forcePublicSurvey(){
+    // v10.9.1의 공개 설문 렌더러가 DOMContentLoaded 타이밍을 놓쳐도 직접 재구성
+    const c=(typeof supabaseClient!=='undefined'?supabaseClient:(typeof sb!=='undefined'?sb:null));
+    if(!c){ setTimeout(forcePublicSurvey,100); return; }
+    if(document.getElementById('publicSurveyV1091')) return;
+
+    const E=v=>String(v??'').replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]));
+    const wrap=document.createElement('div');
+    wrap.id='publicSurveyV1091';
+    wrap.style.cssText='display:block!important;max-width:720px;margin:35px auto;padding:22px;background:#fff;border:1px solid #ddd;border-radius:12px';
+    document.body.appendChild(wrap);
+    wrap.innerHTML='<h2>설문을 불러오는 중입니다...</h2>';
+
+    (async()=>{
+      try{
+        const {data:sv,error}=await c.from('surveys')
+          .select('id,title,description,status,start_date,end_date')
+          .eq('public_token',token).single();
+        if(error||!sv) throw new Error('설문을 찾을 수 없습니다.');
+        if(sv.status!=='open') throw new Error('현재 응답을 받지 않는 설문입니다.');
+
+        const {data:qs,error:qe}=await c.from('survey_questions').select('*')
+          .eq('survey_id',sv.id).order('sort_order');
+        if(qe) throw qe;
+
+        function qhtml(q){
+          const n='q_'+q.id, req=q.required?' *':'';
+          if(q.question_type==='rating5') return `<div class="q"><b>${E(q.question_text)}${req}</b>${[1,2,3,4,5].map(v=>`<label><input type="radio" name="${n}" value="${v}"> ${v}점</label>`).join('')}</div>`;
+          if(q.question_type==='single') return `<div class="q"><b>${E(q.question_text)}${req}</b>${(q.options||[]).map(v=>`<label><input type="radio" name="${n}" value="${E(v)}"> ${E(v)}</label>`).join('')}</div>`;
+          if(q.question_type==='multi') return `<div class="q"><b>${E(q.question_text)}${req}</b>${(q.options||[]).map(v=>`<label><input type="checkbox" name="${n}" value="${E(v)}"> ${E(v)}</label>`).join('')}</div>`;
+          if(q.question_type==='long') return `<div class="q"><b>${E(q.question_text)}${req}</b><textarea name="${n}" rows="4" style="width:100%"></textarea></div>`;
+          return `<div class="q"><b>${E(q.question_text)}${req}</b><input type="text" name="${n}" style="width:100%"></div>`;
+        }
+        function answer(q){
+          const n='q_'+q.id;
+          if(q.question_type==='multi') return [...document.querySelectorAll(`[name="${n}"]:checked`)].map(x=>x.value);
+          if(q.question_type==='rating5'||q.question_type==='single') return document.querySelector(`[name="${n}"]:checked`)?.value||'';
+          return document.querySelector(`[name="${n}"]`)?.value?.trim()||'';
+        }
+
+        wrap.innerHTML=`<h1 style="color:#173f78">${E(sv.title)}</h1>
+          ${sv.description?`<p>${E(sv.description)}</p>`:''}
+          <form id="svPublicFormV1091b">${qs.map(q=>`<div style="padding:14px 0;border-bottom:1px solid #eee">${qhtml(q)}</div>`).join('')}
+          <button type="submit" style="margin-top:20px;padding:12px 24px">응답 제출</button></form>
+          <div id="svPublicMsgV1091b" style="margin-top:16px"></div>`;
+
+        document.getElementById('svPublicFormV1091b').onsubmit=async e=>{
+          e.preventDefault();
+          const msg=document.getElementById('svPublicMsgV1091b');
+          try{
+            const answers=qs.map(q=>({question_id:q.id,answer:answer(q)}));
+            for(let i=0;i<qs.length;i++){
+              const a=answers[i].answer;
+              if(qs[i].required && (a===''||a==null||(Array.isArray(a)&&!a.length)))
+                throw new Error(`${i+1}번 문항은 필수입니다.`);
+            }
+            const {error:re}=await c.rpc('submit_public_survey_v1091',{p_token:token,p_answers:answers});
+            if(re) throw re;
+            document.getElementById('svPublicFormV1091b').style.display='none';
+            msg.innerHTML='<h2>응답이 제출되었습니다.</h2><p>설문에 참여해 주셔서 감사합니다.</p>';
+          }catch(err){ msg.textContent='제출 오류: '+err.message; }
+        };
+      }catch(err){
+        wrap.innerHTML='<h2>설문 안내</h2><p>'+E(err.message)+'</p>';
+      }
+    })();
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',forcePublicSurvey,{once:true});
+  else forcePublicSurvey();
+  window.addEventListener('load',()=>setTimeout(forcePublicSurvey,0),{once:true});
 })();
 </script>
 </body>
