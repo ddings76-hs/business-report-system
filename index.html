@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v12.5 Full DB Management)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v13.0 Dashboard Restoration)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -12,6 +12,7 @@
   /* 메인 모드 선택기 */
   .mode-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; margin-top: 15px; }
   .mode-btn { flex: 1; padding: 12px; text-align: center; font-size: 15px; font-weight: bold; border: 2px solid #cbd5e1; border-radius: 8px; cursor: pointer; background-color: #f8fafc; color: #64748b; transition: all 0.2s ease; }
+  .mode-btn.active-home { background-color: #f3e8ff; border-color: #9333ea; color: #7e22ce; box-shadow: 0 2px 5px rgba(147,51,234,0.15); }
   .mode-btn.active-plan { background-color: #eff6ff; border-color: #2563eb; color: #1d4ed8; box-shadow: 0 2px 5px rgba(37,99,235,0.15); }
   .mode-btn.active-result { background-color: #ecfdf5; border-color: #059669; color: #047857; box-shadow: 0 2px 5px rgba(5,150,105,0.15); }
   .mode-btn.active-list { background-color: #fef3c7; border-color: #d97706; color: #b45309; box-shadow: 0 2px 5px rgba(217,119,6,0.15); }
@@ -26,6 +27,7 @@
   .section-plan-head { border-color: #2563eb; color: #1e40af; }
   .section-result-head { border-color: #059669; color: #047857; }
   .section-list-head { border-color: #d97706; color: #b45309; }
+  .section-home-head { border-color: #9333ea; color: #7e22ce; }
   
   .sub-section { display: none; }
   .sub-section.active { display: block; }
@@ -78,9 +80,16 @@
   .doc-app-label { font-weight: normal; margin-right: 12px; white-space: nowrap; }
   .doc-app-value { font-weight: bold; }
   
-  .doc-footer-address { font-size: 11px; color: #333; margin-top: 8px; text-align: left; line-height: 1.5; font-family: 'Batang', serif; }
   .tag-plan { background-color: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 3px; font-size: 12px; font-weight: bold; }
   .tag-result { background-color: #d1fae5; color: #065f46; padding: 2px 6px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+
+  /* 업무 홈 전용 카드 스타일 */
+  .stat-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+  .stat-title { font-size:12px; color:#64748b; font-weight:bold; }
+  .stat-value { font-size:22px; font-weight:bold; color:#0f172a; margin-top:4px; }
+  
+  .project-card { border:1px solid #cbd5e1; border-radius:8px; padding:16px; background:#fff; margin-bottom:12px; transition:border-color 0.2s; }
+  .project-card:hover { border-color:#9333ea; }
 
   @media print {
     @page { size: A4 portrait; margin: 15mm; }
@@ -139,40 +148,66 @@
 
 <div class="app-container">
   <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템</h1>
-  <div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Full DB Management · 누적 데이터 불러오기/개별삭제/전체삭제 완벽 지원</div>
+  <div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Dashboard restored · 대시보드 요약 및 전체 사업 진행사항 관리</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
-    <div id="btn-mode-home" class="mode-btn" onclick="switchModeV86Home()">🏠 업무 홈</div>
-    <div id="btn-mode-plan" class="mode-btn active-plan" onclick="switchMode('PLAN')">📌 [1단계] 사업계획서 작성</div>
+    <div id="btn-mode-home" class="mode-btn active-home" onclick="switchMode('HOME')">🏠 업무 홈 (진행 현황)</div>
+    <div id="btn-mode-plan" class="mode-btn" onclick="switchMode('PLAN')">📌 [1단계] 사업계획서 작성</div>
     <div id="btn-mode-result" class="mode-btn" onclick="switchMode('RESULT')">✅ [2단계] 사업 결과보고서 작성</div>
     <div id="btn-mode-list" class="mode-btn" onclick="switchMode('LIST')">📁 [3단계] 누적 사업 DB 목록</div>
   </div>
 
-  <div id="section-home-v86" class="form-section">
+  <!-- 복구된 [업무 홈] 대시보드 섹션 -->
+  <div id="section-home-v86" class="form-section active">
     <div class="no-print" style="padding:4px 0 16px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
         <div>
-          <h2 style="margin:0;">업무 홈</h2>
-          <div id="homeWelcomeV86" style="font-size:13px;color:#666;margin-top:5px;">공동 사업 업무현황을 불러옵니다.</div>
+          <h2 class="section-home-head" style="margin:0;">🏠 센터 주요 사업 진행 현황 대시보드</h2>
+          <div id="homeWelcomeV86" style="font-size:13px;color:#666;margin-top:5px;">저장된 모든 사업 데이터의 계획 수립 및 결과보고 진행 상황을 한눈에 파악합니다.</div>
         </div>
-        <button class="btn btn-add" onclick="renderHomeV86()">새로고침</button>
+        <button class="btn btn-add" onclick="renderHomeV86()">↻ 대시보드 새로고침</button>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:14px;">
-        <div style="border:1px solid #ddd;border-radius:9px;padding:14px;background:#fff;">
-          <h3 style="margin:0 0 10px;">빠른 업무</h3>
-          <div style="display:flex;gap:7px;flex-wrap:wrap;">
-            <button class="btn btn-plan" onclick="switchMode('PLAN')">새 사업계획서</button>
-            <button class="btn btn-result" onclick="switchMode('RESULT')">결과보고서</button>
-          </div>
+
+      <!-- 상단 핵심 수치 요약 -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px;">
+        <div class="stat-card">
+          <div class="stat-title">전체 등록 문서</div>
+          <div class="stat-value" id="stat_total_docs">0 건</div>
         </div>
+        <div class="stat-card" style="border-left:4px solid #2563eb;">
+          <div class="stat-title">계획 수립 문서</div>
+          <div class="stat-value" style="color:#1d4ed8;" id="stat_plan_docs">0 건</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid #059669;">
+          <div class="stat-title">결과 보고 완료</div>
+          <div class="stat-value" style="color:#047857;" id="stat_result_docs">0 건</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid #d97706;">
+          <div class="stat-title">누적 참여 인원</div>
+          <div class="stat-value" style="color:#b45309;" id="stat_total_participants">0 명</div>
+        </div>
+      </div>
+
+      <!-- 빠른 업무 실행 -->
+      <div style="border:1px solid #e2e8f0;border-radius:9px;padding:14px;background:#fff;margin-top:16px;">
+        <h3 style="margin:0 0 10px;font-size:14px;color:#334155;">⚡ 빠른 신규 업무 작성</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-plan" onclick="switchMode('PLAN')">📌 새 사업계획서 작성하기</button>
+          <button class="btn btn-result" onclick="switchMode('RESULT')">✅ 사업 결과보고서 작성하기</button>
+        </div>
+      </div>
+
+      <!-- 전체 사업 진행사항 타임라인 목록 -->
+      <h2 class="section-home-head" style="margin-top:24px;">📋 전체 사업별 추진내용 요약 및 진행 현황</h2>
+      <div id="homeProjectTimeline" style="margin-top:12px;">
+        <div style="text-align:center;padding:30px;color:#64748b;background:#fff;border:1px dashed #cbd5e1;border-radius:8px;">사업 진행 현황을 불러오는 중입니다...</div>
       </div>
     </div>
   </div>
 
   <!-- 1단계: 사업계획서 섹션 -->
-  <div id="section-input-plan" class="form-section active">
-    
+  <div id="section-input-plan" class="form-section">
     <!-- ✨ 사업계획서 AI 자동 작성 도구 -->
     <div id="aiPlanBoxV120" style="border:2px solid #2563eb;border-radius:10px;padding:16px;margin-bottom:18px;background:#eff6ff">
       <b style="color:#1e40af;font-size:15px;">✨ AI 사업계획서 문장 자동 완성</b>
@@ -400,7 +435,7 @@
     </div>
   </div>
 
-  <!-- 3단계: 누적 DB 목록 (개별 삭제 및 전체 삭제 관리 지원) -->
+  <!-- 3단계: 누적 DB 목록 -->
   <div id="section-input-list" class="form-section">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
       <h2 class="section-list-head" style="margin:0;">📁 저장된 사업 누적 DB 목록</h2>
@@ -418,10 +453,12 @@
     document.querySelectorAll('.mode-btn').forEach(btn => btn.className = 'mode-btn');
     document.querySelectorAll('.form-section').forEach(sec => sec.classList.remove('active'));
 
-    const homeSec = document.getElementById('section-home-v86');
-    if (homeSec) homeSec.classList.remove('active');
-
-    if (mode === 'PLAN') {
+    if (mode === 'HOME') {
+      document.getElementById('btn-mode-home').className = 'mode-btn active-home';
+      const sec = document.getElementById('section-home-v86');
+      if (sec) { sec.style.display = 'block'; sec.classList.add('active'); }
+      renderHomeV86();
+    } else if (mode === 'PLAN') {
       document.getElementById('btn-mode-plan').className = 'mode-btn active-plan';
       const sec = document.getElementById('section-input-plan');
       if (sec) { sec.style.display = 'block'; sec.classList.add('active'); }
@@ -555,10 +592,76 @@
     document.getElementById('authOverlay').style.display='none';
     document.getElementById('collabBar').style.display='flex';
     document.getElementById('currentUserLabel').textContent=user.email;
+    await renderHomeV86();
     await renderCloudDB();
   }
 
-  // ===== [DB 관리 기능] 목록 렌더링, 불러오기, 개별 삭제, 전체 삭제 =====
+  // ===== [업무 홈 대시보드 복구 및 실시간 연동 기능] =====
+  async function renderHomeV86() {
+    if (!sb) return;
+    const timelineEl = document.getElementById('homeProjectTimeline');
+    if (!timelineEl) return;
+
+    try {
+      const { data, error } = await sb.from('project_documents').select('*').order('updated_at', { ascending: false });
+      if (error) throw error;
+
+      let totalDocs = data ? data.length : 0;
+      let planDocs = 0;
+      let resultDocs = 0;
+      let totalParticipants = 0;
+
+      if (!data || data.length === 0) {
+        document.getElementById('stat_total_docs').innerText = '0 건';
+        document.getElementById('stat_plan_docs').innerText = '0 건';
+        document.getElementById('stat_result_docs').innerText = '0 건';
+        document.getElementById('stat_total_participants').innerText = '0 명';
+        timelineEl.innerHTML = '<div style="text-align:center;padding:30px;color:#64748b;background:#fff;border:1px dashed #cbd5e1;border-radius:8px;">등록된 사업 현황이 없습니다. 새로운 사업계획서를 작성해 보세요.</div>';
+        return;
+      }
+
+      let cardsHtml = '';
+      data.forEach(item => {
+        const isPlan = item.doc_type === 'PLAN';
+        if (isPlan) planDocs++; else resultDocs++;
+
+        const d = item.data || {};
+        const projName = d.sp_project_name || d.sr_project_name || d.r_projName || '사업명 미입력';
+        const staff = d.p_staff || d.r_staff || '담당자 미지정';
+        const content = d.sp_content || d.sr_actual_content || d.r_summaryContent || '내용 요약 없음';
+        const participants = parseInt(d.sp_planned_participants || d.sr_actual_participants || 0);
+        if (participants) totalParticipants += participants;
+
+        const dateStr = d.sp_operation_date || d.sr_actual_date || d.r_dateLoc || new Date(item.updated_at).toLocaleDateString();
+
+        cardsHtml += `
+          <div class="project-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+              <div>
+                <span class="${isPlan ? 'tag-plan' : 'tag-result'}">${isPlan ? '계획 수립' : '결과 보고 완료'}</span>
+                <h3 style="margin:6px 0 4px;font-size:16px;color:#0f172a;">${projName}</h3>
+                <div style="font-size:12px;color:#64748b;">담당자: <b>${staff}</b> | 일시 및 장소: ${dateStr}</div>
+              </div>
+              <button class="btn-add" onclick="loadCloudDocument('${item.id}')">상세보기 / 수정</button>
+            </div>
+            <div style="margin-top:10px;padding:10px;background:#f8fafc;border-radius:6px;font-size:13px;color:#334155;white-space:pre-wrap;">${content}</div>
+          </div>
+        `;
+      });
+
+      document.getElementById('stat_total_docs').innerText = totalDocs + ' 건';
+      document.getElementById('stat_plan_docs').innerText = planDocs + ' 건';
+      document.getElementById('stat_result_docs').innerText = resultDocs + ' 건';
+      document.getElementById('stat_total_participants').innerText = totalParticipants.toLocaleString() + ' 명';
+
+      timelineEl.innerHTML = cardsHtml;
+
+    } catch (err) {
+      console.error('업무 홈 데이터 수집 실패:', err);
+    }
+  }
+
+  // ===== DB 목록 관리 기능 =====
   async function renderCloudDB() {
     if(!v8User || !sb) return;
     const tbody=document.getElementById('dbTableBody');
@@ -585,7 +688,6 @@
     });
   }
 
-  // 1) DB 저장 기능
   async function saveCloudDocument(type) {
     if(!sb || !v8User) return alert('Supabase 로그인 연결이 필요합니다.');
     
@@ -649,11 +751,11 @@
     if (error) alert('저장 중 오류 발생: ' + error.message);
     else {
       alert('DB에 성공적으로 저장되었습니다.');
+      renderHomeV86();
       renderCloudDB();
     }
   }
 
-  // 2) DB 불러오기 기능
   async function loadCloudDocument(id) {
     if (!sb) return;
     const { data, error } = await sb.from('project_documents').select('*').eq('id', id).single();
@@ -709,26 +811,26 @@
     alert('문서를 성공적으로 불러왔습니다.');
   }
 
-  // 3) 개별 삭제 기능
   async function deleteCloudDocument(id) {
     if (!confirm('선택한 사업 누적 데이터를 삭제하시겠습니까?')) return;
     const { error } = await sb.from('project_documents').delete().eq('id', id);
     if (error) alert('삭제 실패: ' + error.message);
     else {
       alert('데이터가 삭제되었습니다.');
+      renderHomeV86();
       renderCloudDB();
     }
   }
 
-  // 4) 전체 삭제 기능
   async function deleteCloudDocumentAll() {
     if (!confirm('⚠️ 정말로 저장된 모든 누적 데이터를 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.')) return;
     if (!confirm('확인을 누르시면 DB의 모든 데이터가 영구적으로 삭제됩니다.')) return;
 
-    const { error } = await sb.from('project_documents').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // 전체 삭제 쿼리
+    const { error } = await sb.from('project_documents').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     if (error) alert('전체 삭제 실패: ' + error.message);
     else {
       alert('모든 누적 데이터가 성공적으로 삭제되었습니다.');
+      renderHomeV86();
       renderCloudDB();
     }
   }
@@ -742,11 +844,10 @@
   }
 
   function switchModeV86Home() { switchMode('HOME'); }
-  function renderHomeV86() {}
 </script>
 
 <script>
-// ===== 1단계: AI 사업계획서 자동 작성 엔진 =====
+// ===== AI 사업계획서 자동 작성 엔진 =====
 let planDraftData = null;
 
 window.generatePlanAIV120 = async function() {
@@ -803,7 +904,7 @@ window.applyPlanAIV120 = function() {
 </script>
 
 <script>
-// ===== 2단계: AI 사업 결과보고서 및 설문 연동 =====
+// ===== AI 사업 결과보고서 및 설문 연동 =====
 let resultDraftData = null;
 
 window.generateResultAIV113 = async function() {
