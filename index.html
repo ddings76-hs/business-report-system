@@ -4974,5 +4974,104 @@ html.public-survey-mode #publicSurveyV1091 { display:block !important; }
   };
 })();
 </script>
+<script>
+// ===== [v11.3 HOTFIX] DB 데이터 폼 입력 바인딩 및 공란 현상 완전 해결 =====
+(function fixPlanDataBinding() {
+  const originalLoadCloudDocument = window.loadCloudDocument;
+
+  window.loadCloudDocument = async function(docId) {
+    try {
+      if (!sb) return;
+
+      // 1. Supabase에서 문서를 직접 조회하여 data 추출
+      const { data: doc, error } = await sb
+        .from('project_documents')
+        .select('*')
+        .eq('id', docId)
+        .single();
+
+      if (error) throw error;
+      if (!doc || !doc.data) {
+        alert('문서 데이터를 찾을 수 없습니다.');
+        return;
+      }
+
+      const d = doc.data;
+
+      // 2. 계획서(PLAN) 데이터인 경우 입력폼 바인딩 수행
+      if (doc.doc_type === 'PLAN') {
+        window.currentCloudPlanProjectId = doc.project_id;
+
+        // 표준 입력폼(v10.6) 값 복원
+        const std = d.standard || (typeof standardFromLegacyV106 === 'function' ? standardFromLegacyV106(d) : null);
+        if (std && typeof applyStandardPlanV106 === 'function') {
+          applyStandardPlanV106(std);
+        } else {
+          // 표준 객체가 없을 경우 기본 매핑 처리
+          const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val || '';
+          };
+          setVal('sp_project_name', d.projectName || projectNameFromPlan(d) || '');
+          setVal('sp_background', d.background || '');
+          setVal('sp_purpose', d.purpose || '');
+          setVal('sp_expected_effect', d.expectedEffect || '');
+          setVal('sp_operation_date', d.operationDate || '');
+          setVal('sp_target_group', d.targetGroup || '');
+          setVal('sp_planned_participants', d.plannedParticipants || d.targetCount || 0);
+          setVal('sp_content', d.content || '');
+          setVal('sp_location', d.location || '');
+          setVal('sp_operation_method', d.operationMethod || '');
+          setVal('sp_evaluation_plan', d.evaluationPlan || '');
+        }
+
+        // 기관명, 담당자, 검토자, 결재자 복원
+        if (document.getElementById('p_orgName')) p_orgName.value = d.orgName || '화성시장기요양지원센터';
+        if (document.getElementById('p_staff')) p_staff.value = d.staff || '';
+        if (document.getElementById('p_reviewer')) p_reviewer.value = d.reviewer || '';
+        if (document.getElementById('p_approver')) p_approver.value = d.approver || '';
+
+        // 세부 프로그램, 일정, 예산 테이블 복원
+        if (typeof setRows === 'function') {
+          setRows('p_overviewTbody', d.overview, ['p-ov-key', 'p-ov-val'], 'addOverviewRow');
+          setRows('p_progTbody', d.programs, ['p-prog-key', 'p-prog-val'], 'addProgRow');
+          setRows('p_schedTbody', d.schedule, ['p-sch-time', 'p-sch-val'], 'addScheduleRow');
+          setRows('p_budgetTbody', d.budget, ['p-bg-item', 'p-bg-calc', 'p-bg-amount', 'p-bg-note'], 'addPlanBudgetRow');
+        }
+
+        if (document.getElementById('p_budgetSource')) p_budgetSource.value = d.budgetSource || '보조금';
+        if (document.getElementById('p_budgetCategory')) p_budgetCategory.value = d.budgetCategory || '';
+
+        // 예산 계산 및 동기화
+        if (typeof calcPlanBudget === 'function') calcPlanBudget();
+        if (typeof syncStandardToLegacyV1061 === 'function') syncStandardToLegacyV1061();
+
+        // 화면 전환 처리
+        if (typeof switchMode === 'function') switchMode('PLAN');
+
+        // 통합 문서 생성기 실행 (미리보기 화면 채우기)
+        if (typeof generatePlanDocs === 'function') generatePlanDocs();
+
+      } else if (doc.doc_type === 'RESULT') {
+        // 결과보고서인 경우 기존 fillResult 활용
+        window.currentCloudResultProjectId = doc.project_id;
+        if (typeof fillResult === 'function') fillResult(d);
+        if (typeof calcResultBudget === 'function') calcResultBudget();
+        if (typeof switchMode === 'function') switchMode('RESULT');
+      }
+
+      // 최상단 이동
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+      console.error('계획서 바인딩 오류:', err);
+      // 에러 발생 시 기존 원본 로직을 fallback으로 실행
+      if (typeof originalLoadCloudDocument === 'function') {
+        originalLoadCloudDocument(docId);
+      }
+    }
+  };
+})();
+</script>  
 </body>
 </html>
