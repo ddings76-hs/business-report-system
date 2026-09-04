@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.2.2 계획서 단일화)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.4 계획·결과 AI)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -106,6 +106,14 @@
 #section-home-v86:not(.active){display:none;}
 .mode-selector{flex-wrap:wrap;}
 .mode-btn{min-width:140px;}
+#aiPlanV110{border:2px solid #2563eb;border-radius:10px;padding:14px;margin:0 0 14px;background:#f8fbff}
+#aiPlanV110 .ai-actions{display:flex;gap:8px;flex-wrap:wrap}
+#aiPlanV110 button{padding:8px 12px}
+#aiPlanV110 button:disabled{opacity:.55;cursor:not-allowed}
+#aiResultV114{border:2px solid #059669;border-radius:10px;padding:14px;margin:0 0 14px;background:#f0fdf9}
+#aiResultV114 .ai-actions{display:flex;gap:8px;flex-wrap:wrap}
+#aiResultV114 button{padding:8px 12px}
+#aiResultV114 button:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:760px){
   .mode-selector{display:grid!important;grid-template-columns:1fr 1fr;}
   .mode-btn{min-width:0!important;font-size:11px!important;padding:10px 6px!important;}
@@ -118,7 +126,7 @@
 <body>
 <div id="authOverlay" style="position:fixed;inset:0;background:#f5f7fa;z-index:99999;display:flex;align-items:center;justify-content:center;">
   <div style="width:min(430px,92vw);background:#fff;border:1px solid #ddd;border-radius:14px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.12);">
-    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v11.2.2</h2>
+    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v11.4</h2>
     <p style="font-size:13px;color:#666;margin:0 0 20px;">직원 계정으로 로그인하면 공동 사업 DB를 사용할 수 있습니다.</p>
     <label>이메일</label><input id="loginEmail" type="email" style="width:100%;padding:10px;margin:5px 0 12px;box-sizing:border-box;">
     <label>비밀번호</label><input id="loginPassword" type="password" style="width:100%;padding:10px;margin:5px 0 14px;box-sizing:border-box;">
@@ -291,7 +299,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.2.2 계획서 단일화)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">2단계 · 사업계획 입력·생성 흐름 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.4 계획·결과 AI)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">사업계획·결과보고 AI 초안 및 문서 생성 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -1200,6 +1208,10 @@
       });
       p_overviewTbody.innerHTML=''; addOverviewRow();
       customPlanFieldsV106=[]; renderCustomPlanFieldsV106();
+      planAIDraftV113=null;
+      const aiPreview=document.getElementById('aiPreviewV110'); if(aiPreview) aiPreview.innerHTML='';
+      const aiMsg=document.getElementById('aiMsgV110'); if(aiMsg) aiMsg.textContent='';
+      const aiApply=document.getElementById('aiApplyV110'); if(aiApply) aiApply.disabled=true;
       p_progTbody.innerHTML=''; addProgRow();
       p_schedTbody.innerHTML=''; addScheduleRow();
       p_budgetTbody.innerHTML=''; addPlanBudgetRow();
@@ -1215,6 +1227,10 @@
       r_budgetTbody.innerHTML=''; addResultBudgetRow();
       r_attachTbody.innerHTML=''; addAttachRow();
       customResultFieldsV107=[]; renderCustomResultFieldsV107();
+      resultAIDraftV114=null;
+      const resultAiPreview=document.getElementById('aiResultPreviewV114'); if(resultAiPreview) resultAiPreview.innerHTML='';
+      const resultAiMsg=document.getElementById('aiResultMsgV114'); if(resultAiMsg) resultAiMsg.textContent='';
+      const resultAiApply=document.getElementById('aiResultApplyV114'); if(resultAiApply) resultAiApply.disabled=true;
       r_orgName.value='화성시장기요양지원센터';
       document.getElementById('validationBox').style.display='none';
       document.getElementById('output-result-container').style.display='none';
@@ -2950,9 +2966,200 @@
     }
   };
 
+  // ===== v11.3 Supabase Edge Function 기반 AI 사업계획 초안 복원 =====
+  let planAIDraftV113=null;
+  function collectPlanAIInputV113(){
+    const st=getStandardPlanV106();
+    return {
+      project_name:st.project_name,
+      target:st.target_group,
+      planned_participants:st.planned_participants,
+      main_content:st.content,
+      operation_date:st.operation_date,
+      location:st.location,
+      method:st.operation_method,
+      background:st.background,
+      purpose:st.purpose,
+      expected_effect:st.expected_effect,
+      evaluation_plan:st.evaluation_plan
+    };
+  }
+  function mountPlanAIV113(){
+    const std=document.getElementById('standardPlanV106');
+    if(!std||document.getElementById('aiPlanV110'))return;
+    const box=document.createElement('div');
+    box.id='aiPlanV110';
+    box.className='no-print';
+    box.innerHTML=`<b style="color:#1d4ed8">✨ AI 사업계획 초안</b>
+      <div style="font-size:12px;color:#666;margin:5px 0 10px">사업명·대상·계획인원·주요내용 등 입력된 사실을 바탕으로 추진배경, 목적, 기대효과, 운영방법, 평가·환류 계획을 작성합니다.</div>
+      <div class="ai-actions">
+        <button type="button" class="btn btn-plan" id="aiGenerateV110" onclick="generatePlanAIV110()">✨ AI 초안 작성</button>
+        <button type="button" class="btn btn-save" id="aiApplyV110" onclick="applyPlanAIV110()" disabled>✅ 표준폼에 적용</button>
+      </div>
+      <div id="aiMsgV110" role="status" aria-live="polite" style="margin-top:8px;font-size:12px"></div>
+      <div id="aiPreviewV110" style="margin-top:10px"></div>`;
+    std.insertAdjacentElement('beforebegin',box);
+  }
+  async function generatePlanAIV110(){
+    const msg=document.getElementById('aiMsgV110');
+    const preview=document.getElementById('aiPreviewV110');
+    const generateBtn=document.getElementById('aiGenerateV110');
+    const applyBtn=document.getElementById('aiApplyV110');
+    try{
+      const input=collectPlanAIInputV113();
+      if(!v8User)throw new Error('로그인 후 이용해 주세요.');
+      if(!input.project_name)throw new Error('사업명을 먼저 입력하세요.');
+      if(!input.target&&!input.main_content)throw new Error('참여대상 또는 주요내용을 입력해 주세요.');
+      planAIDraftV113=null;
+      applyBtn.disabled=true;
+      generateBtn.disabled=true;
+      msg.style.color='#1d4ed8';
+      msg.textContent='AI 초안을 작성하고 있습니다...';
+      preview.innerHTML='';
+      const {data:res,error}=await sb.functions.invoke('ai-plan-draft-v11',{body:input});
+      if(error)throw error;
+      if(!res?.draft)throw new Error(res?.error||'AI 응답 형식이 올바르지 않습니다.');
+      planAIDraftV113=res.draft;
+      const rows=[
+        ['추진배경 및 필요성',planAIDraftV113.background],
+        ['사업목적',planAIDraftV113.purpose],
+        ['기대효과',planAIDraftV113.expected_effect],
+        ['운영방법',planAIDraftV113.method],
+        ['평가·환류 계획',planAIDraftV113.evaluation_plan]
+      ];
+      preview.innerHTML=rows.map(([label,value])=>`<div style="border:1px solid #dbe3ea;border-radius:6px;padding:9px;margin:6px 0;background:#fff"><b>${esc(label)}</b><div style="white-space:pre-wrap;margin-top:5px">${esc(value||'')}</div></div>`).join('');
+      applyBtn.disabled=false;
+      msg.style.color='#166534';
+      msg.textContent='AI 초안이 생성되었습니다. 내용을 확인한 후 표준폼에 적용하세요.';
+    }catch(e){
+      console.error('AI 사업계획 초안 오류:',e);
+      msg.style.color='#b91c1c';
+      msg.textContent='AI 초안 오류: '+(e.message||e);
+    }finally{
+      generateBtn.disabled=false;
+    }
+  }
+  function applyPlanAIV110(){
+    if(!planAIDraftV113)return;
+    const set=(id,value)=>{
+      const el=document.getElementById(id);
+      if(!el)return;
+      el.value=value||'';
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+      el.dispatchEvent(new Event('change',{bubbles:true}));
+    };
+    set('sp_background',planAIDraftV113.background);
+    set('sp_purpose',planAIDraftV113.purpose);
+    set('sp_expected_effect',planAIDraftV113.expected_effect);
+    set('sp_operation_method',planAIDraftV113.method);
+    set('sp_evaluation_plan',planAIDraftV113.evaluation_plan);
+    syncStandardToLegacyV1061();
+    const msg=document.getElementById('aiMsgV110');
+    msg.style.color='#166534';
+    msg.textContent='표준 입력폼에 적용했습니다. 담당자가 사실관계와 표현을 확인한 후 저장하세요.';
+  }
+
+  // ===== v11.4 동일 Edge Function 기반 AI 결과보고서 초안 =====
+  let resultAIDraftV114=null;
+  function collectResultAIInputV114(){
+    const st=getStandardResultV107();
+    return {
+      document_type:'RESULT',
+      project_name:st.project_name||document.getElementById('r_projName')?.value?.trim()||'',
+      actual_date:st.actual_date||document.getElementById('r_dateLoc')?.value?.trim()||'',
+      actual_target:st.actual_target_group||document.getElementById('r_actualTarget')?.value?.trim()||'',
+      actual_participants:st.actual_participants||extractFirstNumber(document.getElementById('r_actualTarget')?.value)||0,
+      actual_content:st.actual_content||document.getElementById('r_summaryContent')?.value?.trim()||'',
+      actual_location:st.actual_location||'',
+      actual_budget:calcResultBudget(),
+      satisfaction_score:document.getElementById('r_surveyScore')?.value?.trim()||st.satisfaction_score||'',
+      survey_items:document.getElementById('r_surveyItems')?.value?.trim()||'',
+      participant_feedback:document.getElementById('r_surveyFeedback')?.value?.trim()||'',
+      existing_achievements:st.achievements||document.getElementById('r_evalGood')?.value?.trim()||'',
+      existing_improvements:st.improvements||document.getElementById('r_evalBad')?.value?.trim()||'',
+      existing_evaluation:st.evaluation_result||'',
+      existing_follow_up_plan:document.getElementById('r_evalPlan')?.value?.trim()||''
+    };
+  }
+  function mountResultAIV114(){
+    const std=document.getElementById('standardResultV107');
+    if(!std||document.getElementById('aiResultV114'))return;
+    const box=document.createElement('div');
+    box.id='aiResultV114';
+    box.className='no-print';
+    box.innerHTML=`<b style="color:#047857">✨ AI 결과보고서 초안</b>
+      <div style="font-size:12px;color:#666;margin:5px 0 10px">실제 참여인원·추진내용·예산·설문 결과를 바탕으로 주요성과, 개선사항, 종합평가, 환류계획을 작성합니다.</div>
+      <div class="ai-actions">
+        <button type="button" class="btn btn-result" id="aiResultGenerateV114" onclick="generateResultAIV114()">✨ AI 결과 초안 작성</button>
+        <button type="button" class="btn btn-save" id="aiResultApplyV114" onclick="applyResultAIV114()" disabled>✅ 결과폼에 적용</button>
+      </div>
+      <div id="aiResultMsgV114" role="status" aria-live="polite" style="margin-top:8px;font-size:12px"></div>
+      <div id="aiResultPreviewV114" style="margin-top:10px"></div>`;
+    std.insertAdjacentElement('beforebegin',box);
+  }
+  async function generateResultAIV114(){
+    const msg=document.getElementById('aiResultMsgV114');
+    const preview=document.getElementById('aiResultPreviewV114');
+    const generateBtn=document.getElementById('aiResultGenerateV114');
+    const applyBtn=document.getElementById('aiResultApplyV114');
+    try{
+      const input=collectResultAIInputV114();
+      if(!v8User)throw new Error('로그인 후 이용해 주세요.');
+      if(!input.project_name)throw new Error('저장된 사업계획서를 먼저 불러오거나 사업명을 입력하세요.');
+      if(!input.actual_content&&!input.survey_items&&!input.participant_feedback)throw new Error('실제 주요내용 또는 설문 결과를 입력해 주세요.');
+      resultAIDraftV114=null;
+      applyBtn.disabled=true;
+      generateBtn.disabled=true;
+      msg.style.color='#047857';
+      msg.textContent='AI 결과보고서 초안을 작성하고 있습니다...';
+      preview.innerHTML='';
+      const {data:res,error}=await sb.functions.invoke('ai-plan-draft-v11',{body:input});
+      if(error)throw error;
+      if(!res?.draft)throw new Error(res?.error||'AI 응답 형식이 올바르지 않습니다.');
+      resultAIDraftV114=res.draft;
+      const rows=[
+        ['주요성과',resultAIDraftV114.achievements],
+        ['문제점·개선사항',resultAIDraftV114.improvements],
+        ['종합 평가결과',resultAIDraftV114.evaluation_result],
+        ['차년도 환류계획',resultAIDraftV114.follow_up_plan]
+      ];
+      preview.innerHTML=rows.map(([label,value])=>`<div style="border:1px solid #cce7dd;border-radius:6px;padding:9px;margin:6px 0;background:#fff"><b>${esc(label)}</b><div style="white-space:pre-wrap;margin-top:5px">${esc(value||'')}</div></div>`).join('');
+      applyBtn.disabled=false;
+      msg.style.color='#166534';
+      msg.textContent='AI 결과 초안이 생성되었습니다. 내용을 확인한 후 결과폼에 적용하세요.';
+    }catch(e){
+      console.error('AI 결과보고서 초안 오류:',e);
+      msg.style.color='#b91c1c';
+      msg.textContent='AI 결과 초안 오류: '+(e.message||e);
+    }finally{
+      generateBtn.disabled=false;
+    }
+  }
+  function applyResultAIV114(){
+    if(!resultAIDraftV114)return;
+    const set=(id,value)=>{
+      const el=document.getElementById(id);
+      if(!el)return;
+      el.value=value||'';
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+      el.dispatchEvent(new Event('change',{bubbles:true}));
+    };
+    set('sr_achievements',resultAIDraftV114.achievements);
+    set('sr_improvements',resultAIDraftV114.improvements);
+    set('sr_evaluation_result',resultAIDraftV114.evaluation_result);
+    set('r_evalGood',resultAIDraftV114.achievements);
+    set('r_evalBad',resultAIDraftV114.improvements);
+    set('r_evalPlan',resultAIDraftV114.follow_up_plan);
+    const msg=document.getElementById('aiResultMsgV114');
+    msg.style.color='#166534';
+    msg.textContent='결과 입력폼에 적용했습니다. 실제 실적과 설문 내용을 확인한 후 저장하세요.';
+  }
+
   document.addEventListener('DOMContentLoaded',()=>{
     renderCustomPlanFieldsV106();
     renderCustomResultFieldsV107();
+    mountPlanAIV113();
+    mountResultAIV114();
     initV8Auth().catch(e=>{
       console.error('앱 초기화 오류:',e);
       const msg=document.getElementById('authMsg');
