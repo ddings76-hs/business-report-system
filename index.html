@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v12.0 Full AI Integration)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v12.5 Full DB Management)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -55,7 +55,8 @@
   .btn-save { background-color: #d97706; color: #ffffff; }
   .btn-save:hover { background-color: #b45309; }
   .btn-add { background-color: #475569; color: #ffffff; font-size: 12px; padding: 5px 12px; border: none; border-radius: 3px; cursor: pointer; }
-  .btn-del { background-color: #ef4444; color: #ffffff; font-size: 12px; padding: 4px 8px; border: none; border-radius: 3px; cursor: pointer; }
+  .btn-del { background-color: #ef4444; color: #ffffff; font-size: 12px; padding: 5px 12px; border: none; border-radius: 3px; cursor: pointer; }
+  .btn-del:hover { background-color: #dc2626; }
   
   /* 공문서 서식 스타일 */
   .doc-sheet { background: #ffffff; border: 1px solid #94a3b8; padding: 40px; font-family: 'Batang', 'Gungsuh', serif; color: #000; box-shadow: 0 0 5px rgba(0,0,0,0.1); margin-top: 20px; line-height: 1.8; page-break-inside: avoid; }
@@ -138,7 +139,7 @@
 
 <div class="app-container">
   <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템</h1>
-  <div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Full AI Integration · 계획서 및 결과보고서 양방향 AI 작성 지원</div>
+  <div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Full DB Management · 누적 데이터 불러오기/개별삭제/전체삭제 완벽 지원</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -172,7 +173,7 @@
   <!-- 1단계: 사업계획서 섹션 -->
   <div id="section-input-plan" class="form-section active">
     
-    <!-- ✨ 사업계획서 AI 자동 작성 도구 (신규 추가) -->
+    <!-- ✨ 사업계획서 AI 자동 작성 도구 -->
     <div id="aiPlanBoxV120" style="border:2px solid #2563eb;border-radius:10px;padding:16px;margin-bottom:18px;background:#eff6ff">
       <b style="color:#1e40af;font-size:15px;">✨ AI 사업계획서 문장 자동 완성</b>
       <div style="font-size:12px;color:#1e3a8a;margin:5px 0 10px">
@@ -278,7 +279,7 @@
       </table>
     </div>
 
-    <!-- 통일된 입력 서브 탭 -->
+    <!-- 서브 탭 -->
     <div class="sub-tab-container no-print">
       <div id="r-subtab-1" class="sub-tab active-res" onclick="switchSubTab('r', 1)">Ⅰ. 사업 결과 개요</div>
       <div id="r-subtab-2" class="sub-tab" onclick="switchSubTab('r', 2)">Ⅱ. 설문 결과 (통합 연동)</div>
@@ -288,8 +289,8 @@
     <div style="display: flex; gap: 15px; margin-bottom: 12px;" class="no-print">
       <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">기관명</label><input type="text" id="r_orgName" value="화성시장기요양지원센터"></div>
       <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">담당자</label><input type="text" id="r_staff" value="최송아"></div>
-      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">검토자</label><input type="text" id="r_reviewer" value="대리 박예원"></div>
-      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">결재자</label><input type="text" id="r_approver" value="센터장 임은숙"></div>
+      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">검토자</label><input type="text" id="r_reviewer" value="박예원"></div>
+      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">결재자</label><input type="text" id="r_approver" value="임은숙"></div>
     </div>
 
     <!-- Ⅰ. 개요 -->
@@ -399,8 +400,12 @@
     </div>
   </div>
 
+  <!-- 3단계: 누적 DB 목록 (개별 삭제 및 전체 삭제 관리 지원) -->
   <div id="section-input-list" class="form-section">
-    <h2 class="section-list-head">📁 저장된 사업 누적 DB 목록</h2>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h2 class="section-list-head" style="margin:0;">📁 저장된 사업 누적 DB 목록</h2>
+      <button class="btn btn-del" onclick="deleteCloudDocumentAll()">⚠️ 전체 데이터 삭제</button>
+    </div>
     <table class="form-table">
       <thead><tr><th>구분</th><th>사업명</th><th>담당자</th><th>저장일</th><th>관리</th></tr></thead>
       <tbody id="dbTableBody"></tbody>
@@ -456,7 +461,6 @@
     let projName = document.getElementById('sp_project_name').value;
     if (!projName.trim()) return alert('사업명을 입력해 주세요.');
 
-    let summary = '';
     const fields = [
       ['사업명', projName],
       ['추진배경 및 필요성', document.getElementById('sp_background').value],
@@ -511,6 +515,7 @@
     document.getElementById('output-result-container').style.display = 'block';
   }
 
+  // Supabase 클라이언트 연결 설정
   const V8_SUPABASE_URL = 'https://quienpvidvkjvtiwyhoq.supabase.co';
   const V8_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1aWVucHZpZHZranZ0aXd5aG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMzE0MzIsImV4cCI6MjEwMzgwNzQzMn0.Q2SvpeN2s_okehjVhjNeKpqBCc2ml7EBcmvDMJ4tqKE';
   const sb = window.supabase ? window.supabase.createClient(V8_SUPABASE_URL, V8_SUPABASE_ANON_KEY) : null;
@@ -553,6 +558,7 @@
     await renderCloudDB();
   }
 
+  // ===== [DB 관리 기능] 목록 렌더링, 불러오기, 개별 삭제, 전체 삭제 =====
   async function renderCloudDB() {
     if(!v8User || !sb) return;
     const tbody=document.getElementById('dbTableBody');
@@ -560,16 +566,171 @@
     const {data,error} = await sb.from('project_documents').select('id,doc_type,data,updated_at').order('updated_at',{ascending:false});
     if(error) return;
     tbody.innerHTML='';
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="td-center" style="padding:20px;color:#888;">저장된 누적 사업 데이터가 없습니다.</td></tr>';
+      return;
+    }
     data.forEach(x=>{
       const tr=document.createElement('tr');
-      const nm=x.data?.sp_project_name || x.data?.sr_project_name || '-';
-      tr.innerHTML=`<td class="td-center">${x.doc_type==='PLAN'?'계획서':'결과보고'}</td>
-        <td>${nm}</td>
+      const nm=x.data?.sp_project_name || x.data?.sr_project_name || x.data?.r_projName || '-';
+      tr.innerHTML=`<td class="td-center">${x.doc_type==='PLAN'?'<span class="tag-plan">계획서</span>':'<span class="tag-result">결과보고</span>'}</td>
+        <td><b>${nm}</b></td>
         <td class="td-center">${x.data?.p_staff || x.data?.r_staff || '-'}</td>
         <td class="td-center">${new Date(x.updated_at).toLocaleString()}</td>
-        <td class="td-center"><button class="btn-add" onclick="loadCloudDocument('${x.id}')">불러오기</button></td>`;
+        <td class="td-center" style="white-space:nowrap;">
+          <button class="btn-add" style="margin-right:4px;" onclick="loadCloudDocument('${x.id}')">불러오기</button>
+          <button class="btn-del" onclick="deleteCloudDocument('${x.id}')">삭제</button>
+        </td>`;
       tbody.appendChild(tr);
     });
+  }
+
+  // 1) DB 저장 기능
+  async function saveCloudDocument(type) {
+    if(!sb || !v8User) return alert('Supabase 로그인 연결이 필요합니다.');
+    
+    let formData = {};
+    if (type === 'PLAN') {
+      formData = {
+        sp_project_name: document.getElementById('sp_project_name').value,
+        sp_background: document.getElementById('sp_background').value,
+        sp_purpose: document.getElementById('sp_purpose').value,
+        sp_expected_effect: document.getElementById('sp_expected_effect').value,
+        sp_operation_date: document.getElementById('sp_operation_date').value,
+        sp_target_group: document.getElementById('sp_target_group').value,
+        sp_planned_participants: document.getElementById('sp_planned_participants').value,
+        sp_content: document.getElementById('sp_content').value,
+        sp_location: document.getElementById('sp_location').value,
+        sp_operation_method: document.getElementById('sp_operation_method').value,
+        sp_evaluation_plan: document.getElementById('sp_evaluation_plan').value,
+        p_orgName: document.getElementById('p_orgName').value,
+        p_staff: document.getElementById('p_staff').value,
+        p_reviewer: document.getElementById('p_reviewer').value,
+        p_approver: document.getElementById('p_approver').value
+      };
+      if (!formData.sp_project_name) return alert('사업명을 입력해 주세요.');
+    } else {
+      formData = {
+        sr_project_name: document.getElementById('sr_project_name').value,
+        sr_actual_date: document.getElementById('sr_actual_date').value,
+        sr_actual_target_group: document.getElementById('sr_actual_target_group').value,
+        sr_actual_participants: document.getElementById('sr_actual_participants').value,
+        sr_actual_content: document.getElementById('sr_actual_content').value,
+        sr_actual_location: document.getElementById('sr_actual_location').value,
+        sr_satisfaction_score: document.getElementById('sr_satisfaction_score').value,
+        sr_achievements: document.getElementById('sr_achievements').value,
+        sr_improvements: document.getElementById('sr_improvements').value,
+        sr_evaluation_result: document.getElementById('sr_evaluation_result').value,
+        r_projName: document.getElementById('r_projName').value,
+        r_dateLoc: document.getElementById('r_dateLoc').value,
+        r_actualTarget: document.getElementById('r_actualTarget').value,
+        r_summaryContent: document.getElementById('r_summaryContent').value,
+        r_surveyScore: document.getElementById('r_surveyScore').value,
+        r_surveyItems: document.getElementById('r_surveyItems').value,
+        r_surveyFeedback: document.getElementById('r_surveyFeedback').value,
+        r_evalGood: document.getElementById('r_evalGood').value,
+        r_evalBad: document.getElementById('r_evalBad').value,
+        r_evalPlan: document.getElementById('r_evalPlan').value,
+        r_orgName: document.getElementById('r_orgName').value,
+        r_staff: document.getElementById('r_staff').value,
+        r_reviewer: document.getElementById('r_reviewer').value,
+        r_approver: document.getElementById('r_approver').value
+      };
+      if (!formData.sr_project_name && !formData.r_projName) return alert('사업명을 입력해 주세요.');
+    }
+
+    const { error } = await sb.from('project_documents').insert([{
+      doc_type: type,
+      data: formData,
+      user_id: v8User.id,
+      updated_at: new Date().toISOString()
+    }]);
+
+    if (error) alert('저장 중 오류 발생: ' + error.message);
+    else {
+      alert('DB에 성공적으로 저장되었습니다.');
+      renderCloudDB();
+    }
+  }
+
+  // 2) DB 불러오기 기능
+  async function loadCloudDocument(id) {
+    if (!sb) return;
+    const { data, error } = await sb.from('project_documents').select('*').eq('id', id).single();
+    if (error || !data) return alert('문서를 불러올 수 없습니다.');
+
+    const d = data.data;
+    if (data.doc_type === 'PLAN') {
+      switchMode('PLAN');
+      setVal('sp_project_name', d.sp_project_name);
+      setVal('sp_background', d.sp_background);
+      setVal('sp_purpose', d.sp_purpose);
+      setVal('sp_expected_effect', d.sp_expected_effect);
+      setVal('sp_operation_date', d.sp_operation_date);
+      setVal('sp_target_group', d.sp_target_group);
+      setVal('sp_planned_participants', d.sp_planned_participants);
+      setVal('sp_content', d.sp_content);
+      setVal('sp_location', d.sp_location);
+      setVal('sp_operation_method', d.sp_operation_method);
+      setVal('sp_evaluation_plan', d.sp_evaluation_plan);
+      setVal('p_orgName', d.p_orgName);
+      setVal('p_staff', d.p_staff);
+      setVal('p_reviewer', d.p_reviewer);
+      setVal('p_approver', d.p_approver);
+      generatePlanDocs();
+    } else {
+      switchMode('RESULT');
+      setVal('sr_project_name', d.sr_project_name || d.r_projName);
+      setVal('sr_actual_date', d.sr_actual_date || d.r_dateLoc);
+      setVal('sr_actual_target_group', d.sr_actual_target_group || d.r_actualTarget);
+      setVal('sr_actual_participants', d.sr_actual_participants);
+      setVal('sr_actual_content', d.sr_actual_content || d.r_summaryContent);
+      setVal('sr_actual_location', d.sr_actual_location);
+      setVal('sr_satisfaction_score', d.sr_satisfaction_score);
+      setVal('sr_achievements', d.sr_achievements || d.r_evalGood);
+      setVal('sr_improvements', d.sr_improvements || d.r_evalBad);
+      setVal('sr_evaluation_result', d.sr_evaluation_result || d.r_evalPlan);
+      setVal('r_projName', d.r_projName || d.sr_project_name);
+      setVal('r_dateLoc', d.r_dateLoc || d.sr_actual_date);
+      setVal('r_actualTarget', d.r_actualTarget || d.sr_actual_target_group);
+      setVal('r_summaryContent', d.r_summaryContent || d.sr_actual_content);
+      setVal('r_surveyScore', d.r_surveyScore);
+      setVal('r_surveyItems', d.r_surveyItems);
+      setVal('r_surveyFeedback', d.r_surveyFeedback);
+      setVal('r_evalGood', d.r_evalGood || d.sr_achievements);
+      setVal('r_evalBad', d.r_evalBad || d.sr_improvements);
+      setVal('r_evalPlan', d.r_evalPlan || d.sr_evaluation_result);
+      setVal('r_orgName', d.r_orgName);
+      setVal('r_staff', d.r_staff);
+      setVal('r_reviewer', d.r_reviewer);
+      setVal('r_approver', d.r_approver);
+      generateResultDocs();
+    }
+    alert('문서를 성공적으로 불러왔습니다.');
+  }
+
+  // 3) 개별 삭제 기능
+  async function deleteCloudDocument(id) {
+    if (!confirm('선택한 사업 누적 데이터를 삭제하시겠습니까?')) return;
+    const { error } = await sb.from('project_documents').delete().eq('id', id);
+    if (error) alert('삭제 실패: ' + error.message);
+    else {
+      alert('데이터가 삭제되었습니다.');
+      renderCloudDB();
+    }
+  }
+
+  // 4) 전체 삭제 기능
+  async function deleteCloudDocumentAll() {
+    if (!confirm('⚠️ 정말로 저장된 모든 누적 데이터를 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.')) return;
+    if (!confirm('확인을 누르시면 DB의 모든 데이터가 영구적으로 삭제됩니다.')) return;
+
+    const { error } = await sb.from('project_documents').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // 전체 삭제 쿼리
+    if (error) alert('전체 삭제 실패: ' + error.message);
+    else {
+      alert('모든 누적 데이터가 성공적으로 삭제되었습니다.');
+      renderCloudDB();
+    }
   }
 
   function setVal(id, v) {
@@ -585,7 +746,7 @@
 </script>
 
 <script>
-// ===== [신규 기능] 1단계: AI 사업계획서 자동 작성 엔진 =====
+// ===== 1단계: AI 사업계획서 자동 작성 엔진 =====
 let planDraftData = null;
 
 window.generatePlanAIV120 = async function() {
@@ -596,7 +757,6 @@ window.generatePlanAIV120 = async function() {
     const pName = document.getElementById('sp_project_name')?.value?.trim();
     const target = document.getElementById('sp_target_group')?.value?.trim() || '관내 장기요양 종사자';
     const count = document.getElementById('sp_planned_participants')?.value?.trim() || '30';
-    const content = document.getElementById('sp_content')?.value?.trim() || '';
 
     if (!pName) {
       alert('사업명을 먼저 입력해 주세요.');
@@ -606,13 +766,12 @@ window.generatePlanAIV120 = async function() {
 
     msg.textContent = '✨ AI가 사업계획서 공공 행정 서식 체계 문장을 작성 중입니다...';
 
-    // AI 표준 공공 행정 사업계획서 템플릿 생성기
     planDraftData = {
       background: `본 사업은 ${target}의 직무 스트레스 완화 및 정서적 안정 도모를 목적으로 기획됨.\n최근 돌봄 서비스 현장의 노동 강도 심화로 인한 정서적 소진(Burnout) 예방의 필요성이 크게 제기됨에 따라, 체계적인 지원 프로그램을 제공하여 지속 가능한 돌봄 복지 기반을 구축하고자 함.`,
-      purpose: `1. ${target}의 신체적·정서적 스트레스 해소 및 정서적 회복 지득\n2. 맞춤형 역량 강화 프로그램을 통한 돌봄 서비스의 질적 향상\n3. 종사자 간 교류 및 네트워킹 구축을 통한 자긍심 증진 및 소속감 제고`,
+      purpose: `1. ${target}의 신체적·정서적 스트레스 해소 및 정서적 회복 지원\n2. 맞춤형 역량 강화 프로그램을 통한 돌봄 서비스의 질적 향상\n3. 종사자 간 교류 및 네트워킹 구축을 통한 자긍심 증진 및 소속감 제고`,
       expected_effect: `[개인적 측면] 직무 소진 완화 및 정서적 힐링을 통한 업무 몰입도 향상\n[조직적 측면] 종사자 간 상호 정보 공유 네트워크 구축 및 전문성 강화\n[사회적 측면] 고품질 장기요양 서비스 제공을 통한 지역사회 돌봄 안전망 정착`,
       operation_method: `· 사전 참가를 신청받아 참여자 맞춤형 소그룹 힐링 세션 형태로 진행\n· 분야별 전문 강사를 초빙하여 체험 중심의 프로그램 구성 및 현장 모니터링 병행\n· 행사 후 만족도 설문조사를 실시하여 차년도 운영에 즉시 반영`,
-      evaluation_plan: `· [정량 평가] 목표 대만 참여 인원 달성률(${count}명 기준) 및 만족도 설문 점수(4.5점/5.0점 이상 목표)\n· [정성 평가] 참여자 소감문 및 의견 피드백 수렴 분석\n· [환류 계획] 평가 결과를 종합 분석하여 차년도 사업 계획 수립 시 프로그램 개편 자료로 활용`
+      evaluation_plan: `· [정량 평가] 목표 대비 참여 인원 달성률(${count}명 기준) 및 만족도 설문 점수(4.5점/5.0점 이상 목표)\n· [정성 평가] 참여자 소감문 및 의견 피드백 수렴 분석\n· [환류 계획] 평가 결과를 종합 분석하여 차년도 사업 계획 수립 시 프로그램 개편 자료로 활용`
     };
 
     preview.innerHTML = `
@@ -644,7 +803,7 @@ window.applyPlanAIV120 = function() {
 </script>
 
 <script>
-// ===== [기존 기능 유지] 2단계: AI 사업 결과보고서 자동 완성 =====
+// ===== 2단계: AI 사업 결과보고서 및 설문 연동 =====
 let resultDraftData = null;
 
 window.generateResultAIV113 = async function() {
@@ -734,16 +893,11 @@ window.applyResultAIV113 = function() {
       }
 
       let globalScores = [];
-      const details = (qs || []).map(q => {
+      (qs || []).forEach(q => {
         const rawAnswers = answers.filter(a => a.question_id === q.id).map(a => a.answer);
         const flatAnswers = rawAnswers.flatMap(v => Array.isArray(v) ? v : [v]).filter(Boolean);
         const scores = flatAnswers.map(parseScore).filter(s => s !== null);
-
         if (scores.length > 0) globalScores.push(...scores);
-        const counts = {};
-        flatAnswers.forEach(v => counts[v] = (counts[v] || 0) + 1);
-
-        return { qText: q.question_text, scores, counts };
       });
 
       const overallAvg = globalScores.length > 0 ? (globalScores.reduce((a, b) => a + b, 0) / globalScores.length) : 0;
