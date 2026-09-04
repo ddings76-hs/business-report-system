@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.3 PLAN OPEN SOURCE FIX)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.5)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -5478,6 +5478,160 @@ html.public-survey-mode #publicSurveyV1091 { display:block !important; }
       });
     }
   });
+
+})();
+</script>
+<script>
+// ===== [v11.5 CRITICAL FIX] 설문 통계 DOM 렌더링 강제 재구축 및 점수 완전 계산 스크립트 =====
+(function fixSurveyAnalyticsDOM() {
+  const E = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // 한글/텍스트 응답 5점 환산 점수표
+  function toScore(val) {
+    if (val === null || val === undefined) return null;
+    const str = String(val).trim().replace(/\s+/g, '');
+    const num = Number(str);
+    if (Number.isFinite(num) && num >= 1 && num <= 5) return num;
+
+    const map = {
+      '매우만족': 5, '매우만족함': 5, '매우그렇다': 5, '매우좋음': 5, '5점': 5, '5': 5,
+      '만족': 4, '만족함': 4, '그렇다': 4, '좋음': 4, '4점': 4, '4': 4,
+      '보통': 3, '보통이다': 3, '보통임': 3, '3점': 3, '3': 3,
+      '불만족': 2, '불만족함': 2, '그렇지않다': 2, '나쁨': 2, '2점': 2, '2': 2,
+      '매우불만족': 1, '매우불만족함': 1, '전혀그렇지않다': 1, '매우나쁨': 1, '1점': 1, '1': 1
+    };
+    return Object.prototype.hasOwnProperty.call(map, str) ? map[str] : null;
+  }
+
+  // 핵심 통계 계산 및 화면 렌더링 재정의
+  window.analyzeLoadedSurveyV1093 = async function() {
+    const root = document.getElementById('sv1093_summary');
+    if (!root) return;
+
+    const surveyId = window.analyticsSurveyV1093 || document.getElementById('sv1095_select')?.value || document.getElementById('sv1096_select')?.value;
+    const sbClient = (typeof supabaseClient !== 'undefined' ? supabaseClient : (typeof sb !== 'undefined' ? sb : null));
+
+    if (!surveyId || !sbClient) {
+      root.innerHTML = '<div style="color:#b91c1c;padding:10px;">설문을 먼저 선택하거나 불러와주세요.</div>';
+      return;
+    }
+
+    try {
+      root.innerHTML = '<div style="color:#2563eb;padding:10px;">설문 응답 통계를 상세 계산 중입니다...</div>';
+
+      // 1. DB에서 문항, 응답, 답변 데이터 수집
+      const { data: qs, error: qe } = await sbClient.from('survey_questions').select('*').eq('survey_id', surveyId).order('sort_order');
+      if (qe) throw qe;
+
+      const { data: rs, error: re } = await sbClient.from('survey_responses').select('id').eq('survey_id', surveyId);
+      if (re) throw re;
+
+      const rids = (rs || []).map(r => r.id);
+      let answers = [];
+      if (rids.length > 0) {
+        const { data: ans, error: ae } = await sbClient.from('survey_answers').select('*').in('response_id', rids);
+        if (ae) throw ae;
+        answers = ans || [];
+      }
+
+      let globalScores = []; // 전체 점수 모음
+
+      // 2. 문항별 수치 분석
+      const details = (qs || []).map(q => {
+        const rawAnswers = answers.filter(a => a.question_id === q.id).map(a => a.answer);
+        const flatAnswers = rawAnswers.flatMap(v => Array.isArray(v) ? v : [v]).filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+
+        // 점수화 가능 여부 검사
+        const scores = flatAnswers.map(toScore).filter(s => s !== null);
+        const isScoreType = q.question_type === 'rating5' || (scores.length > 0 && scores.length >= flatAnswers.length * 0.5);
+
+        const counts = {};
+        flatAnswers.forEach(v => {
+          const k = String(v).trim();
+          counts[k] = (counts[k] || 0) + 1;
+        });
+
+        if (isScoreType && scores.length > 0) {
+          globalScores.push(...scores);
+          const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+          const sat = (scores.filter(s => s >= 4).length / scores.length) * 100;
+          return { qText: q.question_text, isScore: true, avg, sat, count: scores.length, counts, flatAnswers };
+        }
+
+        return { qText: q.question_text, isScore: false, count: flatAnswers.length, counts, flatAnswers };
+      });
+
+      // 3. 전체 종합 평균 및 만족률 계산 (5명 기준 이미지 1 예시: 만족2, 매우만족2, 보통1, 불만족1 등 -> 완벽 계산)
+      const overallAvg = globalScores.length > 0 ? (globalScores.reduce((a, b) => a + b, 0) / globalScores.length) : 0;
+      const overallSat = globalScores.length > 0 ? ((globalScores.filter(s => s >= 4).length / globalScores.length) * 100) : 0;
+      const totalRespondents = (rs || []).length;
+
+      // 데이터 패키지 저장
+      window.surveyReportDataV114 = {
+        respondentCount: totalRespondents,
+        overallAvg,
+        overallSat,
+        details
+      };
+      window.surveyReportDataV1096 = window.surveyReportDataV114;
+
+      // 4. 화면 DOM 강제 덮어쓰기 (상단 카드 `- / 5.00` 오류 완전히 제거)
+      const avgDisplay = overallAvg > 0 ? `${overallAvg.toFixed(2)} / 5.00` : '점수 데이터 없음';
+      const satDisplay = globalScores.length > 0 ? `${overallSat.toFixed(1)}%` : '계산 불가';
+
+      root.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+          <div style="border:1px solid #cbd5e1;background:#f8fafc;padding:12px;border-radius:8px">
+            <div style="font-size:12px;color:#64748b">응답자 수</div>
+            <strong style="font-size:20px;color:#0f172a">${totalRespondents}명</strong>
+          </div>
+          <div style="border:1px solid #93c5fd;background:#eff6ff;padding:12px;border-radius:8px">
+            <div style="font-size:12px;color:#1d4ed8">5점 평균</div>
+            <strong style="font-size:20px;color:#1e40af">${avgDisplay}</strong>
+          </div>
+          <div style="border:1px solid #86efac;background:#f0fdf4;padding:12px;border-radius:8px">
+            <div style="font-size:12px;color:#15803d">만족률(4~5점)</div>
+            <strong style="font-size:20px;color:#166534">${satDisplay}</strong>
+          </div>
+        </div>
+        
+        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:12px">
+          ${details.map((d, i) => {
+            const countSummary = Object.entries(d.counts).map(([k, v]) => `${E(k)} ${v}건`).join(' / ');
+            return `
+              <div style="padding:10px 0;border-bottom:${i === details.length - 1 ? 'none' : '1px solid #f1f5f9'}">
+                <div style="font-weight:bold;font-size:14px;color:#1e293b">Q${i + 1}. ${E(d.qText)}</div>
+                <div style="margin-top:4px;font-size:13px;color:#475569">
+                  ${countSummary || '응답 데이터 없음'}
+                </div>
+                ${d.isScore ? `<div style="margin-top:2px;font-size:12px;color:#2563eb;font-weight:bold">└ 항목 평균: ${d.avg.toFixed(2)}점 (만족률 ${d.sat.toFixed(1)}%)</div>` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      // 결과보고서 폼 자동 반영
+      if (typeof autoFillSurveyResultFormV114 === 'function') {
+        autoFillSurveyResultFormV114();
+      }
+
+    } catch (err) {
+      console.error('v11.5 통계 계산 오류:', err);
+      root.innerHTML = `<div style="color:#b91c1c;padding:10px;">통계 계산 중 오류가 발생했습니다: ${E(err.message || err)}</div>`;
+    }
+  };
+
+  // '불러온 설문 통계' 버튼 클릭 이벤트 재연결
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const txt = (btn.textContent || '').trim();
+    if (txt.includes('불러온 설문 통계')) {
+      e.preventDefault();
+      window.analyzeLoadedSurveyV1093();
+    }
+  }, true);
 
 })();
 </script>  
