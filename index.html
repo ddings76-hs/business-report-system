@@ -556,8 +556,8 @@
     <div style="display: flex; gap: 15px; margin-bottom: 12px;" class="no-print">
       <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">기관명</label><input type="text" id="r_orgName" value="화성시장기요양지원센터"></div>
       <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">담당자</label><input type="text" id="r_staff" value="최송아"></div>
-      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">검토자</label><input type="text" id="r_reviewer" value="대리 박예원"></div>
-      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">결재자</label><input type="text" id="r_approver" value="센터장 임은숙"></div>
+      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">검토자</label><input type="text" id="r_reviewer" value="박예원"></div>
+      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">결재자</label><input type="text" id="r_approver" value="임은숙"></div>
     </div>
 
     <!-- 결과 서브탭 1: 결과 개요 -->
@@ -570,11 +570,11 @@
       <h2 class="section-result-head" style="margin-top:0;">Ⅰ. 사업 결과 기본 정보</h2>
       <table class="form-table">
         <colgroup><col style="width: 25%;"><col style="width: 75%;"></colgroup>
-        <tr><th>사업명</th><td><input type="text" id="r_projName" value="화성시 장기요양종사자 힐링 나들이 「마음충전 힐링데이」"></td></tr>
+        <tr><th>사업명</th><td><input type="text" id="r_projName" value="사업명을 작성해 주세요"></td></tr>
         <tr><th>관련 기안문 근거 번호</th><td><input type="text" id="r_refDoc" value="장기요양지원- (2026. 04. 20.)"></td></tr>
-        <tr><th>실시 일시 및 장소</th><td><input type="text" id="r_dateLoc" value="2026. 5. 15. (금) 09:00~17:00 / 가평 아침고요수목원"></td></tr>
-        <tr><th>실제 참석 인원</th><td><input type="text" id="r_actualTarget" value="장기요양종사자 28명 참석"></td></tr>
-        <tr><th>주요 추진 내용 요약</th><td><textarea id="r_summaryContent">가드닝 클래스 식물심기 체험, 정원 해설 프로그램 참여, 수목원 산책 및 네트워킹 진행</textarea></td></tr>
+        <tr><th>실시 일시 및 장소</th><td><input type="text" id="r_dateLoc" value="일시 및 장소를 작성해 주세요"></td></tr>
+        <tr><th>실제 참석 인원</th><td><input type="text" id="r_actualTarget" value="실제참여인원을 작성해 주세요"></td></tr>
+        <tr><th>주요 추진 내용 요약</th><td><textarea id="r_summaryContent">주쵸 추진 내용을 작성해 주세요</textarea></td></tr>
       </table>
     </div>
 
@@ -888,10 +888,33 @@
     document.getElementById('out_p_reviewer').innerText = reviewer;
     document.getElementById('out_p_approver').innerText = approver;
 
-    // 1. 사업개요/기안문 매핑 — v10.8.8: 표준 입력폼을 단일 원본으로 직접 사용
-    const stdPlan = (typeof getStandardPlanV106 === 'function' ? getStandardPlanV106() : {}) || {};
-    let summary = '', tbl = '<tr><th style="width:25%;">항목</th><th>내용</th></tr>';
-    let firstProjName = (stdPlan.project_name || '').trim() || "사업계획(안)";
+  // 1. 사업개요/기안문 매핑
+let summary = '', tbl = '<tr><th style="width:25%;">항목</th><th>내용</th></tr>';
+
+// 입력폼(p_overviewTbody)에서 '사업명' 입력값 가져오기
+let keys = document.querySelectorAll('.p-ov-key');
+let vals = document.querySelectorAll('.p-ov-val');
+let firstProjName = "";
+
+for (let i = 0; i < keys.length; i++) {
+  let k = keys[i].value.trim();
+  let v = vals[i].value.trim();
+  if (k === '사업명' && v) {
+    firstProjName = v;
+  }
+  if (k && v) {
+    tbl += `<tr><th class="td-center">${k}</th><td>${v.replaceAll('\n','<br>')}</td></tr>`;
+  }
+}
+
+// 입력 폼에 '사업명' 항목이 없거나 비어있을 경우 대체값 적용
+if (!firstProjName) {
+  const stdPlan = (typeof getStandardPlanV106 === 'function' ? getStandardPlanV106() : {}) || {};
+  firstProjName = (stdPlan.project_name || '').trim() || (vals[0] ? vals[0].value.trim() : "사업계획(안)");
+}
+
+// 제목 출력 부분 적용
+document.getElementById('out_p_docTitle').innerText = firstProjName + " 운영 계획(안)";
 
     const overviewRows = [
       ['사업명', stdPlan.project_name],
