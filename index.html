@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.2 Refactored)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.2.1 복구본)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
   h1 { font-size: 22px; color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; margin-top: 0; text-align: center; }
   
   /* 메인 모드 선택기 */
-  .mode-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; margin-top: 15px; flex-wrap: wrap; }
-  .mode-btn { flex: 1; min-width: 140px; padding: 12px; text-align: center; font-size: 15px; font-weight: bold; border: 2px solid #cbd5e1; border-radius: 8px; cursor: pointer; background-color: #f8fafc; color: #64748b; transition: all 0.2s ease; }
+  .mode-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; margin-top: 15px; }
+  .mode-btn { flex: 1; padding: 12px; text-align: center; font-size: 15px; font-weight: bold; border: 2px solid #cbd5e1; border-radius: 8px; cursor: pointer; background-color: #f8fafc; color: #64748b; transition: all 0.2s ease; }
   .mode-btn.active-plan { background-color: #eff6ff; border-color: #2563eb; color: #1d4ed8; box-shadow: 0 2px 5px rgba(37,99,235,0.15); }
   .mode-btn.active-result { background-color: #ecfdf5; border-color: #059669; color: #047857; box-shadow: 0 2px 5px rgba(5,150,105,0.15); }
-  .mode-btn.active-list, .mode-btn.active-db { background-color: #fef3c7; border-color: #d97706; color: #b45309; box-shadow: 0 2px 5px rgba(217,119,6,0.15); }
+  .mode-btn.active-list { background-color: #fef3c7; border-color: #d97706; color: #b45309; box-shadow: 0 2px 5px rgba(217,119,6,0.15); }
 
   /* 입력 서브 탭 */
   .sub-tab-container { display: flex; gap: 5px; border-bottom: 2px solid #cbd5e1; margin-bottom: 15px; }
@@ -101,18 +101,24 @@
     .tag-plan, .tag-result { display: none !important; }
   }
 
-  @media(max-width:760px){
-    .mode-selector{display:grid!important;grid-template-columns:1fr 1fr;}
-    .mode-btn{min-width:0!important;font-size:11px!important;padding:10px 6px!important;}
-  }
+/* v8.6 기관 업무형 UI 보강 */
+#section-home-v86.active{display:block;}
+#section-home-v86:not(.active){display:none;}
+.mode-selector{flex-wrap:wrap;}
+.mode-btn{min-width:140px;}
+@media(max-width:760px){
+  .mode-selector{display:grid!important;grid-template-columns:1fr 1fr;}
+  .mode-btn{min-width:0!important;font-size:11px!important;padding:10px 6px!important;}
+}
+
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
 <div id="authOverlay" style="position:fixed;inset:0;background:#f5f7fa;z-index:99999;display:flex;align-items:center;justify-content:center;">
   <div style="width:min(430px,92vw);background:#fff;border:1px solid #ddd;border-radius:14px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.12);">
-    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v11.2</h2>
+    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v11.2.1</h2>
     <p style="font-size:13px;color:#666;margin:0 0 20px;">직원 계정으로 로그인하면 공동 사업 DB를 사용할 수 있습니다.</p>
     <label>이메일</label><input id="loginEmail" type="email" style="width:100%;padding:10px;margin:5px 0 12px;box-sizing:border-box;">
     <label>비밀번호</label><input id="loginPassword" type="password" style="width:100%;padding:10px;margin:5px 0 14px;box-sizing:border-box;">
@@ -124,15 +130,24 @@
   </div>
 </div>
 
+<div id="systemCheckModalV87" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100005;align-items:center;justify-content:center;">
+  <div style="width:min(620px,94vw);max-height:82vh;overflow:auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.25);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="margin:0;">시스템 연결점검</h3>
+      <button type="button" class="btn btn-del" onclick="closeSystemCheckV87()">닫기</button>
+    </div>
+    <div id="systemCheckBodyV87">확인 준비 중...</div>
+  </div>
+</div>
 <div id="collabBar" class="no-print" style="display:none;background:#172554;color:#fff;padding:9px 16px;font-size:12px;align-items:center;justify-content:space-between;">
   <span>☁️ Supabase 공동 DB 연결 · <strong id="currentUserLabel"></strong></span>
   <span style="display:flex;gap:6px;align-items:center;">
     <span id="currentRoleLabel" style="opacity:.85;"></span>
-    <button class="btn btn-add" style="padding:5px 9px;font-size:11px;" type="button" id="profileBtnV812" onclick="openProfileV81()">내 정보</button>
+    <button class="btn btn-add" style="padding:5px 9px;font-size:11px;" type="button" id="profileBtnV812">내 정보</button>
     <button class="btn btn-add" style="display:none;padding:5px 9px;font-size:11px;" type="button" id="adminBtnV82" onclick="openAdminV82()">직원관리</button>
     <button class="btn btn-add" style="padding:5px 9px;font-size:11px;" onclick="renderCloudDB()">공동 DB 새로고침</button>
     <button type="button" class="btn btn-add" onclick="openSystemCheckV87()">🔧 연결점검</button>
-    <button class="btn btn-del" style="padding:5px 9px;font-size:11px;" onclick="logoutV8()">로그아웃</button>
+      <button class="btn btn-del" style="padding:5px 9px;font-size:11px;" onclick="logoutV8()">로그아웃</button>
   </span>
 </div>
 
@@ -271,35 +286,34 @@
   </div>
 </div>
 
-<div id="systemCheckModalV87" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100007;align-items:center;justify-content:center;">
-  <div style="width:min(500px,94vw);background:#fff;border-radius:12px;padding:24px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <h3 style="margin:0;">시스템 연결 점검</h3>
-      <button class="btn btn-del" onclick="closeSystemCheckV87()">닫기</button>
-    </div>
-    <div id="systemCheckBodyV87">점검 진행 중...</div>
-  </div>
-</div>
-
 <div id="globalAutosaveV102" class="no-print" style="position:fixed;right:14px;bottom:14px;z-index:9998;background:#fff;border:1px solid #ddd;border-radius:20px;padding:7px 11px;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none">
   💾 <span id="globalAutosaveTextV102">자동저장 준비</span>
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템</h1>
-  <div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Refactored Release · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.2.1 복구본)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">1단계 정상화 · 공동업무/권한/사업관리 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
-    <div id="btn-mode-home" class="mode-btn" onclick="switchModeV86Home()">🏠 업무 홈</div>
-    <div id="btn-mode-plan" class="mode-btn active-plan" onclick="switchMode('PLAN')">📌 [1단계] 사업계획서 작성</div>
-    <div id="btn-mode-result" class="mode-btn" onclick="switchMode('RESULT')">✅ [2단계] 사업 결과보고서 작성 (구글폼 연동)</div>
-    <div id="btn-mode-list" class="mode-btn" onclick="switchMode('LIST')">📁 [3단계] 누적 사업 DB 목록</div>
-    <div id="btn-mode-dashboard" class="mode-btn" onclick="switchModeV831Dashboard()">📊 [관리] 사업관리 대시보드</div>
+    <div id="btn-mode-home" class="mode-btn" onclick="switchModeV86Home()">
+      🏠 업무 홈
+    </div>
+    <div id="btn-mode-plan" class="mode-btn active-plan" onclick="switchMode('PLAN')">
+      📌 [1단계] 사업계획서 작성
+    </div>
+    <div id="btn-mode-result" class="mode-btn" onclick="switchMode('RESULT')">
+      ✅ [2단계] 사업 결과보고서 작성 (구글폼 연동)
+    </div>
+    <div id="btn-mode-list" class="mode-btn" onclick="switchMode('LIST')">
+      📁 [3단계] 누적 사업 DB 목록
+    </div>
+    <div id="btn-mode-dashboard" class="mode-btn" onclick="switchModeV831Dashboard()">
+      📊 [관리] 사업관리 대시보드
+    </div>
     <div id="btn-employee-v87" class="mode-btn" style="display:none;" onclick="openAdminV82()">👥 직원관리</div>
   </div>
 
-  <!-- 업무 홈 -->
+  <!-- 입력 폼 1: 사업계획 전용 입력 폼 -->
   <div id="section-home-v86" class="form-section">
     <div class="no-print" style="padding:4px 0 16px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
@@ -331,11 +345,10 @@
     </div>
   </div>
 
-  <!-- 1단계: 사업계획 전용 입력 폼 -->
   <div id="section-input-plan" class="form-section active">
     <div id="standardPlanV106" style="border:2px solid #1f4e8c;border-radius:10px;padding:16px;margin-bottom:18px;background:#fff">
       <h2 style="margin:0 0 8px;color:#173f78">Ⅰ. 사업 개요 · 표준 입력폼</h2>
-      <div style="font-size:12px;color:#666;margin-bottom:12px">기본항목은 한 번만 입력하며, Ⅰ. 사업 개요와 생성 문서에 자동 반영됩니다.</div>
+      <div style="font-size:12px;color:#666;margin-bottom:12px">기본항목은 한 번만 입력하며, Ⅰ. 사업 개요와 생성 문서에 자동 반영됩니다. Ⅱ. 주요 프로그램 및 세부일정과 Ⅲ. 소요 예산(안) 및 재원은 별도 입력합니다.</div>
       <table style="width:100%;border-collapse:collapse">
         <tbody id="standardPlanBodyV106">
           <tr><th style="border:1px solid #bbb;padding:8px;width:180px">사업명</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_project_name" style="width:100%" placeholder="사업명을 입력하세요"></td></tr>
@@ -371,7 +384,7 @@
     <!-- 계획 서브탭 1: 사업 개요 -->
     <div id="p-sub-section-1" class="sub-section active">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 class="section-plan-head" style="margin:0;">Ⅰ. 사업 개요 상세</h2>
+        <h2 class="section-plan-head" style="margin:0;">Ⅰ. 사업 개요</h2>
         <button class="btn btn-add" onclick="addOverviewRow()">+ 항목 추가</button>
       </div>
       <table class="form-table" style="margin-top: 8px;">
@@ -506,14 +519,14 @@
     </div>
   </div>
 
-  <!-- 2단계: 사업 결과보고 전용 입력 폼 -->
+  <!-- 입력 폼 2: 사업 결과보고 전용 입력 폼 -->
   <div id="section-input-result" class="form-section">
     <div id="standardResultV107" style="border:2px solid #07845f;border-radius:10px;padding:16px;margin-bottom:18px;background:#fff">
       <h2 style="margin:0 0 8px;color:#076348">Ⅰ. 사업 결과 개요 · 표준 실적폼</h2>
-      <div style="font-size:12px;color:#666;margin-bottom:12px">결과 기본항목은 한 번만 입력하며 결과보고서 개요와 생성 문서에 자동 반영됩니다.</div>
+      <div style="font-size:12px;color:#666;margin-bottom:12px">결과 기본항목은 한 번만 입력하며 결과보고서 개요와 생성 문서에 자동 반영됩니다. 설문 결과와 실제 집행 예산 정산내역은 별도 입력합니다.</div>
       <table style="width:100%;border-collapse:collapse">
         <tbody>
-          <tr><th style="border:1px solid #bbb;padding:8px;width:180px">사업명</th><td style="border:1px solid #bbb;padding:6px"><input id="sr_project_name" style="width:100%"></td></tr>
+          <tr><th style="border:1px solid #bbb;padding:8px;width:180px">사업명</th><td style="border:1px solid #bbb;padding:6px"><input id="sr_project_name" style="width:100%" readonly></td></tr>
           <tr><th style="border:1px solid #bbb;padding:8px">실제 운영일시</th><td style="border:1px solid #bbb;padding:6px"><input id="sr_actual_date" style="width:100%"></td></tr>
           <tr><th style="border:1px solid #bbb;padding:8px">실제 참여대상</th><td style="border:1px solid #bbb;padding:6px"><input id="sr_actual_target_group" style="width:100%"></td></tr>
           <tr><th style="border:1px solid #bbb;padding:8px">실제 참여인원</th><td style="border:1px solid #bbb;padding:6px"><input id="sr_actual_participants" type="number" min="0" style="width:160px"> 명</td></tr>
@@ -547,10 +560,9 @@
     <!-- 결과 서브탭 1: 결과 개요 -->
     <div id="r-sub-section-1" class="sub-section active">
       <div class="no-print" style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;">
-        <button class="btn btn-plan" style="padding:7px 12px;font-size:12px;" onclick="loadSavedPlanIntoResultV1043()">📥 저장된 계획서 불러오기</button>
+        <button class="btn btn-plan" style="padding:7px 12px;font-size:12px;" onclick="openPlanPicker()">📥 저장된 계획서 불러오기</button>
         <button class="btn btn-save" style="padding:7px 12px;font-size:12px;" onclick="validatePlanVsResult()">🔎 계획 대비 실적 점검</button>
       </div>
-      <div id="resultPlanLinkNoticeV1043" class="no-print" style="margin-bottom:8px;font-size:12px;color:#0369a1;"></div>
       <div id="validationBox" class="no-print" style="display:none;margin-bottom:12px;padding:10px;border-radius:6px;background:#fffbeb;border:1px solid #f59e0b;font-size:12px;"></div>
       <h2 class="section-result-head" style="margin-top:0;">Ⅰ. 사업 결과 기본 정보</h2>
       <table class="form-table">
@@ -704,8 +716,8 @@
     </div>
   </div>
 
-  <!-- 3단계: 통합 사업관리 대시보드 및 DB 목록 -->
-  <div id="dashboard-mode" class="form-section">
+  <!-- 입력 폼 3: 누적 데이터 관리 -->
+  <div id="dashboard-mode" class="content-area" style="display:none;">
     <div class="no-print" style="padding:18px 0;">
       <h2 style="margin:0 0 5px;">📊 사업관리 대시보드</h2>
       <p style="font-size:12px;color:#666;margin:0 0 10px;">사업 단위로 계획서·결과보고서·담당자·진행상태를 확인합니다.</p>
@@ -716,10 +728,8 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
         <input id="dashSearchV831" placeholder="사업명 또는 담당자 검색" oninput="filterDashboardV831()" style="flex:1;min-width:200px;padding:9px;">
         <select id="dashStatusV831" onchange="filterDashboardV831()" style="padding:9px;">
-          <option value="">전체 상태</option>
-          <option value="draft">작성중</option>
-          <option value="review_requested">검토요청</option>
-          <option value="reviewed">검토완료</option>
+          <option value="">전체 상태</option><option value="draft">작성중</option>
+          <option value="review_requested">검토요청</option><option value="reviewed">검토완료</option>
           <option value="completed">사업완료</option>
         </select>
         <button class="btn btn-add" onclick="renderDashboardV831()">새로고침</button>
@@ -729,7 +739,10 @@
   </div>
 
   <div id="section-input-list" class="form-section">
-    <h2 class="section-list-head">📁 저장된 사업 누적 DB 목록 (로컬 및 클라우드)</h2>
+    <h2 class="section-list-head">📁 저장된 사업 누적 DB 목록</h2>
+    <div class="no-print" style="background:#fff7ed;border:1px solid #fdba74;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#9a3412;">
+      v8.0: Supabase 공동 DB 기반으로 직원 프로필, 사업 상태, 수정자·수정일, 수정이력 조회를 지원합니다.
+    </div>
     <table class="form-table">
       <thead><tr><th>구분</th><th>사업명</th><th>담당자</th><th>저장일</th><th>관리</th></tr></thead>
       <tbody id="dbTableBody"></tbody>
@@ -737,105 +750,27 @@
   </div>
 </div>
 
+<div id="mode-dashboard" class="form-section" style="display:none;">
+  <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+    <div>
+      <h2 style="margin:0;">사업관리 대시보드</h2>
+      <div style="font-size:12px;color:#666;margin-top:4px;">사업 단위로 계획서·결과보고서·담당자·진행상태를 한눈에 확인합니다.</div>
+    </div>
+    <button class="btn btn-add" onclick="renderDashboardV83()">새로고침</button>
+  </div>
+  <div id="dashboardSummaryV83" class="no-print" style="display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:10px;margin-bottom:15px;"></div>
+  <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+    <input id="dashSearchV83" type="text" placeholder="사업명·담당자 검색" oninput="filterDashboardV83()" style="flex:1;min-width:180px;padding:8px;">
+    <select id="dashStatusV83" onchange="filterDashboardV83()" style="padding:8px;">
+      <option value="">전체 상태</option><option value="draft">작성중</option>
+      <option value="review_requested">검토요청</option><option value="reviewed">검토완료</option>
+      <option value="completed">사업완료</option>
+    </select>
+  </div>
+  <div id="dashboardTableV83">불러오는 중...</div>
+</div>
+
 <script>
-  // =========================================================================
-  // 1. 기초 환경 변수 및 초깃값
-  // =========================================================================
-  const V8_SUPABASE_URL = 'https://quienpvidvkjvtiwyhoq.supabase.co';
-  const V8_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1aWVucHZpZHZranZ0aXd5aG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMzE0MzIsImV4cCI6MjEwMzgwNzQzMn0.Q2SvpeN2s_okehjVhjNeKpqBCc2ml7EBcmvDMJ4tqKE';
-  const sb = window.supabase.createClient(V8_SUPABASE_URL, V8_SUPABASE_ANON_KEY);
-
-  let v8User = null;
-  let v81Profile = null;
-  let v10CurrentProjectId = null;
-  let budgetProjectIdV101 = null;
-  let budgetRowsDataV101 = [];
-  let budgetAutosaveTimerV101 = null;
-  let customPlanFieldsV106 = [];
-  let customResultFieldsV107 = [];
-  let dashboardRowsV831 = [];
-  let reviewProjectV84 = null;
-  let currentResultLinkedProjectV1043 = null;
-
-  // =========================================================================
-  // 2. 유틸리티 및 수식 계산 함수
-  // =========================================================================
-  function esc(v) {
-    return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  }
-  function escAttrV101(v) {
-    return String(v ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-  function moneyV10(v) {
-    return Number(v || 0).toLocaleString('ko-KR') + '원';
-  }
-  function firstNumV10(v) {
-    const m = String(v ?? '').replace(/,/g, '').match(/-?\d+(\.\d+)?/);
-    return m ? Number(m[0]) : 0;
-  }
-  function safeArithmetic(expr) {
-    const raw = String(expr || '').replace(/\s+/g, '');
-    if (!raw) return null;
-    const tokens = raw.match(/\d+(?:\.\d+)?|[()+\-*/]/g);
-    if (!tokens || tokens.join('') !== raw) return null;
-    let pos = 0;
-    function primary() {
-      if (pos >= tokens.length) throw new Error('Unbalanced');
-      const t = tokens[pos++];
-      if (t === '(') {
-        const v = addSub();
-        if (pos >= tokens.length || tokens[pos++] !== ')') throw new Error('Missing bracket');
-        return v;
-      }
-      if (t === '+') return primary();
-      if (t === '-') return -primary();
-      const n = Number(t);
-      if (!Number.isFinite(n)) throw new Error('Invalid number');
-      return n;
-    }
-    function mulDiv() {
-      let v = primary();
-      while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/')) {
-        const op = tokens[pos++], r = primary();
-        if (op === '/' && r === 0) throw new Error('Div zero');
-        v = op === '*' ? v * r : v / r;
-      }
-      return v;
-    }
-    function addSub() {
-      let v = mulDiv();
-      while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
-        const op = tokens[pos++], r = mulDiv();
-        v = op === '+' ? v + r : v - r;
-      }
-      return v;
-    }
-    try {
-      const v = addSub();
-      return pos === tokens.length && Number.isFinite(v) ? v : null;
-    } catch (_) { return null; }
-  }
-  function evalBudgetBasis(text) {
-    let t = String(text || '').replace(/,/g, '').replace(/원|명|개|회|식|건|세트|박스|대|시간|일|개월|회기/g, '');
-    t = t.replace(/[×xX＊*]/g, '*').replace(/[÷]/g, '/').replace(/[＋]/g, '+').replace(/[－–—]/g, '-');
-    if (!t.trim() || /[^0-9+\-*/().\s]/.test(t)) return null;
-    const v = safeArithmetic(t);
-    return v !== null && v >= 0 ? Math.round(v) : null;
-  }
-  function calcBasisAmountV1031(input) {
-    const row = input.closest('tr'); if (!row) return;
-    const amount = row.querySelector('.p-bg-amount'); if (!amount) return;
-    const v = evalBudgetBasis(input.value);
-    if (v !== null) {
-      amount.value = v;
-      calcPlanBudget();
-      amount.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  }
-
-  // =========================================================================
-  // 3. UI 탭 및 화면 전환 컨트롤
-  // =========================================================================
   function switchMode(mode) {
     document.querySelectorAll('.mode-btn').forEach(btn => btn.className = 'mode-btn');
     document.querySelectorAll('.form-section').forEach(sec => sec.classList.remove('active'));
@@ -853,23 +788,6 @@
     }
   }
 
-  function switchModeV86Home() {
-    document.querySelectorAll('.mode-btn').forEach(btn => btn.className = 'mode-btn');
-    document.querySelectorAll('.form-section').forEach(sec => sec.classList.remove('active'));
-    document.getElementById('btn-mode-home').className = 'mode-btn active-list';
-    document.getElementById('section-home-v86').classList.add('active');
-    const dash = document.getElementById('dashboard-mode'); if (dash) dash.style.display = 'none';
-    renderHomeV86();
-  }
-
-  function switchModeV831Dashboard() {
-    document.querySelectorAll('.form-section').forEach(sec => sec.classList.remove('active'));
-    const dash = document.getElementById('dashboard-mode'); if (dash) dash.classList.add('active');
-    document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('active-plan','active-result','active-list','active-db'));
-    document.getElementById('btn-mode-dashboard')?.classList.add('active-db');
-    renderDashboardV831();
-  }
-
   function switchSubTab(prefix, num) {
     let container = prefix === 'p' ? 'section-input-plan' : 'section-input-result';
     document.querySelectorAll(`#${container} .sub-tab`).forEach(tab => tab.classList.remove('active', 'active-res'));
@@ -877,24 +795,22 @@
 
     let targetTab = document.getElementById(`${prefix}-subtab-${num}`) || document.getElementById(`subtab-${num}`);
     let activeClass = prefix === 'p' ? 'active' : 'active-res';
-    if (targetTab) targetTab.classList.add(activeClass);
+    if(targetTab) targetTab.classList.add(activeClass);
     
     let targetSec = document.getElementById(`${prefix}-sub-section-${num}`);
-    if (targetSec) targetSec.classList.add('active');
-  }
-
-  function showProjectTabV10(name, btn) {
-    document.querySelectorAll('.v10-project-tab').forEach(x => x.style.display = 'none');
-    const el = document.getElementById('v10tab-' + name); if (el) el.style.display = 'block';
-    document.querySelectorAll('.v10-tabs button').forEach(x => x.style.fontWeight = '400');
-    if (btn) btn.style.fontWeight = '700';
+    if(targetSec) targetSec.classList.add('active');
   }
 
   function delRow(btn) { btn.closest('tr').remove(); }
 
-  // =========================================================================
-  // 4. 입력폼 및 데이터 획득 (단일 표준화)
-  // =========================================================================
+  function fetchGoogleFormResponses() {
+    alert("구글 폼 응답 연동 요청 완료!\n테스트 응답 데이터가 각 항목에 자동으로 반영됩니다.");
+    document.getElementById('r_surveyScore').value = "4.92점 / 5.0점 만점 (응답인원 28명 완료)";
+    document.getElementById('r_surveyItems').value = "ㆍ힐링 프로그램 만족도: 100% (매우 만족)\nㆍ가드닝 체험 만족도: 96.4%\nㆍ식사 및 장소 만족도: 92.8%";
+    document.getElementById('r_surveyFeedback').value = "\"바쁜 일상에서 벗어나 내 자신을 돌아보는 시간이었습니다.\"\n\"칭찬 카드를 주고받은 순간이 따뜻했습니다.\"";
+  }
+
+  // 계획 추가
   function addOverviewRow() {
     document.getElementById('p_overviewTbody').insertAdjacentHTML('beforeend', 
       `<tr><td><input type="text" class="p-ov-key" placeholder="항목명"></td><td><textarea class="p-ov-val" placeholder="내용"></textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>`);
@@ -912,6 +828,8 @@
       `<tr><td><input type="text" class="p-bg-item" placeholder="세목"></td><td><input type="text" class="p-bg-calc" placeholder="예: 11,000원 × 40명" oninput="calcBasisAmountV1031(this)"></td><td><input type="number" class="p-bg-amount" value="0" oninput="calcPlanBudget()"></td><td><input type="text" class="p-bg-note" placeholder="비고"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcPlanBudget();">삭제</button></td></tr>`);
     calcPlanBudget();
   }
+
+  // 결과 추가
   function addResultBudgetRow() {
     document.getElementById('r_budgetTbody').insertAdjacentHTML('beforeend', 
       `<tr><td><input type="text" class="r-bg-item" placeholder="세목"></td><td><input type="text" class="r-bg-calc" placeholder="근거"></td><td><input type="number" class="r-bg-amount" value="0" oninput="calcResultBudget()"></td><td><input type="text" class="r-bg-note" placeholder="비고"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcResultBudget();">삭제</button></td></tr>`);
@@ -925,208 +843,109 @@
 
   function calcPlanBudget() {
     let total = 0;
-    document.querySelectorAll('.p-bg-amount').forEach(i => total += parseInt(i.value) || 0);
+    document.querySelectorAll('.p-bg-amount').forEach(i => total += parseInt(i.value)||0);
     document.getElementById('p_totalBudgetDisplay').innerText = total.toLocaleString() + ' 원';
     return total;
   }
 
   function calcResultBudget() {
     let total = 0;
-    document.querySelectorAll('.r-bg-amount').forEach(i => total += parseInt(i.value) || 0);
+    document.querySelectorAll('.r-bg-amount').forEach(i => total += parseInt(i.value)||0);
     document.getElementById('r_totalBudgetDisplay').innerText = total.toLocaleString() + ' 원';
     return total;
   }
 
-  function getStandardPlanV106() {
-    const val = id => document.getElementById(id)?.value?.trim() || '';
-    return {
-      project_name: val('sp_project_name') || val('p_projName') || '제목 없는 사업',
-      background: val('sp_background'),
-      purpose: val('sp_purpose'),
-      expected_effect: val('sp_expected_effect'),
-      operation_date: val('sp_operation_date'),
-      target_group: val('sp_target_group'),
-      planned_participants: Number(val('sp_planned_participants') || 0),
-      content: val('sp_content'),
-      location: val('sp_location'),
-      operation_method: val('sp_operation_method'),
-      evaluation_plan: val('sp_evaluation_plan'),
-      custom_fields: customPlanFieldsV106.map(x => ({ label: x.label || '', value: x.value || '' })).filter(x => x.label || x.value)
-    };
-  }
-
-  function getStandardResultV107() {
-    const val = id => document.getElementById(id)?.value?.trim() || '';
-    return {
-      project_name: val('sr_project_name') || val('r_projName') || '',
-      actual_date: val('sr_actual_date') || val('r_dateLoc') || '',
-      actual_target_group: val('sr_actual_target_group') || val('r_actualTarget') || '',
-      actual_participants: Number(val('sr_actual_participants') || 0),
-      actual_content: val('sr_actual_content') || val('r_summaryContent') || '',
-      actual_location: val('sr_actual_location'),
-      actual_budget: Number(val('sr_actual_budget') || calcResultBudget()),
-      satisfaction_score: Number(val('sr_satisfaction_score') || 0),
-      achievements: val('sr_achievements') || val('r_evalGood') || '',
-      improvements: val('sr_improvements') || val('r_evalBad') || '',
-      evaluation_result: val('sr_evaluation_result') || val('r_evalPlan') || '',
-      custom_fields: customResultFieldsV107.map(x => ({ label: x.label || '', value: x.value || '' })).filter(x => x.label || x.value)
-    };
-  }
-
-  function getRows(tbodySelector, classes) {
-    return Array.from(document.querySelectorAll(tbodySelector + ' tr')).map(tr => {
-      let o = {};
-      classes.forEach(c => {
-        let el = tr.querySelector('.' + c);
-        o[c] = el ? el.value : '';
-      });
-      return o;
-    });
-  }
-
-  function getValues(selector) {
-    return Array.from(document.querySelectorAll(selector)).map(el => el.value);
-  }
-
-  function getPlanData() {
-    const std = getStandardPlanV106();
-    return {
-      orgName: document.getElementById('p_orgName').value,
-      staff: document.getElementById('p_staff').value,
-      reviewer: document.getElementById('p_reviewer').value,
-      approver: document.getElementById('p_approver').value,
-      projectName: std.project_name,
-      standard: std,
-      overview: getRows('#p_overviewTbody', ['p-ov-key', 'p-ov-val']),
-      programs: getRows('#p_progTbody', ['p-prog-key', 'p-prog-val']),
-      schedule: getRows('#p_schedTbody', ['p-sch-time', 'p-sch-val']),
-      budgetSource: document.getElementById('p_budgetSource').value,
-      budgetCategory: document.getElementById('p_budgetCategory').value,
-      budget: getRows('#p_budgetTbody', ['p-bg-item', 'p-bg-calc', 'p-bg-amount', 'p-bg-note']),
-      programVisible: window.planProgramVisible !== false,
-      scheduleVisible: window.planScheduleVisible !== false,
-      targetCount: std.planned_participants,
-      plannedParticipants: std.planned_participants
-    };
-  }
-
-  function getResultData() {
-    const std = getStandardResultV107();
-    return {
-      orgName: document.getElementById('r_orgName').value,
-      staff: document.getElementById('r_staff').value,
-      reviewer: document.getElementById('r_reviewer').value,
-      approver: document.getElementById('r_approver').value,
-      projName: document.getElementById('r_projName').value,
-      refDoc: document.getElementById('r_refDoc').value,
-      dateLoc: document.getElementById('r_dateLoc').value,
-      actualTarget: document.getElementById('r_actualTarget').value,
-      summaryContent: document.getElementById('r_summaryContent').value,
-      surveyScore: document.getElementById('r_surveyScore').value,
-      surveyItems: document.getElementById('r_surveyItems').value,
-      surveyFeedback: document.getElementById('r_surveyFeedback').value,
-      evalGood: document.getElementById('r_evalGood').value,
-      evalBad: document.getElementById('r_evalBad').value,
-      evalPlan: document.getElementById('r_evalPlan').value,
-      budgetSource: document.getElementById('r_budgetSource').value,
-      budgetCategory: document.getElementById('r_budgetCategory').value,
-      budget: getRows('#r_budgetTbody', ['r-bg-item', 'r-bg-calc', 'r-bg-amount', 'r-bg-note']),
-      attachments: getValues('.r-attach-val'),
-      standard: std,
-      sourcePlanId: window.currentSourcePlanId || null
-    };
-  }
-
-  function projectNameFromPlan(data) {
-    return data?.standard?.project_name || data?.projectName || data?.projName || '제목 없는 사업';
-  }
-
-  function addCustomPlanFieldV106(label='', value='') {
-    const id = 'cpf_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-    customPlanFieldsV106.push({ id, label, value });
-    renderCustomPlanFieldsV106();
-  }
-  function renderCustomPlanFieldsV106() {
-    const box = document.getElementById('customPlanFieldsV106'); if (!box) return;
-    box.innerHTML = customPlanFieldsV106.map((x, i) => `<div style="display:grid;grid-template-columns:180px 1fr 70px;gap:6px;margin:5px 0">
-      <input value="${esc(x.label || '')}" placeholder="추가 항목명" oninput="customPlanFieldsV106[${i}].label=this.value">
-      <input value="${esc(x.value || '')}" placeholder="내용" oninput="customPlanFieldsV106[${i}].value=this.value">
-      <button type="button" class="btn btn-del" onclick="customPlanFieldsV106.splice(${i},1);renderCustomPlanFieldsV106()">삭제</button></div>`).join('');
-  }
-
-  function addCustomResultFieldV107(label='', value='') {
-    customResultFieldsV107.push({ label, value });
-    renderCustomResultFieldsV107();
-  }
-  function renderCustomResultFieldsV107() {
-    const box = document.getElementById('customResultFieldsV107'); if (!box) return;
-    box.innerHTML = customResultFieldsV107.map((x, i) => `<div style="display:grid;grid-template-columns:180px 1fr 70px;gap:6px;margin:5px 0">
-      <input value="${esc(x.label || '')}" placeholder="추가 항목명" oninput="customResultFieldsV107[${i}].label=this.value">
-      <input value="${esc(x.value || '')}" placeholder="내용" oninput="customResultFieldsV107[${i}].value=this.value">
-      <button type="button" class="btn btn-del" onclick="customResultFieldsV107.splice(${i},1);renderCustomResultFieldsV107()">삭제</button></div>`).join('');
-  }
-
-  // =========================================================================
-  // 5. 문단 및 문서 생성 (인쇄/출력)
-  // =========================================================================
+  // 사업계획서 생성 함수
   function generatePlanDocs() {
-    const std = getStandardPlanV106();
-    if (!std.project_name) return alert('사업명을 입력해주세요.');
-    
-    document.getElementById('out_p_org').innerText = document.getElementById('p_orgName').value;
-    document.querySelectorAll('.bind_p_org').forEach(el => el.innerText = document.getElementById('p_orgName').value);
-    document.getElementById('out_p_staff').innerText = document.getElementById('p_staff').value;
-    document.getElementById('out_p_reviewer').innerText = document.getElementById('p_reviewer').value;
-    document.getElementById('out_p_approver').innerText = document.getElementById('p_approver').value;
+    const stdCheck=(typeof getStandardPlanV106==='function'?getStandardPlanV106():{})||{};
+    const requiredPlan=[
+      ['사업명',stdCheck.project_name,'sp_project_name'],
+      ['운영일시',stdCheck.operation_date,'sp_operation_date'],
+      ['참여대상',stdCheck.target_group,'sp_target_group']
+    ];
+    const missPlan=requiredPlan.find(x=>!String(x[1]??'').trim());
+    if(missPlan){
+      alert(missPlan[0]+'을(를) 입력해 주세요.');
+      const el=document.getElementById(missPlan[2]);if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}
+      return;
+    }
+    let org = document.getElementById('p_orgName').value;
+    let staff = document.getElementById('p_staff').value;
+    let reviewer = document.getElementById('p_reviewer').value;
+    let approver = document.getElementById('p_approver').value;
 
-    let tbl = '<tr><th style="width:25%;">항목</th><th>내용</th></tr>';
+    document.getElementById('out_p_org').innerText = org;
+    document.querySelectorAll('.bind_p_org').forEach(el => el.innerText = org);
+    document.getElementById('out_p_staff').innerText = staff;
+    document.getElementById('out_p_reviewer').innerText = reviewer;
+    document.getElementById('out_p_approver').innerText = approver;
+
+    // 1. 사업개요/기안문 매핑
+    const stdPlan = (typeof getStandardPlanV106 === 'function' ? getStandardPlanV106() : {}) || {};
+    let summary = '', tbl = '<tr><th style="width:25%;">항목</th><th>내용</th></tr>';
+    let firstProjName = (stdPlan.project_name || '').trim() || "사업계획(안)";
+
     const overviewRows = [
-      ['사업명', std.project_name],
-      ['추진배경 및 필요성', std.background],
-      ['사업목적', std.purpose],
-      ['기대효과', std.expected_effect],
-      ['운영일시', std.operation_date],
-      ['참여대상', std.target_group],
-      ['계획인원', std.planned_participants ? std.planned_participants + '명' : ''],
-      ['주요내용', std.content],
-      ['운영장소', std.location],
-      ['운영방법', std.operation_method],
-      ['평가·환류 계획', std.evaluation_plan],
-      ...(std.custom_fields.map(x => [x.label, x.value]))
+      ['사업명', stdPlan.project_name],
+      ['추진배경 및 필요성', stdPlan.background],
+      ['사업목적', stdPlan.purpose],
+      ['기대효과', stdPlan.expected_effect],
+      ['운영일시', stdPlan.operation_date],
+      ['참여대상', stdPlan.target_group],
+      ['계획인원', (stdPlan.planned_participants === '' || stdPlan.planned_participants == null) ? '' : Number(stdPlan.planned_participants || 0) + '명'],
+      ['주요내용', stdPlan.content],
+      ['운영장소', stdPlan.location],
+      ['운영방법', stdPlan.operation_method],
+      ['평가·환류 계획', stdPlan.evaluation_plan],
+      ...((stdPlan.custom_fields || []).map(x => [x.label || '', x.value || '']))
     ].filter(x => x[0] && String(x[1] ?? '').trim());
 
-    overviewRows.forEach(([k, v]) => {
+    overviewRows.forEach(([k,v]) => {
       tbl += `<tr><th class="td-center" style="font-size:13px;">${esc(k)}</th><td style="font-size:13px;line-height:1.65;">${esc(String(v)).replaceAll('\n','<br>')}</td></tr>`;
     });
 
-    let summary = '';
-    const ga = ['가','나','다','라','마','바','사','아','자','차','카','타'];
-    overviewRows.slice(0, 10).forEach(([k, v], i) => {
-      summary += `<div class="doc-list-item">${ga[i]}. ${esc(k)} : ${esc(String(v)).replaceAll('\n','<br>')}</div>`;
+    let draftItems = [
+      ['사업명', stdPlan.project_name || ''],
+      ['사업목적', stdPlan.purpose || ''],
+      ['운영일시', stdPlan.operation_date || ''],
+      ['참여대상', stdPlan.target_group || ''],
+      ['계획인원', (stdPlan.planned_participants === '' || stdPlan.planned_participants == null) ? '' : Number(stdPlan.planned_participants || 0) + '명'],
+      ['교육내용', stdPlan.content || ''],
+      ['운영장소', stdPlan.location || ''],
+      ['운영방법', stdPlan.operation_method || ''],
+      ['재원', document.getElementById('p_budgetSource').value],
+      ['소요예산', calcPlanBudget().toLocaleString() + '원']
+    ];
+    const ga = ['가','나','다','라','마','바','사','아','자','차','카','타','파','하'];
+    draftItems.filter(x=>x[1]).forEach((x,i)=>{
+      summary += `<div class="doc-list-item">${ga[i]}. ${esc(x[0])} : ${esc(x[1]).replaceAll('\n','<br>')}</div>`;
     });
-
-    document.getElementById('out_p_docTitle').innerText = std.project_name + " 운영 계획(안)";
+    document.getElementById('out_p_docTitle').innerText = firstProjName + " 운영 계획(안)";
     document.getElementById('out_p_overview_summary').innerHTML = summary;
     document.getElementById('out_p_overview_table').innerHTML = tbl;
 
-    // 주요 프로그램
+    // 2. 주요 프로그램
     let pKeys = document.querySelectorAll('.p-prog-key'), pVals = document.querySelectorAll('.p-prog-val');
     let pTbl = '<tr><th style="width:25%;">구분</th><th>내용</th></tr>';
-    for (let i = 0; i < pKeys.length; i++) if (pKeys[i].value) pTbl += `<tr><th class="td-center">${pKeys[i].value}</th><td>${pVals[i].value.replaceAll('\n','<br>')}</td></tr>`;
+    for(let i=0; i<pKeys.length; i++) if(pKeys[i].value) pTbl += `<tr><th class="td-center">${pKeys[i].value}</th><td>${pVals[i].value.replaceAll('\n','<br>')}</td></tr>`;
     document.getElementById('out_p_prog_table').innerHTML = pTbl;
+    document.getElementById('out_p_program_block').style.display = window.planProgramVisible === false ? 'none' : 'block';
 
-    // 세부 일정
+    // 3. 세부 일정
     let sTimes = document.querySelectorAll('.p-sch-time'), sVals = document.querySelectorAll('.p-sch-val');
     let sTbl = '<tr><th style="width:25%;">시간</th><th>내용</th></tr>';
-    for (let i = 0; i < sTimes.length; i++) if (sTimes[i].value) sTbl += `<tr><td class="td-center">${sTimes[i].value}</td><td>${sVals[i].value}</td></tr>`;
+    for(let i=0; i<sTimes.length; i++) if(sTimes[i].value) sTbl += `<tr><td class="td-center">${sTimes[i].value}</td><td>${sVals[i].value}</td></tr>`;
     document.getElementById('out_p_sched_table').innerHTML = sTbl;
+    document.getElementById('out_p_schedule_block').style.display = window.planScheduleVisible === false ? 'none' : 'block';
+    document.getElementById('out_p_program_schedule_section').style.display =
+      (window.planProgramVisible === false && window.planScheduleVisible === false) ? 'none' : 'block';
 
-    // 예산
+    // 4. 예산
     document.getElementById('out_p_budget_meta').innerText = `○ 재원 및 예산항목 : ${document.getElementById('p_budgetSource').value} / ${document.getElementById('p_budgetCategory').value}`;
     let bItems = document.querySelectorAll('.p-bg-item'), bCalcs = document.querySelectorAll('.p-bg-calc'), bAmts = document.querySelectorAll('.p-bg-amount'), bNotes = document.querySelectorAll('.p-bg-note');
     let bTbl = '<tr><th>세목</th><th>산출 근거</th><th>금액(원)</th><th>비고</th></tr>';
     let totalAmt = calcPlanBudget();
-    for (let i = 0; i < bItems.length; i++) if (bItems[i].value) bTbl += `<tr><td class="td-center">${bItems[i].value}</td><td>${bCalcs[i].value}</td><td class="td-right">${(parseInt(bAmts[i].value)||0).toLocaleString()}</td><td class="td-center">${bNotes[i].value}</td></tr>`;
+    for(let i=0; i<bItems.length; i++) if(bItems[i].value) bTbl += `<tr><td class="td-center">${bItems[i].value}</td><td>${bCalcs[i].value}</td><td class="td-right">${(parseInt(bAmts[i].value)||0).toLocaleString()}</td><td class="td-center">${bNotes[i].value}</td></tr>`;
     document.getElementById('out_p_budget_table').innerHTML = bTbl;
     document.getElementById('out_p_budget_total').innerText = totalAmt.toLocaleString() + ' 원';
     document.getElementById('out_p_budget_total_bottom').innerText = totalAmt.toLocaleString() + ' 원';
@@ -1134,7 +953,20 @@
     document.getElementById('output-plan-container').style.display = 'block';
   }
 
+  // 사업 결과보고서 생성 함수
   function generateResultDocs() {
+    const srCheck=(typeof getStandardResultV107==='function'?getStandardResultV107():{})||{};
+    const requiredResult=[
+      ['사업명',srCheck.project_name||document.getElementById('r_projName')?.value,'sr_project_name'],
+      ['실제 운영일시',srCheck.actual_date||srCheck.operation_date||document.getElementById('r_dateLoc')?.value,'sr_actual_date'],
+      ['실제 참여대상',srCheck.actual_target_group||document.getElementById('r_actualTarget')?.value,'sr_actual_target_group']
+    ];
+    const missResult=requiredResult.find(x=>!String(x[1]??'').trim());
+    if(missResult){
+      alert(missResult[0]+'을(를) 입력해 주세요.');
+      const el=document.getElementById(missResult[2]);if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}
+      return;
+    }
     let pName = document.getElementById('r_projName').value;
     let dateLoc = document.getElementById('r_dateLoc').value;
     let actualTarget = document.getElementById('r_actualTarget').value;
@@ -1170,517 +1002,1970 @@
 
     let bItems = document.querySelectorAll('.r-bg-item'), bCalcs = document.querySelectorAll('.r-bg-calc'), bAmts = document.querySelectorAll('.r-bg-amount'), bNotes = document.querySelectorAll('.r-bg-note');
     let bTbl = '<tr><th>세목</th><th>집행 내역</th><th>실제 집행액(원)</th><th>비고</th></tr>';
-    for (let i = 0; i < bItems.length; i++) if (bItems[i].value) bTbl += `<tr><td class="td-center">${bItems[i].value}</td><td>${bCalcs[i].value}</td><td class="td-right">${(parseInt(bAmts[i].value)||0).toLocaleString()}</td><td class="td-center">${bNotes[i].value}</td></tr>`;
+    for(let i=0; i<bItems.length; i++) if(bItems[i].value) bTbl += `<tr><td class="td-center">${bItems[i].value}</td><td>${bCalcs[i].value}</td><td class="td-right">${(parseInt(bAmts[i].value)||0).toLocaleString()}</td><td class="td-center">${bNotes[i].value}</td></tr>`;
     document.getElementById('out_r_tbl_budgetTable').innerHTML = bTbl;
     document.getElementById('out_r_tbl_budgetTotal').innerText = totalBudget.toLocaleString() + ' 원';
 
     let attaches = document.querySelectorAll('.r-attach-val');
     let attachHTML = '';
-    for (let i = 0; i < attaches.length; i++) if (attaches[i].value) attachHTML += `<div style="margin:3px 0;">붙임 ${i+1}. ${attaches[i].value}</div>`;
+    for(let i=0; i<attaches.length; i++) if(attaches[i].value) attachHTML += `<div style="margin:3px 0;">붙임 ${i+1}. ${attaches[i].value}</div>`;
     document.getElementById('out_r_tbl_attachList').innerHTML = attachHTML;
 
     document.getElementById('output-result-container').style.display = 'block';
   }
 
-  // =========================================================================
-  // 6. Supabase 클라우드 데이터베이스 및 저장소 연동
-  // =========================================================================
-  async function initV8Auth() {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session?.user) await enterV8(session.user);
-    sb.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) await enterV8(session.user);
-    });
+  // 데이터 직렬화/복원
+  function getValues(selector) {
+    return Array.from(document.querySelectorAll(selector)).map(el => el.value);
   }
-
-  async function loginV8() {
-    document.getElementById('authMsg').textContent = '로그인 중...';
-    const { data, error } = await sb.auth.signInWithPassword({
-      email: document.getElementById('loginEmail').value.trim(),
-      password: document.getElementById('loginPassword').value
-    });
-    if (error) { document.getElementById('authMsg').textContent = error.message; return; }
-    document.getElementById('authMsg').textContent = '';
-    await enterV8(data.user);
-  }
-
-  async function signupV8() {
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    if (!email || password.length < 6) {
-      document.getElementById('authMsg').textContent = '이메일과 6자 이상의 비밀번호를 입력하세요.'; return;
-    }
-    document.getElementById('authMsg').textContent = '계정 생성 중...';
-    const { data, error } = await sb.auth.signUp({
-      email, password, options: { data: { name: email.split('@')[0] } }
-    });
-    if (error) { document.getElementById('authMsg').textContent = error.message; return; }
-    if (data.session) {
-      await enterV8(data.user);
-    } else {
-      document.getElementById('authMsg').style.color = '#166534';
-      document.getElementById('authMsg').textContent = '계정이 생성되었습니다. 이메일 승인 후 로그인하세요.';
-    }
-  }
-
-  async function logoutV8() {
-    await sb.auth.signOut();
-    v8User = null;
-    document.getElementById('authOverlay').style.display = 'flex';
-    document.getElementById('collabBar').style.display = 'none';
-  }
-
-  async function enterV8(user) {
-    v8User = user;
-    document.getElementById('authOverlay').style.display = 'none';
-    document.getElementById('collabBar').style.display = 'flex';
-    document.getElementById('currentUserLabel').textContent = user.email || user.id;
-    await loadProfileV81();
-    await renderCloudDB();
-    switchModeV86Home();
-  }
-
-  async function loadProfileV81() {
-    if (!v8User) return;
-    const { data } = await sb.from('profiles').select('*').eq('id', v8User.id).maybeSingle();
-    v81Profile = data;
-    const who = [data?.name, data?.position].filter(Boolean).join(' · ');
-    document.getElementById('currentUserLabel').textContent = who || v8User.email || v8User.id;
-    document.getElementById('currentRoleLabel').textContent = '권한: ' + ({ admin: '관리자', staff: '담당자', reviewer: '검토자' }[data?.role] || '담당자');
-    const adminBtn = document.getElementById('adminBtnV82');
-    if (adminBtn) adminBtn.style.display = (data?.role === 'admin') ? 'inline-block' : 'none';
-  }
-
-  async function saveCloudDocument(type) {
-    if (!v8User) return alert('먼저 로그인하세요.');
-    const data = type === 'PLAN' ? getPlanData() : getResultData();
-    const name = type === 'PLAN' ? projectNameFromPlan(data) : (data.projName || '결과보고');
-    let projectId = type === 'PLAN' ? window.currentCloudPlanProjectId : (window.currentCloudResultProjectId || window.currentSourcePlanId);
-
-    try {
-      if (!projectId) {
-        const { data: pr, error } = await sb.from('projects').insert({
-          project_name: name, owner_id: v8User.id, created_by: v8User.id, updated_by: v8User.id
-        }).select().single();
-        if (error) throw error;
-        projectId = pr.id;
-      } else {
-        await sb.from('projects').update({ project_name: name, updated_by: v8User.id }).eq('id', projectId);
-      }
-
-      const { data: existing } = await sb.from('project_documents')
-        .select('id').eq('project_id', projectId).eq('doc_type', type).maybeSingle();
-
-      let doc;
-      if (existing) {
-        const { data: updated } = await sb.from('project_documents').update({
-          data, updated_by: v8User.id
-        }).eq('id', existing.id).select().single();
-        doc = updated;
-      } else {
-        const { data: created } = await sb.from('project_documents').insert({
-          project_id: projectId, doc_type: type, data,
-          created_by: v8User.id, updated_by: v8User.id
-        }).select().single();
-        doc = created;
-      }
-
-      await sb.from('project_history').insert({
-        project_id: projectId, document_id: doc.id,
-        action: existing ? 'UPDATE_' + type : 'CREATE_' + type,
-        snapshot: data, changed_by: v8User.id
+  function getRows(tbodySelector, classes) {
+    return Array.from(document.querySelectorAll(tbodySelector + ' tr')).map(tr => {
+      let o = {};
+      classes.forEach(c => {
+        let el = tr.querySelector('.' + c);
+        o[c] = el ? el.value : '';
       });
-
-      if (type === 'PLAN') {
-        window.currentCloudPlanProjectId = projectId;
-        await syncStandardMetricsV106(projectId, getStandardPlanV106());
-      } else {
-        window.currentCloudResultProjectId = projectId;
-      }
-
-      alert('공동 DB에 저장되었습니다.');
-      await renderCloudDB();
-    } catch (e) {
-      console.error(e);
-      alert('공동 DB 저장 오류: ' + e.message);
-    }
+      return o;
+    });
   }
-
-  async function syncStandardMetricsV106(projectId, std) {
-    if (!v8User) return;
-    const existing = await sb.from('project_metrics').select('*').eq('project_id', projectId).maybeSingle();
-    const old = existing.data || {};
-    const row = {
-      project_id: projectId,
-      background: std.background || '',
-      purpose: std.purpose || '',
-      expected_effect: std.expected_effect || '',
-      operation_date: std.operation_date || '',
-      target_group: std.target_group || '',
-      planned_participants: Number(std.planned_participants || 0),
-      content: std.content || '',
-      location: std.location || '',
-      operation_method: std.operation_method || '',
-      evaluation_plan: std.evaluation_plan || '',
-      custom_fields: std.custom_fields || [],
-      actual_participants: Number(old.actual_participants || 0),
-      planned_budget: Number(old.planned_budget || 0),
-      actual_budget: Number(old.actual_budget || 0),
-      satisfaction_score: Number(old.satisfaction_score || 0),
-      manager_name: document.getElementById('p_staff')?.value || old.manager_name || '',
-      source_version: 'v11.2',
-      updated_by: v8User.id,
-      updated_at: new Date().toISOString()
+  function esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function getPlanData() {
+    return {
+      orgName:p_orgName.value, staff:p_staff.value, reviewer:p_reviewer.value, approver:p_approver.value,
+      overview:getRows('#p_overviewTbody',['p-ov-key','p-ov-val']),
+      programs:getRows('#p_progTbody',['p-prog-key','p-prog-val']),
+      schedule:getRows('#p_schedTbody',['p-sch-time','p-sch-val']),
+      budgetSource:p_budgetSource.value, budgetCategory:p_budgetCategory.value,
+      budget:getRows('#p_budgetTbody',['p-bg-item','p-bg-calc','p-bg-amount','p-bg-note']),
+      programVisible: window.planProgramVisible !== false,
+      scheduleVisible: window.planScheduleVisible !== false
     };
-    await sb.from('project_metrics').upsert(row, { onConflict: 'project_id' });
   }
-
-  async function renderCloudDB() {
-    if (!v8User) return;
-    const tbody = document.getElementById('dbTableBody');
-    if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="5" class="td-center">공동 DB 불러오는 중...</td></tr>';
-    const { data, error } = await sb.from('project_documents')
-      .select('id,project_id,doc_type,data,updated_at,projects(project_name,status)')
-      .order('updated_at', { ascending: false });
-      
-    if (error) {
-      tbody.innerHTML = `<tr><td colspan="5" class="td-center" style="color:red;">${esc(error.message)}</td></tr>`;
-      return;
+  function getResultData() {
+    return {
+      orgName:r_orgName.value, staff:r_staff.value, reviewer:r_reviewer.value, approver:r_approver.value,
+      projName:r_projName.value, refDoc:r_refDoc.value, dateLoc:r_dateLoc.value,
+      actualTarget:r_actualTarget.value, summaryContent:r_summaryContent.value,
+      surveyScore:r_surveyScore.value, surveyItems:r_surveyItems.value, surveyFeedback:r_surveyFeedback.value,
+      evalGood:r_evalGood.value, evalBad:r_evalBad.value, evalPlan:r_evalPlan.value,
+      budgetSource:r_budgetSource.value, budgetCategory:r_budgetCategory.value,
+      budget:getRows('#r_budgetTbody',['r-bg-item','r-bg-calc','r-bg-amount','r-bg-note']),
+      attachments:getValues('.r-attach-val'),
+      sourcePlanId: window.currentSourcePlanId || null
+    };
+  }
+  function projectNameFromPlan(data) {
+    let row = (data.overview || []).find(x => (x['p-ov-key']||'').trim() === '사업명') || (data.overview||[])[0];
+    return row ? row['p-ov-val'] : '사업계획서';
+  }
+  function saveCurrentData(type) {
+    let db = JSON.parse(localStorage.getItem('app_project_db') || '[]');
+    let data = type === 'PLAN' ? getPlanData() : getResultData();
+    let currentId = type === 'PLAN' ? window.currentPlanRecordId : window.currentResultRecordId;
+    let projName = type === 'PLAN' ? projectNameFromPlan(data) : data.projName;
+    if(currentId) {
+      let idx = db.findIndex(x => x.id === currentId);
+      if(idx >= 0 && confirm('현재 불러온 문서를 수정 저장하시겠습니까?\n취소하면 새 문서로 저장합니다.')) {
+        db[idx] = {...db[idx], projName, staff:data.staff, regDate:new Date().toLocaleString(), data};
+        localStorage.setItem('app_project_db', JSON.stringify(db));
+        alert('기존 문서가 수정 저장되었습니다.');
+        return;
+      }
     }
+    let item = {id:Date.now(), type, regDate:new Date().toLocaleString(), projName, staff:data.staff, data};
+    db.push(item);
+    localStorage.setItem('app_project_db', JSON.stringify(db));
+    if(type === 'PLAN') window.currentPlanRecordId = item.id;
+    else window.currentResultRecordId = item.id;
+    alert('v7.1 DB에 전체 작성 내용이 저장되었습니다.');
+  }
+  function renderDBList() {
+    let db = JSON.parse(localStorage.getItem('app_project_db') || '[]');
+    let tbody = document.getElementById('dbTableBody');
     tbody.innerHTML = '';
-    if (!data.length) tbody.innerHTML = '<tr><td colspan="5" class="td-center">저장된 문서가 없습니다.</td></tr>';
-    
-    data.forEach(x => {
-      const tr = document.createElement('tr');
-      const nm = x.projects?.project_name || projectNameFromPlan(x.data);
+    if(db.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="td-center">저장 목록이 없습니다.</td></tr>'; return; }
+    db.slice().reverse().forEach(item => {
+      let tr = document.createElement('tr');
+      let canLoad = !!item.data;
       tr.innerHTML = `
-        <td class="td-center"><span class="${x.doc_type==='PLAN'?'tag-plan':'tag-result'}">${x.doc_type==='PLAN'?'계획':'결과'}</span></td>
-        <td>${esc(nm)}</td>
-        <td class="td-center">${esc(x.data?.staff || '-')}</td>
-        <td class="td-center">${new Date(x.updated_at).toLocaleString()}</td>
+        <td class="td-center"><span class="${item.type==='PLAN'?'tag-plan':'tag-result'}">${item.type==='PLAN'?'계획':'결과'}</span></td>
+        <td>${esc(item.projName)}</td>
+        <td class="td-center">${esc(item.staff)}</td>
+        <td class="td-center">${esc(item.regDate || '')}</td>
         <td class="td-center">
-          <button class="btn-add" onclick="loadCloudDocument('${x.id}')">불러오기</button>
-          ${x.doc_type === 'PLAN' ? `<button class="btn-gform" onclick="cloudPlanToResult('${x.project_id}')">결과작성</button>` : ''}
+          ${canLoad ? `<button class="btn-add" onclick="loadSavedData(${item.id})">불러오기</button>` : ''}
+          ${item.type==='PLAN' && canLoad ? `<button class="btn-gform" onclick="usePlanForResult(${item.id})">결과작성</button>` : ''}
+          <button class="btn-del" onclick="deleteData(${item.id})">삭제</button>
         </td>`;
       tbody.appendChild(tr);
     });
   }
-
-  async function loadCloudDocument(docId) {
-    const { data: x, error } = await sb.from('project_documents').select('*').eq('id', docId).single();
-    if (error) return alert(error.message);
-    const d = x.data || {};
-    
-    if (x.doc_type === 'PLAN') {
-      window.currentCloudPlanProjectId = x.project_id;
-      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
-      setVal('p_orgName', d.orgName || '');
-      setVal('p_staff', d.staff || '');
-      setVal('p_reviewer', d.reviewer || '');
-      setVal('p_approver', d.approver || '');
-
-      applyStandardPlanV106(d.standard || {});
-      if (Array.isArray(d.overview)) setRows('p_overviewTbody', d.overview, ['p-ov-key', 'p-ov-val'], 'addOverviewRow');
-      if (Array.isArray(d.programs)) setRows('p_progTbody', d.programs, ['p-prog-key', 'p-prog-val'], 'addProgRow');
-      if (Array.isArray(d.schedule)) setRows('p_schedTbody', d.schedule, ['p-sch-time', 'p-sch-val'], 'addScheduleRow');
-      if (Array.isArray(d.budget)) setRows('p_budgetTbody', d.budget, ['p-bg-item', 'p-bg-calc', 'p-bg-amount', 'p-bg-note'], 'addPlanBudgetRow');
-
-      calcPlanBudget();
-      switchMode('PLAN');
-    } else {
-      window.currentCloudResultProjectId = x.project_id;
-      fillResult(d);
-      calcResultBudget();
-      switchMode('RESULT');
-    }
+  function findSaved(id) {
+    return JSON.parse(localStorage.getItem('app_project_db') || '[]').find(x => x.id === id);
   }
-
-  function fillResult(d) {
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
-    setVal('r_orgName', d.orgName); setVal('r_staff', d.staff);
-    setVal('r_reviewer', d.reviewer); setVal('r_approver', d.approver);
-    setVal('r_projName', d.projName); setVal('r_refDoc', d.refDoc); setVal('r_dateLoc', d.dateLoc);
-    setVal('r_actualTarget', d.actualTarget); setVal('r_summaryContent', d.summaryContent);
-    setVal('r_surveyScore', d.surveyScore); setVal('r_surveyItems', d.surveyItems); setVal('r_surveyFeedback', d.surveyFeedback);
-    setVal('r_evalGood', d.evalGood); setVal('r_evalBad', d.evalBad); setVal('r_evalPlan', d.evalPlan);
-    setVal('r_budgetSource', d.budgetSource); setVal('r_budgetCategory', d.budgetCategory);
-    
-    if (d.standard) applyStandardResultV107(d.standard);
-    if (Array.isArray(d.budget)) setRows('r_budgetTbody', d.budget, ['r-bg-item', 'r-bg-calc', 'r-bg-amount', 'r-bg-note'], 'addResultBudgetRow');
-    
-    let tbody = document.getElementById('r_attachTbody'); tbody.innerHTML = '';
-    (d.attachments || []).forEach(v => { addAttachRow(); tbody.lastElementChild.querySelector('.r-attach-val').value = v; });
-  }
-
   function setRows(tbodyId, rows, columns, addFnName) {
     let tbody = document.getElementById(tbodyId); tbody.innerHTML = '';
     (rows || []).forEach(row => {
       window[addFnName]();
       let tr = tbody.lastElementChild;
-      columns.forEach(c => { let el = tr.querySelector('.' + c); if (el) el.value = row[c] ?? ''; });
+      columns.forEach(c => { let el = tr.querySelector('.'+c); if(el) el.value = row[c] ?? ''; });
     });
   }
-
-  async function cloudPlanToResult(projectId) {
-    const { data: x, error } = await sb.from('project_documents')
-      .select('*').eq('project_id', projectId).eq('doc_type', 'PLAN').single();
-    if (error) return alert(error.message);
-    const d = x.data || {};
-    
-    document.getElementById('r_orgName').value = d.orgName || '';
-    document.getElementById('r_staff').value = d.staff || '';
-    document.getElementById('r_reviewer').value = d.reviewer || '';
-    document.getElementById('r_approver').value = d.approver || '';
-    document.getElementById('r_projName').value = projectNameFromPlan(d);
-    document.getElementById('r_budgetSource').value = d.budgetSource || '';
-    document.getElementById('r_budgetCategory').value = d.budgetCategory || '';
-    
-    window.currentSourcePlanId = projectId;
-    window.currentCloudResultProjectId = projectId;
-    switchMode('RESULT');
-    alert('계획서 정보가 결과보고서에 연동되었습니다.');
-  }
-
-  // =========================================================================
-  // 7. 대시보드 및 상세 관리 컨트롤
-  // =========================================================================
-  async function renderDashboardV831() {
-    const box = document.getElementById('dashboardTableV831'); if (!box || !v8User) return;
-    box.innerHTML = '공동 DB에서 사업을 불러오는 중...';
-    
-    const pr = await sb.from('projects').select('id,project_name,status,owner_id,updated_by,updated_at').order('updated_at', { ascending: false });
-    if (pr.error) { box.innerHTML = '사업 조회 오류: ' + esc(pr.error.message); return; }
-    
-    const projects = pr.data || [], pids = projects.map(x => x.id);
-    let docs = [];
-    if (pids.length) {
-      const dr = await sb.from('project_documents').select('id,project_id,doc_type,data,updated_at').in('project_id', pids);
-      docs = dr.data || [];
+  function loadSavedData(id) {
+    let item = findSaved(id); if(!item || !item.data) return alert('구버전 요약 데이터는 전체 불러오기를 지원하지 않습니다.');
+    let d = item.data;
+    if(item.type === 'PLAN') {
+      window.currentPlanRecordId = item.id;
+      p_orgName.value=d.orgName||''; p_staff.value=d.staff||''; p_reviewer.value=d.reviewer||''; p_approver.value=d.approver||'';
+      setRows('p_overviewTbody',d.overview,['p-ov-key','p-ov-val'],'addOverviewRow');
+      setRows('p_progTbody',d.programs,['p-prog-key','p-prog-val'],'addProgRow');
+      setRows('p_schedTbody',d.schedule,['p-sch-time','p-sch-val'],'addScheduleRow');
+      setPlanSectionVisible('program', d.programVisible !== false, false);
+      setPlanSectionVisible('schedule', d.scheduleVisible !== false, false);
+      p_budgetSource.value=d.budgetSource||''; p_budgetCategory.value=d.budgetCategory||'';
+      setRows('p_budgetTbody',d.budget,['p-bg-item','p-bg-calc','p-bg-amount','p-bg-note'],'addPlanBudgetRow');
+      calcPlanBudget(); switchMode('PLAN');
+    } else {
+      window.currentResultRecordId = item.id;
+      fillResult(d); switchMode('RESULT');
     }
-
-    dashboardRowsV831 = projects.map(p => ({
-      ...p,
-      plan: docs.find(d => d.project_id === p.id && d.doc_type === 'PLAN'),
-      result: docs.find(d => d.project_id === p.id && d.doc_type === 'RESULT')
-    }));
-
-    const cards = [
-      ['전체 사업', dashboardRowsV831.length],
-      ['검토 요청', dashboardRowsV831.filter(x => x.status === 'review_requested').length],
-      ['사업 완료', dashboardRowsV831.filter(x => x.status === 'completed').length],
-      ['결과보고 미작성', dashboardRowsV831.filter(x => x.plan && !x.result).length]
-    ];
-    document.getElementById('dashboardSummaryV831').innerHTML = cards.map(x => 
-      `<div style="border:1px solid #ddd;border-radius:9px;padding:14px;background:#fff"><div style="font-size:12px;color:#666">${x[0]}</div><div style="font-size:25px;font-weight:700">${x[1]}</div></div>`
-    ).join('');
-    
-    filterDashboardV831();
   }
-
-  function filterDashboardV831() {
-    const q = (document.getElementById('dashSearchV831')?.value || '').toLowerCase();
-    const st = document.getElementById('dashStatusV831')?.value || '';
-    drawDashboardV831(dashboardRowsV831.filter(x => {
-      const staff = String(x.plan?.data?.staff || x.result?.data?.staff || '');
-      return (!st || x.status === st) && (!q || String(x.project_name || '').toLowerCase().includes(q) || staff.toLowerCase().includes(q));
-    }));
+  function fillResult(d) {
+    r_orgName.value=d.orgName||''; r_staff.value=d.staff||''; r_reviewer.value=d.reviewer||''; r_approver.value=d.approver||'';
+    r_projName.value=d.projName||''; r_refDoc.value=d.refDoc||''; r_dateLoc.value=d.dateLoc||'';
+    r_actualTarget.value=d.actualTarget||''; r_summaryContent.value=d.summaryContent||'';
+    r_surveyScore.value=d.surveyScore||''; r_surveyItems.value=d.surveyItems||''; r_surveyFeedback.value=d.surveyFeedback||'';
+    r_evalGood.value=d.evalGood||''; r_evalBad.value=d.evalBad||''; r_evalPlan.value=d.evalPlan||'';
+    r_budgetSource.value=d.budgetSource||''; r_budgetCategory.value=d.budgetCategory||'';
+    setRows('r_budgetTbody',d.budget,['r-bg-item','r-bg-calc','r-bg-amount','r-bg-note'],'addResultBudgetRow');
+    let tbody=document.getElementById('r_attachTbody'); tbody.innerHTML='';
+    (d.attachments||[]).forEach(v=>{ addAttachRow(); tbody.lastElementChild.querySelector('.r-attach-val').value=v; });
+    window.currentSourcePlanId=d.sourcePlanId||null; calcResultBudget();
   }
-
-  function drawDashboardV831(rows) {
-    const b = document.getElementById('dashboardTableV831');
-    const L = { draft: '작성중', review_requested: '검토요청', reviewed: '검토완료', completed: '사업완료' };
-    if (!rows.length) { b.innerHTML = '<div style="padding:25px;text-align:center;border:1px solid #ddd">등록된 사업이 없습니다.</div>'; return; }
-    
-    b.innerHTML = `<div style="overflow:auto"><table style="width:100%;min-width:1100px;border-collapse:collapse;font-size:12px;background:#fff">
-      <tr>${['사업명','담당자','상태','계획서','결과보고서','최종수정일','사업관리'].map(x => `<th style="border:1px solid #ddd;padding:8px">${x}</th>`).join('')}</tr>
-      ${rows.map(x => {
-        const staff = x.plan?.data?.staff || x.result?.data?.staff || '-';
-        return `<tr>
-          <td style="border:1px solid #ddd;padding:8px">${esc(x.project_name || '-')}</td>
-          <td style="border:1px solid #ddd;padding:8px">${esc(staff)}</td>
-          <td style="border:1px solid #ddd;padding:8px">${L[x.status] || x.status}</td>
-          <td style="border:1px solid #ddd;padding:8px">${x.plan ? `<button class="btn btn-add" onclick="loadCloudDocument('${x.plan.id}')">계획서 열기</button>` : '미작성'}</td>
-          <td style="border:1px solid #ddd;padding:8px">${x.result ? `<button class="btn btn-add" onclick="loadCloudDocument('${x.result.id}')">결과보고서 열기</button>` : (x.plan ? `<button class="btn btn-result" onclick="cloudPlanToResult('${x.id}')">결과작성</button>` : '계획서 필요')}</td>
-          <td style="border:1px solid #ddd;padding:8px">${new Date(x.updated_at).toLocaleString()}</td>
-          <td style="border:1px solid #ddd;padding:8px;white-space:nowrap">
-            <button class="btn btn-plan" onclick="openProjectDetailV85('${x.id}')">상세</button>
-            <button class="btn btn-add" onclick="openReviewV84('${x.id}','${esc(x.project_name)}')">검토</button>
-          </td>
-        </tr>`;
-      }).join('')}
-    </table></div>`;
+  function openPlanPicker() {
+    let plans = JSON.parse(localStorage.getItem('app_project_db') || '[]').filter(x=>x.type==='PLAN' && x.data);
+    if(!plans.length) return alert('먼저 사업계획서를 DB에 저장해 주세요.');
+    let msg = plans.map((p,i)=>`${i+1}. ${p.projName}`).join('\n');
+    let n = parseInt(prompt('결과보고서로 승계할 계획서 번호를 입력하세요.\n\n'+msg),10);
+    if(n>=1 && n<=plans.length) usePlanForResult(plans[n-1].id);
   }
-
-  async function openProjectDetailV85(projectId) {
-    v10CurrentProjectId = projectId;
-    document.getElementById('projectDetailModalV85').style.display = 'flex';
-    await renderIntegratedProjectV10(projectId);
-    showProjectTabV10('basic', document.querySelector('.v10-tabs button'));
+  function usePlanForResult(id) {
+    let item=findSaved(id); if(!item || !item.data) return;
+    let d=item.data, ov={}; (d.overview||[]).forEach(x=>ov[x['p-ov-key']]=x['p-ov-val']);
+    r_orgName.value=d.orgName||''; r_staff.value=d.staff||''; r_reviewer.value=d.reviewer||''; r_approver.value=d.approver||'';
+    r_projName.value=ov['사업명']||projectNameFromPlan(d);
+    r_dateLoc.value=[ov['사업일시'],ov['장소']].filter(Boolean).join(' / ');
+    r_actualTarget.value=ov['참여대상']||'';
+    r_summaryContent.value=(d.programs||[]).map(x=>`${x['p-prog-key']}: ${x['p-prog-val']}`).join('\n');
+    r_budgetSource.value=d.budgetSource||''; r_budgetCategory.value=d.budgetCategory||'';
+    window.currentSourcePlanId=id; window.currentResultRecordId=null; switchMode('RESULT');
+    alert('계획서 기본정보를 결과보고서로 승계했습니다. 실제 실적·집행액·설문 결과를 수정해 주세요.');
   }
-
-  function closeProjectDetailV85() { document.getElementById('projectDetailModalV85').style.display = 'none'; }
-
-  async function renderIntegratedProjectV10(projectId) {
-    const pr = await sb.from('projects').select('*').eq('id', projectId).single(); if (pr.error) return;
-    const p = pr.data;
-    document.getElementById('detailProjectNameV85').textContent = p.project_name || '사업 상세관리';
-    
-    const dr = await sb.from('project_documents').select('*').eq('project_id', projectId);
-    const docs = dr.data || [], plan = docs.find(x => x.doc_type === 'PLAN'), result = docs.find(x => x.doc_type === 'RESULT');
-    const pd = plan?.data || {}, rd = result?.data || {};
-
-    document.getElementById('v10BasicSummary').innerHTML = `
-      <table style="width:100%;border-collapse:collapse;background:#fff">
-        <tr><th style="border:1px solid #ddd;padding:8px;width:140px">사업명</th><td style="border:1px solid #ddd;padding:8px">${esc(p.project_name)}</td></tr>
-        <tr><th style="border:1px solid #ddd;padding:8px">담당자</th><td style="border:1px solid #ddd;padding:8px">${esc(pd.staff || rd.staff || '-')}</td></tr>
-        <tr><th style="border:1px solid #ddd;padding:8px">운영일시</th><td style="border:1px solid #ddd;padding:8px">${esc(pd.standard?.operation_date || rd.dateLoc || '-')}</td></tr>
-      </table>`;
+  function extractFirstNumber(text) {
+    let m=String(text||'').replace(/,/g,'').match(/\d+/); return m ? parseInt(m[0],10) : null;
   }
-
-  // =========================================================================
-  // 8. 예산 및 정산 관리
-  // =========================================================================
-  async function openBudgetManagerV101(projectId) {
-    if (!projectId) return alert('사업을 먼저 선택해주세요.');
-    budgetProjectIdV101 = projectId;
-    const pr = await sb.from('projects').select('project_name').eq('id', projectId).single();
-    document.getElementById('budgetProjectNameV101').textContent = pr.data?.project_name || '';
-    
-    const rr = await sb.from('project_budget_items').select('*').eq('project_id', projectId).order('sort_order', { ascending: true });
-    budgetRowsDataV101 = (rr.data || []).map(x => ({
-      id: x.id, item: x.item_name || '', basis: x.calculation_basis || '',
-      planned: Number(x.planned_amount || 0), actual: Number(x.actual_amount || 0), note: x.note || ''
-    }));
-    renderBudgetRowsV101();
-    document.getElementById('budgetModalV101').style.display = 'flex';
-  }
-
-  function closeBudgetManagerV101() { document.getElementById('budgetModalV101').style.display = 'none'; }
-
-  function renderBudgetRowsV101() {
-    const tb = document.getElementById('budgetRowsV101'); if (!tb) return;
-    if (!budgetRowsDataV101.length) budgetRowsDataV101 = [{ item: '', basis: '', planned: 0, actual: 0, note: '' }];
-    tb.innerHTML = budgetRowsDataV101.map((r, i) => {
-      const remain = Number(r.planned) - Number(r.actual);
-      return `<tr>
-        <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.item)}" oninput="updateBudgetCellV101(${i},'item',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.basis)}" oninput="updateBudgetCellV101(${i},'basis',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:5px"><input type="number" style="width:120px" value="${Number(r.planned)}" oninput="updateBudgetCellV101(${i},'planned',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:5px"><input type="number" style="width:120px" value="${Number(r.actual)}" oninput="updateBudgetCellV101(${i},'actual',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:7px;text-align:right">${moneyV10(remain)}</td>
-        <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.note)}" oninput="updateBudgetCellV101(${i},'note',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:5px"><button class="btn btn-del" onclick="removeBudgetRowV101(${i})">삭제</button></td>
-      </tr>`;
-    }).join('');
-  }
-
-  function updateBudgetCellV101(i, k, v) {
-    if (!budgetRowsDataV101[i]) return;
-    budgetRowsDataV101[i][k] = (k === 'planned' || k === 'actual') ? Number(v || 0) : v;
-  }
-  function addBudgetRowV101() { budgetRowsDataV101.push({ item: '', basis: '', planned: 0, actual: 0, note: '' }); renderBudgetRowsV101(); }
-  function removeBudgetRowV101(i) { budgetRowsDataV101.splice(i, 1); renderBudgetRowsV101(); }
-
-  async function saveBudgetManagerV101() {
-    if (!budgetProjectIdV101) return;
-    await sb.from('project_budget_items').delete().eq('project_id', budgetProjectIdV101);
-    const rows = budgetRowsDataV101.map((r, i) => ({
-      project_id: budgetProjectIdV101, item_name: r.item || '항목', calculation_basis: r.basis,
-      planned_amount: Number(r.planned || 0), actual_amount: Number(r.actual || 0), note: r.note, sort_order: i
-    }));
-    if (rows.length) await sb.from('project_budget_items').insert(rows);
-    alert('예산 내역이 저장되었습니다.');
-    closeBudgetManagerV101();
-  }
-
-  // =========================================================================
-  // 9. 계획 대비 실적 점검 및 보조 로직
-  // =========================================================================
   function validatePlanVsResult() {
-    let box = document.getElementById('validationBox');
-    let planBudget = calcPlanBudget();
-    let actualBudget = calcResultBudget();
-    box.style.display = 'block';
-    box.innerHTML = `<b>계획 대비 실적 검증 결과</b><br>계획 예산: ${planBudget.toLocaleString()}원 / 집행 예산: ${actualBudget.toLocaleString()}원 (집행률 ${planBudget ? ((actualBudget/planBudget)*100).toFixed(1) : 0}%)`;
-  }
+    let box=document.getElementById('validationBox'), msgs=[];
+    let plan=window.currentSourcePlanId ? findSaved(window.currentSourcePlanId) : null;
+    if(!plan || !plan.data) {
+      box.style.display='block'; box.innerHTML='⚠️ 연결된 사업계획서가 없습니다. 먼저 <b>저장된 계획서 불러오기</b>를 실행하세요.'; return;
+    }
+    let d=plan.data, ov={}; (d.overview||[]).forEach(x=>ov[x['p-ov-key']]=x['p-ov-val']);
+    let plannedPeople=extractFirstNumber(ov['참여대상']), actualPeople=extractFirstNumber(r_actualTarget.value);
+    let planBudget=(d.budget||[]).reduce((a,x)=>a+(parseInt(x['p-bg-amount'])||0),0);
+    let actualBudget=calcResultBudget();
+    if(plannedPeople!==null && actualPeople!==null)
+      msgs.push(`참여인원: 계획 ${plannedPeople}명 → 실제 ${actualPeople}명 (${actualPeople-plannedPeople>=0?'+':''}${actualPeople-plannedPeople}명)`);
+    msgs.push(`예산: 계획 ${planBudget.toLocaleString()}원 → 집행 ${actualBudget.toLocaleString()}원 (집행률 ${planBudget?((actualBudget/planBudget)*100).toFixed(1):0}%)`);
 
-  async function loadSavedPlanIntoResultV1043() {
-    if (!v8User) return alert('로그인이 필요합니다.');
-    const dq = await sb.from('project_documents').select('id,project_id,data,updated_at')
-      .eq('doc_type', 'PLAN').order('updated_at', { ascending: false }).limit(10);
-    if (!dq.data?.length) return alert('저장된 계획서가 없습니다.');
-    
-    const labels = dq.data.map((d, i) => `${i+1}. ${projectNameFromPlan(d.data)}`).join('\n');
-    const pick = prompt('불러올 사업계획서를 선택하세요:\n\n' + labels);
-    const idx = Number(pick) - 1;
-    if (Number.isInteger(idx) && dq.data[idx]) {
-      const doc = dq.data[idx];
-      fillResult(doc.data);
-      window.currentSourcePlanId = doc.project_id;
-      alert('사업계획서 데이터가 복사되었습니다.');
+    (d.budget||[]).forEach(x=>{
+      let calcN=extractFirstNumber((x['p-bg-calc']||'').split('×').pop());
+      if(plannedPeople && calcN && calcN!==plannedPeople) msgs.push(`⚠️ 계획 예산 '${x['p-bg-item']}' 산출인원 ${calcN}명은 참여대상 ${plannedPeople}명과 다릅니다.`);
+    });
+    box.style.display='block'; box.innerHTML='<b>계획 대비 실적 점검</b><br>'+msgs.map(esc).join('<br>');
+  }
+  function setPlanSectionVisible(section, visible, ask=true) {
+    if(!visible && ask && !confirm('이 항목을 계획서 입력 및 출력에서 제외하시겠습니까?\n입력 내용은 현재 화면에서 숨겨지며 다시 표시할 수 있습니다.')) return;
+    if(section === 'program') {
+      window.planProgramVisible = visible;
+      document.getElementById('p-program-block').style.display = visible ? 'block' : 'none';
+    } else {
+      window.planScheduleVisible = visible;
+      document.getElementById('p-schedule-block').style.display = visible ? 'block' : 'none';
     }
   }
 
-  function fetchGoogleFormResponses() {
-    alert("구글 폼 응답 연동 완료!\n응답 데이터가 반영되었습니다.");
-    document.getElementById('r_surveyScore').value = "4.92점 / 5.0점 만점 (응답 28명)";
-    document.getElementById('r_surveyItems').value = "ㆍ프로그램 만족도: 100%\nㆍ식사/장소 만족도: 92.8%";
-    document.getElementById('r_surveyFeedback').value = "\"매우 유익한 시간이었습니다.\"";
+  function startNewDocument(type) {
+    const label = type === 'PLAN' ? '새 사업계획서' : '새 결과보고서';
+    if(!confirm(label + ' 작성을 시작하시겠습니까?\n현재 화면의 입력 내용은 초기화됩니다. 저장하지 않은 내용은 사라집니다.')) return;
+
+    if(type === 'PLAN') {
+      window.currentPlanRecordId = null;
+      window.planProgramVisible = true; window.planScheduleVisible = true;
+      document.querySelectorAll('#section-input-plan input[type="text"], #section-input-plan input[type="number"], #section-input-plan textarea').forEach(el=>{
+        if(!el.closest('#output-plan-container')) el.value = el.type === 'number' ? '0' : '';
+      });
+      p_overviewTbody.innerHTML=''; addOverviewRow();
+      p_progTbody.innerHTML=''; addProgRow();
+      p_schedTbody.innerHTML=''; addScheduleRow();
+      p_budgetTbody.innerHTML=''; addPlanBudgetRow();
+      setPlanSectionVisible('program', true, false); setPlanSectionVisible('schedule', true, false);
+      p_orgName.value='화성시장기요양지원센터';
+      document.getElementById('output-plan-container').style.display='none';
+      calcPlanBudget(); switchSubTab('p',1); switchMode('PLAN');
+    } else {
+      window.currentResultRecordId = null; window.currentSourcePlanId = null;
+      document.querySelectorAll('#section-input-result input[type="text"], #section-input-result input[type="number"], #section-input-result textarea').forEach(el=>{
+        if(!el.closest('#output-result-container')) el.value = el.type === 'number' ? '0' : '';
+      });
+      r_budgetTbody.innerHTML=''; addResultBudgetRow();
+      r_attachTbody.innerHTML=''; addAttachRow();
+      r_orgName.value='화성시장기요양지원센터';
+      document.getElementById('validationBox').style.display='none';
+      document.getElementById('output-result-container').style.display='none';
+      calcResultBudget(); switchSubTab('r',1); switchMode('RESULT');
+    }
+  }
+  function deleteData(id) {
+    if(!confirm("해당 사업 데이터를 삭제하시겠습니까?")) return;
+    let db = JSON.parse(localStorage.getItem('app_project_db') || '[]').filter(x => x.id !== id);
+    localStorage.setItem('app_project_db', JSON.stringify(db)); renderDBList();
   }
 
   function printDoc(targetId) {
-    let target = document.getElementById(targetId); if (!target) return;
+    let target = document.getElementById(targetId);
+    if (!target) return;
     document.querySelectorAll('#output-plan-container, #output-result-container').forEach(el => el.classList.remove('print-target'));
+    document.querySelectorAll('.form-section').forEach(el => el.classList.remove('print-parent'));
     target.classList.add('print-target');
+    let parent = target.closest('.form-section');
+    if(parent) parent.classList.add('print-parent');
+
+    const cleanup = () => {
+      target.classList.remove('print-target');
+      if(parent) parent.classList.remove('print-parent');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
     window.print();
   }
 
   function exportDoc(containerId, filename) {
     let header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>";
     let sourceHTML = header + document.getElementById(containerId).innerHTML + "</body></html>";
+    let source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
     let a = document.createElement("a");
-    a.href = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+    document.body.appendChild(a);
+    a.href = source;
     a.download = filename + '.doc';
     a.click();
+    document.body.removeChild(a);
   }
 
-  // 시스템 점검 창
-  function openSystemCheckV87() {
-    document.getElementById('systemCheckModalV87').style.display = 'flex';
-    document.getElementById('systemCheckBodyV87').innerHTML = `
-      <div>Supabase DB: ${sb ? '✅ 연결됨' : '❌ 오류'}</div>
-      <div>사용자 세션: ${v8User ? '✅ ' + v8User.email : '❌ 미로그인'}</div>
-    `;
-  }
-  function closeSystemCheckV87() { document.getElementById('systemCheckModalV87').style.display = 'none'; }
+  window.onload = function() { window.planProgramVisible=true; window.planScheduleVisible=true; calcPlanBudget(); calcResultBudget(); };
 
-  // 프로필 모달 컨트롤
-  function openProfileV81() {
-    document.getElementById('profileNameV81').value = v81Profile?.name || '';
-    document.getElementById('profilePositionV81').value = v81Profile?.position || '';
-    document.getElementById('profileRoleV81').textContent = v81Profile?.role || '담당자';
-    document.getElementById('profileModalV81').style.display = 'flex';
+  // ===== v8.0 Supabase 협업 기능 =====
+  const V8_SUPABASE_URL = 'https://quienpvidvkjvtiwyhoq.supabase.co';
+  const V8_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1aWVucHZpZHZranZ0aXd5aG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMzE0MzIsImV4cCI6MjEwMzgwNzQzMn0.Q2SvpeN2s_okehjVhjNeKpqBCc2ml7EBcmvDMJ4tqKE';
+  const sb = window.supabase.createClient(V8_SUPABASE_URL, V8_SUPABASE_ANON_KEY);
+  let v8User = null;
+
+  async function initV8Auth() {
+    const {data:{session}} = await sb.auth.getSession();
+    if(session?.user) await enterV8(session.user);
+    sb.auth.onAuthStateChange(async (_event, session) => {
+      if(session?.user) await enterV8(session.user);
+    });
   }
-  function closeProfileV81() { document.getElementById('profileModalV81').style.display = 'none'; }
-  async function saveProfileV81() {
-    if (!v8User) return;
-    await sb.from('profiles').update({
-      name: document.getElementById('profileNameV81').value,
-      position: document.getElementById('profilePositionV81').value
-    }).eq('id', v8User.id);
-    closeProfileV81();
+
+  async function loginV8() {
+    document.getElementById('authMsg').textContent = '로그인 중...';
+    const {data,error} = await sb.auth.signInWithPassword({
+      email: document.getElementById('loginEmail').value.trim(), password: document.getElementById('loginPassword').value
+    });
+    if(error) { document.getElementById('authMsg').textContent = error.message; return; }
+    document.getElementById('authMsg').textContent = '';
+    await enterV8(data.user);
+  }
+
+  async function signupV8() {
+    const email = document.getElementById('loginEmail').value.trim(), password = document.getElementById('loginPassword').value;
+    if(!email || password.length < 6) {
+      document.getElementById('authMsg').textContent = '이메일과 6자 이상의 비밀번호를 입력하세요.'; return;
+    }
+    document.getElementById('authMsg').textContent = '계정 생성 중...';
+    const {data,error} = await sb.auth.signUp({
+      email, password, options:{data:{name: email.split('@')[0]}}
+    });
+    if(error) { document.getElementById('authMsg').textContent = error.message; return; }
+    if(data.session) {
+      await enterV8(data.user);
+      document.getElementById('authMsg').textContent = '';
+    } else {
+      document.getElementById('authMsg').style.color='#166534';
+      document.getElementById('authMsg').textContent = '계정이 생성되었습니다. 이메일 확인 설정이 켜져 있다면 메일 인증 후 로그인하세요.';
+    }
+  }
+
+  async function logoutV8() {
+    await sb.auth.signOut();
+    v8User=null;
+    document.getElementById('authOverlay').style.display='flex';
+    document.getElementById('collabBar').style.display='none';
+  }
+
+  async function enterV8(user) {
+    v8User=user;
+    document.getElementById('authOverlay').style.display='none';
+    document.getElementById('collabBar').style.display='flex';
+    document.getElementById('currentUserLabel').textContent=user.email || user.id;
     await loadProfileV81();
+    await renderCloudDB();
+    switchModeV86Home();
+    setTimeout(refreshProfileAndRoleV87,300);
   }
 
-  // =========================================================================
-  // 10. 초기화 및 이벤트 바인딩
-  // =========================================================================
-  window.onload = function() {
-    initV8Auth();
-    calcPlanBudget();
-    calcResultBudget();
+  function planProjectName(data) {
+    return projectNameFromPlan(data) || '사업계획';
+  }
+
+  async function saveCloudDocument(type) {
+    if(!v8User) return alert('먼저 로그인하세요.');
+    const data = type === 'PLAN' ? getPlanData() : getResultData();
+    const name = type === 'PLAN' ? planProjectName(data) : (data.projName || '결과보고');
+    let projectId = type === 'PLAN' ? window.currentCloudPlanProjectId :
+                    (window.currentCloudResultProjectId || window.currentSourcePlanId);
+
+    try {
+      if(!projectId) {
+        const {data:pr,error} = await sb.from('projects').insert({
+          project_name:name, owner_id:v8User.id, created_by:v8User.id, updated_by:v8User.id
+        }).select().single();
+        if(error) throw error;
+        projectId=pr.id;
+      } else {
+        const {error} = await sb.from('projects').update({
+          project_name:name, updated_by:v8User.id
+        }).eq('id',projectId);
+        if(error) throw error;
+      }
+
+      const {data:existing,error:findErr} = await sb.from('project_documents')
+        .select('id').eq('project_id',projectId).eq('doc_type',type).maybeSingle();
+      if(findErr) throw findErr;
+
+      let doc;
+      if(existing) {
+        const {data:updated,error} = await sb.from('project_documents').update({
+          data, updated_by:v8User.id
+        }).eq('id',existing.id).select().single();
+        if(error) throw error; doc=updated;
+      } else {
+        const {data:created,error} = await sb.from('project_documents').insert({
+          project_id:projectId, doc_type:type, data,
+          created_by:v8User.id, updated_by:v8User.id
+        }).select().single();
+        if(error) throw error; doc=created;
+      }
+
+      await sb.from('project_history').insert({
+        project_id:projectId, document_id:doc.id,
+        action: existing ? 'UPDATE_'+type : 'CREATE_'+type,
+        snapshot:data, changed_by:v8User.id
+      });
+
+      if(type==='PLAN') window.currentCloudPlanProjectId=projectId;
+      else window.currentCloudResultProjectId=projectId;
+      alert('공동 DB에 저장되었습니다.');
+      await renderCloudDB();
+    } catch(e) {
+      console.error(e); alert('공동 DB 저장 오류: '+e.message);
+    }
+  }
+
+  async function renderCloudDB() {
+    if(!v8User) return;
+    const tbody=document.getElementById('dbTableBody');
+    if(!tbody) return;
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;">공동 DB 불러오는 중...</td></tr>';
+    const {data,error} = await sb.from('project_documents')
+      .select('id,project_id,doc_type,data,updated_at,updated_by,projects(project_name,status,owner_id,updated_by)')
+      .order('updated_at',{ascending:false});
+    if(error) {
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#b91c1c;">'+esc(error.message)+'</td></tr>'; return;
+    }
+    tbody.innerHTML='';
+    if(!data.length) tbody.innerHTML='<tr><td colspan="6" style="text-align:center;">저장된 공동 문서가 없습니다.</td></tr>';
+    data.forEach(x=>{
+      const tr=document.createElement('tr');
+      const nm=x.projects?.project_name || (x.doc_type==='PLAN'?projectNameFromPlan(x.data):x.data?.projName) || '-';
+      const st=x.projects?.status||'draft';
+      const stLabel={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'}[st]||st;
+      tr.innerHTML=`<td>${x.doc_type==='PLAN'?'계획서':'결과보고'}</td>
+        <td>${esc(nm)}<div style="font-size:11px;margin-top:3px;"><span style="padding:2px 6px;border:1px solid #bbb;border-radius:10px;">${stLabel}</span></div></td>
+        <td>${esc(x.data?.staff||'-')}</td>
+        <td>${new Date(x.updated_at).toLocaleString()}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-add" onclick="loadCloudDocument('${x.id}')">불러오기</button>
+          ${x.doc_type==='PLAN'?`<button class="btn btn-result" onclick="cloudPlanToResult('${x.project_id}')">결과작성</button>`:''}
+          <button class="btn btn-add" onclick="changeProjectStatusV81('${x.project_id}','${st}')">상태변경</button>
+          <button class="btn btn-add" onclick="showHistoryV81('${x.project_id}')">이력</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function loadCloudDocument(docId) {
+    const {data:x,error}=await sb.from('project_documents').select('*').eq('id',docId).single();
+    if(error) return alert(error.message);
+    const d=x.data||{};
+    if(x.doc_type==='PLAN') {
+      try{
+        window.currentCloudPlanProjectId=x.project_id;
+
+        const setVal=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val??'';};
+        setVal('p_orgName',d.orgName||'');
+        setVal('p_staff',d.staff||'');
+        setVal('p_reviewer',d.reviewer||'');
+        setVal('p_approver',d.approver||'');
+
+        if(typeof applyStandardPlanV106==='function'){
+          const std=d.standard || (typeof standardFromLegacyV106==='function' ? standardFromLegacyV106(d) : null);
+          if(std) applyStandardPlanV106(std);
+        }
+        if(Array.isArray(d.overview)) setRows('p_overviewTbody',d.overview,['p-ov-key','p-ov-val'],'addOverviewRow');
+        if(Array.isArray(d.programs)) setRows('p_progTbody',d.programs,['p-prog-key','p-prog-val'],'addProgRow');
+        if(Array.isArray(d.schedule)) setRows('p_schedTbody',d.schedule,['p-sch-time','p-sch-val'],'addScheduleRow');
+        if(Array.isArray(d.budget)) setRows('p_budgetTbody',d.budget,['p-bg-item','p-bg-calc','p-bg-amount','p-bg-note'],'addPlanBudgetRow');
+
+        setPlanSectionVisible('program',d.programVisible!==false,false);
+        setPlanSectionVisible('schedule',d.scheduleVisible!==false,false);
+        setVal('p_budgetSource',d.budgetSource||'');
+        setVal('p_budgetCategory',d.budgetCategory||'');
+
+        if(typeof syncStandardToLegacyV1061==='function') try{syncStandardToLegacyV1061();}catch(_e){}
+        if(typeof hideDuplicateLegacyOverviewV1061==='function') try{hideDuplicateLegacyOverviewV1061();}catch(_e){}
+        if(typeof calcPlanBudget==='function') calcPlanBudget();
+        if(typeof switchMode==='function') switchMode('PLAN');
+
+        await new Promise(resolve=>setTimeout(resolve,50));
+        if(typeof generatePlanDocs==='function') generatePlanDocs();
+        const out=document.getElementById('output-plan-container');
+        if(out) out.style.display='block';
+      }catch(e){
+        console.error('PLAN 문서 불러오기 오류:',e);
+        alert('계획서를 불러오는 중 오류가 발생했습니다: '+(e.message||e));
+      }
+    } else {
+      window.currentCloudResultProjectId=x.project_id;
+      fillResult(d); calcResultBudget(); switchMode('RESULT');
+    }
+  }
+
+  async function cloudPlanToResult(projectId) {
+    const {data:x,error}=await sb.from('project_documents')
+      .select('*').eq('project_id',projectId).eq('doc_type','PLAN').single();
+    if(error) return alert(error.message);
+    const d=x.data||{};
+    const setV1041=(id,value)=>{ const el=document.getElementById(id); if(el) el.value=value??''; };
+    setV1041('r_orgName',d.orgName||''); setV1041('r_staff',d.staff||'');
+    setV1041('r_reviewer',d.reviewer||''); setV1041('r_approver',d.approver||'');
+    setV1041('r_projName',projectNameFromPlan(d)||'');
+    const om={}; (d.overview||[]).forEach(a=>{if(a[0]) om[a[0]]=a[1]||'';});
+    setV1041('r_dateLoc',[om['사업일시']||om['운영일시']||om['일시'],om['사업장소']||om['장소']].filter(Boolean).join(' / '));
+    setV1041('r_target',om['참여대상']||om['대상']||'');
+    setV1041('r_content',(d.programs||[]).map(a=>a[0]?`${a[0]}: ${a[1]||''}`:'').filter(Boolean).join('\n'));
+    setV1041('r_budgetSource',d.budgetSource||''); setV1041('r_budgetCategory',d.budgetCategory||'');
+    window.currentSourcePlanId=projectId; window.currentCloudResultProjectId=projectId;
+    switchMode('RESULT'); switchSubTab('r',1);
+    alert('공동 DB의 계획서 정보를 결과보고서로 승계했습니다.');
+  }
+
+  // 직원 프로필 / 권한표시 / 사업상태 / 수정이력
+  let v81Profile = null;
+
+  async function loadProfileV81() {
+    if(!v8User) return;
+    const {data,error}=await sb.from('profiles').select('*').eq('id',v8User.id).maybeSingle();
+    if(error) { console.warn(error); return; }
+    v81Profile=data;
+    const who=[data?.name,data?.position].filter(Boolean).join(' · ');
+    document.getElementById('currentUserLabel').textContent=who || v8User.email || v8User.id;
+    document.getElementById('currentRoleLabel').textContent='권한: '+({admin:'관리자',staff:'담당자',reviewer:'검토자'}[data?.role]||data?.role||'담당자');
+  }
+
+  function openProfileV81() {
+    const modal=document.getElementById('profileModalV81');
+    if(!modal) { alert('내 정보 창을 찾지 못했습니다.'); return; }
+    document.getElementById('profileNameV81').value=v81Profile?.name||'';
+    document.getElementById('profilePositionV81').value=v81Profile?.position||'';
+    document.getElementById('profileRoleV81').textContent=({admin:'관리자',staff:'담당자',reviewer:'검토자'}[v81Profile?.role]||v81Profile?.role||'담당자');
+    modal.style.display='flex';
+  }
+  function closeProfileV81(){ document.getElementById('profileModalV81').style.display='none'; }
+
+  async function saveProfileV81() {
+    if(!v8User) return;
+    const {error}=await sb.from('profiles').update({
+      name:document.getElementById('profileNameV81').value.trim(),
+      position:document.getElementById('profilePositionV81').value.trim()
+    }).eq('id',v8User.id);
+    if(error) return alert('직원정보 저장 오류: '+error.message);
+    closeProfileV81(); await loadProfileV81();
+    alert('직원정보가 저장되었습니다.');
+  }
+
+  async function changeProjectStatusV81(projectId,current) {
+    const options=[
+      ['draft','작성중'],['review_requested','검토요청'],
+      ['reviewed','검토완료'],['completed','사업완료']
+    ];
+    let msg='변경할 상태 번호를 입력하세요.\n\n'+options.map((x,i)=>(i+1)+'. '+x[1]).join('\n');
+    let n=Number(prompt(msg, String(Math.max(1,options.findIndex(x=>x[0]===current)+1))));
+    if(!n || !options[n-1]) return;
+    const next=options[n-1][0];
+
+    if(v81Profile?.role==='staff' && next==='reviewed') {
+      return alert('검토완료 처리는 검토자 또는 관리자가 수행하도록 설정했습니다.');
+    }
+    const {error}=await sb.from('projects').update({
+      status:next, updated_by:v8User.id
+    }).eq('id',projectId);
+    if(error) return alert('상태 변경 오류: '+error.message);
+
+    await sb.from('project_history').insert({
+      project_id:projectId, action:'STATUS_'+current+'_TO_'+next,
+      snapshot:{from:current,to:next}, changed_by:v8User.id
+    });
+    await renderCloudDB();
+  }
+
+  async function showHistoryV81(projectId) {
+    document.getElementById('historyModalV81').style.display='flex';
+    document.getElementById('historyListV81').innerHTML='불러오는 중...';
+    const {data,error}=await sb.from('project_history')
+      .select('id,action,changed_at,changed_by')
+      .eq('project_id',projectId).order('changed_at',{ascending:false}).limit(100);
+    if(error) { document.getElementById('historyListV81').innerHTML=esc(error.message); return; }
+
+    const ids=[...new Set((data||[]).map(x=>x.changed_by).filter(Boolean))];
+    let people={};
+    if(ids.length) {
+      const {data:p}=await sb.from('profiles').select('id,name,position').in('id',ids);
+      (p||[]).forEach(x=>people[x.id]=[x.name,x.position].filter(Boolean).join(' · '));
+    }
+    if(!data?.length) { document.getElementById('historyListV81').innerHTML='<p>저장된 수정이력이 없습니다.</p>'; return; }
+    document.getElementById('historyListV81').innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <tr><th style="padding:7px;border:1px solid #ddd;">일시</th><th style="padding:7px;border:1px solid #ddd;">작업</th><th style="padding:7px;border:1px solid #ddd;">수정자</th></tr>
+      ${data.map(x=>`<tr><td style="padding:7px;border:1px solid #ddd;">${new Date(x.changed_at).toLocaleString()}</td>
+      <td style="padding:7px;border:1px solid #ddd;">${esc(historyActionLabelV81(x.action))}</td>
+      <td style="padding:7px;border:1px solid #ddd;">${esc(people[x.changed_by]||x.changed_by||'-')}</td></tr>`).join('')}
+    </table>`;
+  }
+  function closeHistoryV81(){ document.getElementById('historyModalV81').style.display='none'; }
+
+  function historyActionLabelV81(a) {
+    if(a==='CREATE_PLAN') return '사업계획서 최초 저장';
+    if(a==='UPDATE_PLAN') return '사업계획서 수정 저장';
+    if(a==='CREATE_RESULT') return '결과보고서 최초 저장';
+    if(a==='UPDATE_RESULT') return '결과보고서 수정 저장';
+    if((a||'').startsWith('STATUS_')) return '사업 상태 변경';
+    return a||'-';
+  }
+
+  let dashboardRowsV83=[];
+
+  function switchModeV83Dashboard(){
+    document.querySelectorAll('.form-section').forEach(x=>x.style.display='none');
+    const d=document.getElementById('mode-dashboard');
+    if(d) d.style.display='block';
+    document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active-plan','active-result','active-db'));
+    const b=document.getElementById('btn-mode-dashboard');
+    if(b) b.classList.add('active-db');
+    renderDashboardV83();
+  }
+
+  async function renderDashboardV83(){
+    const box=document.getElementById('dashboardTableV83');
+    if(!box||!v8User) return;
+    box.innerHTML='공동 DB에서 사업을 불러오는 중...';
+
+    const {data:projects,error}=await sb.from('projects')
+      .select('id,project_name,status,owner_id,updated_by,created_at,updated_at')
+      .order('updated_at',{ascending:false});
+    if(error){box.innerHTML='<div style="color:#b91c1c;">'+esc(error.message)+'</div>';return;}
+
+    const pids=(projects||[]).map(x=>x.id);
+    let docs=[];
+    if(pids.length){
+      const r=await sb.from('project_documents')
+        .select('id,project_id,doc_type,data,updated_at').in('project_id',pids);
+      if(r.error){box.innerHTML='<div style="color:#b91c1c;">'+esc(r.error.message)+'</div>';return;}
+      docs=r.data||[];
+    }
+
+    const userIds=[...new Set((projects||[]).flatMap(x=>[x.owner_id,x.updated_by]).filter(Boolean))];
+    let people={};
+    if(userIds.length){
+      const r=await sb.from('profiles').select('id,name,position,email').in('id',userIds);
+      (r.data||[]).forEach(x=>people[x.id]=x);
+    }
+
+    dashboardRowsV83=(projects||[]).map(p=>{
+      const plan=docs.find(d=>d.project_id===p.id&&d.doc_type==='PLAN');
+      const result=docs.find(d=>d.project_id===p.id&&d.doc_type==='RESULT');
+      const owner=people[p.owner_id];
+      const editor=people[p.updated_by];
+      return {...p,plan,result,owner,editor};
+    });
+    renderDashboardSummaryV83();
+    filterDashboardV83();
+  }
+
+  function renderDashboardSummaryV83(){
+    const el=document.getElementById('dashboardSummaryV83'); if(!el)return;
+    const all=dashboardRowsV83.length;
+    const review=dashboardRowsV83.filter(x=>x.status==='review_requested').length;
+    const done=dashboardRowsV83.filter(x=>x.status==='completed').length;
+    const noResult=dashboardRowsV83.filter(x=>x.plan&&!x.result).length;
+    const cards=[['전체 사업',all],['검토 요청',review],['사업 완료',done],['결과보고 미작성',noResult]];
+    el.innerHTML=cards.map(x=>`<div style="border:1px solid #ddd;border-radius:9px;padding:13px;background:#fff;">
+      <div style="font-size:11px;color:#666;">${x[0]}</div><div style="font-size:23px;font-weight:700;margin-top:3px;">${x[1]}</div></div>`).join('');
+  }
+
+  function filterDashboardV83(){
+    const q=(document.getElementById('dashSearchV83')?.value||'').trim().toLowerCase();
+    const st=document.getElementById('dashStatusV83')?.value||'';
+    const rows=dashboardRowsV83.filter(x=>{
+      const staff=x.plan?.data?.staff||x.result?.data?.staff||x.owner?.name||'';
+      return (!st||x.status===st) && (!q||(x.project_name||'').toLowerCase().includes(q)||staff.toLowerCase().includes(q));
+    });
+    drawDashboardV83(rows);
+  }
+
+  function drawDashboardV83(rows){
+    const box=document.getElementById('dashboardTableV83'); if(!box)return;
+    const labels={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'};
+    if(!rows.length){box.innerHTML='<div style="padding:24px;text-align:center;color:#666;">조건에 맞는 사업이 없습니다.</div>';return;}
+    box.innerHTML=`<div style="overflow:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:900px;">
+      <tr>
+       <th style="border:1px solid #ddd;padding:8px;">사업명</th>
+       <th style="border:1px solid #ddd;padding:8px;">담당자</th>
+       <th style="border:1px solid #ddd;padding:8px;">상태</th>
+       <th style="border:1px solid #ddd;padding:8px;">계획서</th>
+       <th style="border:1px solid #ddd;padding:8px;">결과보고서</th>
+       <th style="border:1px solid #ddd;padding:8px;">최종수정자</th>
+       <th style="border:1px solid #ddd;padding:8px;">최종수정일</th>
+       <th style="border:1px solid #ddd;padding:8px;">관리</th>
+      </tr>
+      ${rows.map(x=>{
+        const staff=x.plan?.data?.staff||x.result?.data?.staff||x.owner?.name||'-';
+        const editor=x.editor?.name||x.editor?.email||'-';
+        return `<tr>
+         <td style="border:1px solid #ddd;padding:8px;font-weight:600;">${esc(x.project_name||'-')}</td>
+         <td style="border:1px solid #ddd;padding:8px;">${esc(staff)}</td>
+         <td style="border:1px solid #ddd;padding:8px;">${labels[x.status]||esc(x.status)}</td>
+         <td style="border:1px solid #ddd;padding:8px;">${x.plan?`<button class="btn btn-add" onclick="loadCloudDocument('${x.plan.id}')">열기</button>`:'미작성'}</td>
+         <td style="border:1px solid #ddd;padding:8px;">${x.result?`<button class="btn btn-add" onclick="loadCloudDocument('${x.result.id}')">열기</button>`:(x.plan?`<button class="btn btn-result" onclick="cloudPlanToResult('${x.id}')">작성</button>`:'미작성')}</td>
+         <td style="border:1px solid #ddd;padding:8px;">${esc(editor)}</td>
+         <td style="border:1px solid #ddd;padding:8px;">${new Date(x.updated_at).toLocaleString()}</td>
+         <td style="border:1px solid #ddd;padding:8px;white-space:nowrap;">
+           <button class="btn btn-add" onclick="changeProjectStatusV81('${x.id}','${x.status}')">상태</button>
+           <button class="btn btn-add" onclick="showHistoryV81('${x.id}')">이력</button>
+         </td></tr>`}).join('')}
+    </table></div>`;
+  }
+
+  async function openAdminV82() {
+    if(v81Profile?.role!=='admin') return alert('관리자만 직원관리를 사용할 수 있습니다.');
+    document.getElementById('adminModalV82').style.display='flex';
+    await renderAdminUsersV82();
+  }
+  function closeAdminV82(){ document.getElementById('adminModalV82').style.display='none'; }
+
+  async function renderAdminUsersV82() {
+    const box=document.getElementById('adminUserListV82');
+    box.innerHTML='직원 목록을 불러오는 중...';
+    const {data,error}=await sb.from('profiles').select('id,email,name,position,role,created_at').order('created_at',{ascending:true});
+    if(error){ box.innerHTML='<div style="color:#b91c1c;">'+esc(error.message)+'</div>'; return; }
+    const labels={admin:'관리자',staff:'담당자',reviewer:'검토자'};
+    box.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <tr>
+        <th style="border:1px solid #ddd;padding:8px;">이름</th>
+        <th style="border:1px solid #ddd;padding:8px;">직급/직책</th>
+        <th style="border:1px solid #ddd;padding:8px;">이메일</th>
+        <th style="border:1px solid #ddd;padding:8px;">현재 권한</th>
+        <th style="border:1px solid #ddd;padding:8px;">권한 변경</th>
+      </tr>
+      ${(data||[]).map(u=>`<tr>
+        <td style="border:1px solid #ddd;padding:8px;">${esc(u.name||'-')}${u.id===v8User.id?' <strong>(나)</strong>':''}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${esc(u.position||'-')}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${esc(u.email||'-')}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${labels[u.role]||esc(u.role)}</td>
+        <td style="border:1px solid #ddd;padding:8px;">
+          <select id="role_${u.id}" style="padding:6px;">
+            <option value="staff" ${u.role==='staff'?'selected':''}>담당자</option>
+            <option value="reviewer" ${u.role==='reviewer'?'selected':''}>검토자</option>
+            <option value="admin" ${u.role==='admin'?'selected':''}>관리자</option>
+          </select>
+          <button class="btn btn-plan" style="padding:5px 8px;font-size:11px;" onclick="updateUserRoleV82('${u.id}')">적용</button>
+        </td>
+      </tr>`).join('')}
+    </table>`;
+  }
+
+  async function updateUserRoleV82(userId) {
+    if(v81Profile?.role!=='admin') return alert('관리자 권한이 필요합니다.');
+    const el=document.getElementById('role_'+userId);
+    if(!el) return;
+    const role=el.value;
+    if(userId===v8User.id && v81Profile.role==='admin' && role!=='admin') {
+      if(!confirm('본인의 관리자 권한을 해제하시겠습니까? 다른 관리자가 없다면 직원 권한을 다시 변경하기 어려울 수 있습니다.')) return;
+    }
+    const {error}=await sb.rpc('admin_set_user_role',{target_user:userId,new_role:role});
+    if(error) return alert('권한 변경 오류: '+error.message);
+    alert('직원 권한을 변경했습니다.');
+    await loadProfileV81();
+    if(v81Profile?.role==='admin') await renderAdminUsersV82(); else closeAdminV82();
+  }
+
+  function bindV812UI() {
+    const b=document.getElementById('profileBtnV812');
+    if(b) b.addEventListener('click', function(e){ e.preventDefault(); openProfileV81(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', bindV812UI);
+  else bindV812UI();
+
+  let dashboardRowsV831=[];
+  function switchModeV831Dashboard(){
+    switchMode('LIST');
+    const lc=document.getElementById('section-input-list'); if(lc) lc.style.display='none';
+    const dash=document.getElementById('dashboard-mode'); if(dash) dash.style.display='block';
+    document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active-plan','active-result','active-list','active-db'));
+    document.getElementById('btn-mode-dashboard')?.classList.add('active-db');
+    renderDashboardV831();
+  }
+  async function renderDashboardV831(){
+    const box=document.getElementById('dashboardTableV831'); if(!box||!v8User)return;
+    box.innerHTML='공동 DB에서 사업을 불러오는 중...';
+    const pr=await sb.from('projects').select('id,project_name,status,owner_id,updated_by,updated_at').order('updated_at',{ascending:false});
+    if(pr.error){box.innerHTML='사업 조회 오류: '+esc(pr.error.message);return;}
+    const projects=pr.data||[], pids=projects.map(x=>x.id); let docs=[];
+    if(pids.length){const dr=await sb.from('project_documents').select('id,project_id,doc_type,data,updated_at').in('project_id',pids); if(dr.error){box.innerHTML='문서 조회 오류: '+esc(dr.error.message);return;} docs=dr.data||[];}
+    const uids=[...new Set(projects.flatMap(x=>[x.owner_id,x.updated_by]).filter(Boolean))]; let people={};
+    if(uids.length){const ur=await sb.from('profiles').select('id,name,email').in('id',uids);(ur.data||[]).forEach(x=>people[x.id]=x);}
+    dashboardRowsV831=projects.map(p=>({...p,plan:docs.find(d=>d.project_id===p.id&&d.doc_type==='PLAN'),result:docs.find(d=>d.project_id===p.id&&d.doc_type==='RESULT'),owner:people[p.owner_id],editor:people[p.updated_by]}));
+    const cards=[['전체 사업',dashboardRowsV831.length],['검토 요청',dashboardRowsV831.filter(x=>x.status==='review_requested').length],['사업 완료',dashboardRowsV831.filter(x=>x.status==='completed').length],['결과보고 미작성',dashboardRowsV831.filter(x=>x.plan&&!x.result).length]];
+    document.getElementById('dashboardSummaryV831').innerHTML=cards.map(x=>`<div style="border:1px solid #ddd;border-radius:9px;padding:14px;background:#fff"><div style="font-size:12px;color:#666">${x[0]}</div><div style="font-size:25px;font-weight:700">${x[1]}</div></div>`).join('');
+    filterDashboardV831();
+  }
+  function filterDashboardV831(){
+    const q=(document.getElementById('dashSearchV831')?.value||'').toLowerCase(),st=document.getElementById('dashStatusV831')?.value||'';
+    drawDashboardV831(dashboardRowsV831.filter(x=>{const staff=String(x.plan?.data?.staff||x.result?.data?.staff||x.owner?.name||'');return(!st||x.status===st)&&(!q||String(x.project_name||'').toLowerCase().includes(q)||staff.toLowerCase().includes(q));}));
+  }
+  function drawDashboardV831(rows){
+   const b=document.getElementById('dashboardTableV831'),L={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'};
+   if(!rows.length){b.innerHTML='<div style="padding:25px;text-align:center;border:1px solid #ddd">등록된 사업이 없습니다.</div>';return;}
+   b.innerHTML=`<div style="overflow:auto"><table style="width:100%;min-width:1250px;border-collapse:collapse;font-size:12px;background:#fff"><tr>${['사업명','담당자','상태','계획서','결과보고서','연동상태','최종수정자','최종수정일','사업관리','삭제'].map(x=>`<th style="border:1px solid #ddd;padding:8px">${x}</th>`).join('')}</tr>${rows.map(x=>{
+   const staff=x.plan?.data?.staff||x.result?.data?.staff||x.owner?.name||'-',ed=x.editor?.name||x.editor?.email||'-';
+   const safeName=String(x.project_name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+   const linked=!!(x.plan&&x.result);
+   return`<tr>
+   <td style="border:1px solid #ddd;padding:8px">${esc(x.project_name||'-')}</td><td style="border:1px solid #ddd;padding:8px">${esc(staff)}</td><td style="border:1px solid #ddd;padding:8px">${L[x.status]||x.status}</td>
+   <td style="border:1px solid #ddd;padding:8px">${x.plan?`<button class="btn btn-add" onclick="loadCloudDocument('${x.plan.id}')">계획서 열기</button>`:'미작성'}</td>
+   <td style="border:1px solid #ddd;padding:8px">${x.result?`<button class="btn btn-add" onclick="loadCloudDocument('${x.result.id}')">결과보고서 열기</button>`:(x.plan?`<button class="btn btn-result" onclick="openResultFromDashboardV104('${x.id}')">결과보고서 작성</button>`:'계획서 필요')}</td>
+   <td style="border:1px solid #ddd;padding:8px;text-align:center">${linked?'✅ 계획↔결과':(x.plan?'⏳ 결과 미작성':'⚠ 계획 미작성')}</td>
+   <td style="border:1px solid #ddd;padding:8px">${esc(ed)}</td><td style="border:1px solid #ddd;padding:8px">${new Date(x.updated_at).toLocaleString()}</td>
+   <td style="border:1px solid #ddd;padding:8px;white-space:nowrap"><button class="btn btn-plan" onclick="openProjectDetailV85('${x.id}')">사업상세</button> <button class="btn" onclick="archiveProjectV103('${x.id}','${safeName}')">보관</button> ${x.status==='draft'?`<button class="btn btn-result" onclick="requestProjectReviewV84('${x.id}')">검토요청</button>`:''} <button class="btn btn-add" onclick="openReviewV84('${x.id}','${safeName}')">검토</button> <button class="btn btn-add" onclick="changeProjectStatusV81('${x.id}','${x.status}')">상태</button> <button class="btn btn-add" onclick="showHistoryV81('${x.id}')">이력</button></td>
+   <td style="border:1px solid #ddd;padding:8px;text-align:center;background:#fff7f7"><button class="btn btn-del" style="font-weight:700" onclick="deleteProjectEasyV104('${x.id}','${safeName}')">🗑 삭제</button></td></tr>`}).join('')}</table></div>`;
+  }
+
+  let reviewProjectV84=null;
+
+  async function openReviewV84(projectId, projectName){
+    reviewProjectV84=projectId;
+    document.getElementById('reviewProjectNameV84').textContent=projectName||'';
+    document.getElementById('reviewCommentV84').value='';
+    document.getElementById('reviewModalV84').style.display='flex';
+    await loadReviewHistoryV84();
+  }
+  function closeReviewV84(){document.getElementById('reviewModalV84').style.display='none';}
+
+  async function loadReviewHistoryV84(){
+    const box=document.getElementById('reviewHistoryV84');
+    box.innerHTML='검토이력을 불러오는 중...';
+    const r=await sb.from('project_reviews').select('id,comment,review_action,created_by,created_at')
+      .eq('project_id',reviewProjectV84).order('created_at',{ascending:false});
+    if(r.error){box.innerHTML='<div style="color:#b91c1c;">'+esc(r.error.message)+'</div>';return;}
+    const ids=[...new Set((r.data||[]).map(x=>x.created_by).filter(Boolean))]; let people={};
+    if(ids.length){const p=await sb.from('profiles').select('id,name,position,email').in('id',ids);(p.data||[]).forEach(x=>people[x.id]=x);}
+    const L={comment:'의견',revision_requested:'수정요청',approved:'검토완료'};
+    box.innerHTML=(r.data||[]).length?(r.data||[]).map(x=>{
+      const u=people[x.created_by], who=u?.name||u?.email||'-';
+      return `<div style="border:1px solid #ddd;border-radius:7px;padding:10px;margin-bottom:7px;">
+        <div style="font-size:11px;color:#666;">${L[x.review_action]||x.review_action} · ${esc(who)} · ${new Date(x.created_at).toLocaleString()}</div>
+        <div style="margin-top:6px;white-space:pre-wrap;">${esc(x.comment||'')}</div></div>`;
+    }).join(''):'<div style="color:#666;">등록된 검토 의견이 없습니다.</div>';
+  }
+
+  async function addReviewV84(action){
+    if(!reviewProjectV84||!v8User)return;
+    const comment=document.getElementById('reviewCommentV84').value.trim();
+    if(!comment && action!=='approved') return alert('검토 의견을 입력해주세요.');
+    const r=await sb.from('project_reviews').insert({
+      project_id:reviewProjectV84,comment,review_action:action,created_by:v8User.id
+    });
+    if(r.error)return alert('검토의견 저장 오류: '+r.error.message);
+
+    let next=null;
+    if(action==='revision_requested') next='draft';
+    if(action==='approved') next='reviewed';
+    if(next){
+      const u=await sb.from('projects').update({status:next,updated_by:v8User.id}).eq('id',reviewProjectV84);
+      if(u.error)return alert('사업상태 변경 오류: '+u.error.message);
+    }
+    document.getElementById('reviewCommentV84').value='';
+    await loadReviewHistoryV84();
+    await renderDashboardV831();
+  }
+  function saveReviewCommentV84(){return addReviewV84('comment');}
+  function requestRevisionV84(){return addReviewV84('revision_requested');}
+  function approveReviewV84(){
+    if(v81Profile?.role==='staff') return alert('검토완료 처리는 검토자 또는 관리자 권한이 필요합니다.');
+    return addReviewV84('approved');
+  }
+
+  async function requestProjectReviewV84(projectId){
+    if(!confirm('이 사업을 검토 요청 상태로 변경하시겠습니까?'))return;
+    const r=await sb.from('projects').update({status:'review_requested',updated_by:v8User.id}).eq('id',projectId);
+    if(r.error)return alert('검토요청 오류: '+r.error.message);
+    await sb.from('project_history').insert({project_id:projectId,action:'REVIEW_REQUESTED',snapshot:{status:'review_requested'},changed_by:v8User.id});
+    await renderDashboardV831();
+  }
+
+  let detailProjectIdV85=null;
+  async function openProjectDetailV85(projectId){
+    detailProjectIdV85=projectId;
+    document.getElementById('projectDetailModalV85').style.display='flex';
+    await renderProjectDetailV85();
+  }
+  function closeProjectDetailV85(){document.getElementById('projectDetailModalV85').style.display='none';}
+
+  async function renderProjectDetailV85(){
+    const id=detailProjectIdV85;if(!id)return;
+    const pr=await sb.from('projects').select('*').eq('id',id).single();
+    if(pr.error)return alert('사업 상세조회 오류: '+pr.error.message);
+    const p=pr.data;
+    const dr=await sb.from('project_documents').select('id,doc_type,data,updated_at').eq('project_id',id);
+    const docs=dr.data||[], plan=docs.find(x=>x.doc_type==='PLAN'), result=docs.find(x=>x.doc_type==='RESULT');
+    const labels={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'};
+    document.getElementById('detailProjectNameV85').textContent=p.project_name||'사업 상세관리';
+    document.getElementById('detailProjectMetaV85').textContent='현재 상태: '+(labels[p.status]||p.status)+' · 최종수정 '+new Date(p.updated_at).toLocaleString();
+
+    const steps=[
+      ['계획서 작성',!!plan],
+      ['검토 요청',['review_requested','reviewed','completed'].includes(p.status)],
+      ['검토 완료',['reviewed','completed'].includes(p.status)],
+      ['결과보고 작성',!!result],
+      ['사업 완료',p.status==='completed']
+    ];
+    document.getElementById('detailFlowV85').innerHTML=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;">
+      ${steps.map((x,i)=>`<div style="text-align:center;padding:9px 5px;border-radius:7px;border:1px solid ${x[1]?'#64748b':'#ddd'};background:${x[1]?'#f1f5f9':'#fff'};font-size:11px;"><div style="font-weight:700;">${i+1}</div>${x[0]}<div>${x[1]?'✓':'-'}</div></div>`).join('')}</div>`;
+
+    let actions=[];
+    if(plan) actions.push(`<button class="btn btn-add" onclick="loadCloudDocument('${plan.id}');closeProjectDetailV85()">계획서 열기</button>`);
+    if(plan && p.status==='draft') actions.push(`<button class="btn btn-result" onclick="requestProjectReviewV84('${id}');closeProjectDetailV85()">검토 요청</button>`);
+    actions.push(`<button class="btn btn-add" onclick="openReviewV84('${id}',${JSON.stringify(p.project_name||'')});closeProjectDetailV85()">검토 의견</button>`);
+    if(plan && !result) actions.push(`<button class="btn btn-result" onclick="cloudPlanToResult('${id}');closeProjectDetailV85()">결과보고 작성</button>`);
+    if(result) actions.push(`<button class="btn btn-add" onclick="loadCloudDocument('${result.id}');closeProjectDetailV85()">결과보고 열기</button>`);
+    if(result && p.status!=='completed') actions.push(`<button class="btn btn-plan" onclick="completeProjectV85('${id}')">사업 완료 처리</button>`);
+    document.getElementById('detailActionsV85').innerHTML=actions.join('');
+
+    document.getElementById('detailPlanV85').innerHTML=plan?
+      `작성됨 · ${new Date(plan.updated_at).toLocaleString()}<br><span style="font-size:11px;color:#666;">담당자: ${esc(plan.data?.staff||'-')}</span>`:
+      '<span style="color:#b91c1c;">계획서 미작성</span>';
+    document.getElementById('detailResultV85').innerHTML=result?
+      `작성됨 · ${new Date(result.updated_at).toLocaleString()}<br><span style="font-size:11px;color:#666;">담당자: ${esc(result.data?.staff||'-')}</span>`:
+      '<span style="color:#666;">결과보고서 미작성</span>';
+
+    const hr=await sb.from('project_history').select('action,changed_at,changed_by').eq('project_id',id).order('changed_at',{ascending:false}).limit(5);
+    const rr=await sb.from('project_reviews').select('review_action,comment,created_at,created_by').eq('project_id',id).order('created_at',{ascending:false}).limit(5);
+    const items=[
+      ...(hr.data||[]).map(x=>({at:x.changed_at,text:historyActionLabelV81(x.action)})),
+      ...(rr.data||[]).map(x=>({at:x.created_at,text:({comment:'검토의견',revision_requested:'수정요청',approved:'검토완료'}[x.review_action]||x.review_action)+(x.comment?' · '+x.comment:'')}))
+    ].sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,8);
+    document.getElementById('detailHistoryV85').innerHTML=items.length?items.map(x=>`<div style="padding:6px 0;border-bottom:1px solid #eee;"><span style="font-size:11px;color:#666;">${new Date(x.at).toLocaleString()}</span> · ${esc(x.text)}</div>`).join(''):'이력이 없습니다.';
+  }
+
+  async function completeProjectV85(projectId){
+    if(!confirm('결과보고서 작성이 완료된 사업을 최종 완료 처리하시겠습니까?'))return;
+    const docs=await sb.from('project_documents').select('id').eq('project_id',projectId).eq('doc_type','RESULT').limit(1);
+    if(!docs.data?.length)return alert('결과보고서가 저장된 후 사업완료 처리할 수 있습니다.');
+    const r=await sb.from('projects').update({status:'completed',updated_by:v8User.id}).eq('id',projectId);
+    if(r.error)return alert('완료 처리 오류: '+r.error.message);
+    await sb.from('project_history').insert({project_id:projectId,action:'PROJECT_COMPLETED',snapshot:{status:'completed'},changed_by:v8User.id});
+    await renderProjectDetailV85(); await renderDashboardV831();
+  }
+
+  function switchModeV86Home(){
+    document.querySelectorAll('.mode-btn').forEach(btn=>btn.className='mode-btn');
+    document.querySelectorAll('.form-section').forEach(sec=>sec.classList.remove('active'));
+    document.getElementById('btn-mode-home').className='mode-btn active-list';
+    document.getElementById('section-home-v86').classList.add('active');
+    const dash=document.getElementById('dashboard-mode'); if(dash) dash.style.display='none';
+    renderHomeV86();
+  }
+
+  async function renderHomeV86(){
+    if(!v8User)return;
+    const welcome=document.getElementById('homeWelcomeV86');
+    const name=v81Profile?.name||v8User.email||'사용자';
+    welcome.textContent=name+'님의 사업 업무현황입니다.';
+
+    const pr=await sb.from('projects').select('id,project_name,status,updated_at').order('updated_at',{ascending:false});
+    if(pr.error){document.getElementById('homeTasksV86').textContent=pr.error.message;return;}
+    const projects=pr.data||[], ids=projects.map(x=>x.id);
+    let docs=[];
+    if(ids.length){const dr=await sb.from('project_documents').select('id,project_id,doc_type').in('project_id',ids);docs=dr.data||[];}
+
+    const counts={
+      all:projects.length,
+      review:projects.filter(x=>x.status==='review_requested').length,
+      reviewed:projects.filter(x=>x.status==='reviewed').length,
+      completed:projects.filter(x=>x.status==='completed').length
+    };
+    const cards=[['전체 사업',counts.all],['검토 대기',counts.review],['검토 완료',counts.reviewed],['사업 완료',counts.completed]];
+    document.getElementById('homeCardsV86').innerHTML=cards.map(x=>`<div style="background:#fff;border:1px solid #d1d5db;border-radius:9px;padding:14px;"><div style="font-size:12px;color:#64748b">${x[0]}</div><div style="font-size:25px;font-weight:700">${x[1]}</div></div>`).join('');
+
+    let tasks=[];
+    projects.forEach(p=>{
+      const plan=docs.some(d=>d.project_id===p.id&&d.doc_type==='PLAN');
+      const result=docs.some(d=>d.project_id===p.id&&d.doc_type==='RESULT');
+      if(p.status==='review_requested') tasks.push(`${p.project_name} · 검토 대기`);
+      else if(plan&&!result&&p.status==='reviewed') tasks.push(`${p.project_name} · 결과보고 미작성`);
+    });
+    document.getElementById('homeTasksV86').innerHTML=tasks.length?
+      tasks.slice(0,6).map(x=>`<div style="padding:6px 0;border-bottom:1px solid #eee;">${esc(x)}</div>`).join(''):
+      '<span style="color:#666;">현재 우선 확인할 업무가 없습니다.</span>';
+
+    const L={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'};
+    document.getElementById('homeRecentV86').innerHTML=projects.length?
+      projects.slice(0,7).map(p=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #eee;">
+        <span><strong>${esc(p.project_name||'-')}</strong> · ${L[p.status]||esc(p.status)}</span>
+        <button class="btn btn-add" style="padding:4px 7px;font-size:11px;" onclick="openProjectDetailV85('${p.id}')">상세</button>
+      </div>`).join(''):'<span style="color:#666;">등록된 사업이 없습니다.</span>';
+  }
+
+  function refreshRoleUIV87(){
+    const role=v81Profile?.role||'staff';
+    const b=document.getElementById('btn-employee-v87');
+    if(b) b.style.display=(role==='admin')?'block':'none';
+    const old=document.getElementById('adminBtnV82');
+    if(old) old.style.display=(role==='admin')?'inline-block':'none';
+  }
+  async function refreshProfileAndRoleV87(){
+    if(!v8User)return;
+    const r=await sb.from('profiles').select('id,email,name,position,role').eq('id',v8User.id).single();
+    if(!r.error && r.data){
+      v81Profile=r.data;
+      refreshRoleUIV87();
+    }
+  }
+  async function openSystemCheckV87(){
+    const modal=document.getElementById('systemCheckModalV87'),box=document.getElementById('systemCheckBodyV87');
+    modal.style.display='flex'; box.innerHTML='Supabase 연결과 권한을 확인하는 중...';
+    const tests=[];
+    tests.push(['로그인',!!v8User,v8User?.email||'로그인 필요']);
+    const p=await sb.from('profiles').select('id,role').eq('id',v8User?.id||'00000000-0000-0000-0000-000000000000').maybeSingle();
+    tests.push(['프로필',!p.error,p.error?.message||('권한: '+(p.data?.role||'-'))]);
+    const pr=await sb.from('projects').select('id',{count:'exact',head:true});
+    tests.push(['사업 DB',!pr.error,pr.error?.message||'연결 정상']);
+    const dr=await sb.from('project_documents').select('id',{count:'exact',head:true});
+    tests.push(['문서 DB',!dr.error,dr.error?.message||'연결 정상']);
+    const rr=await sb.from('project_reviews').select('id',{count:'exact',head:true});
+    tests.push(['검토 DB',!rr.error,rr.error?.message||'연결 정상']);
+    box.innerHTML=tests.map(x=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:9px;border-bottom:1px solid #eee;">
+      <strong>${esc(x[0])}</strong><span>${x[1]?'✅':'❌'} ${esc(String(x[2]))}</span></div>`).join('');
+  }
+  function closeSystemCheckV87(){document.getElementById('systemCheckModalV87').style.display='none';}
+
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshProfileAndRoleV87,1200));
+
+  function showProjectTabV10(name, btn){
+    document.querySelectorAll('.v10-project-tab').forEach(x=>x.style.display='none');
+    const el=document.getElementById('v10tab-'+name); if(el) el.style.display='block';
+    document.querySelectorAll('.v10-tabs button').forEach(x=>x.style.fontWeight='400');
+    if(btn) btn.style.fontWeight='700';
+  }
+  function moneyV10(v){ return Number(v||0).toLocaleString('ko-KR')+'원'; }
+  function firstNumV10(v){
+    const m=String(v??'').replace(/,/g,'').match(/-?\d+(\.\d+)?/); return m?Number(m[0]):0;
+  }
+
+  async function renderIntegratedProjectV10(projectId){
+    v10CurrentProjectId=projectId;
+    const pr=await sb.from('projects').select('*').eq('id',projectId).single(); if(pr.error)return;
+    const p=pr.data;
+    const dr=await sb.from('project_documents').select('*').eq('project_id',projectId);
+    const docs=dr.data||[], plan=docs.find(x=>x.doc_type==='PLAN'), result=docs.find(x=>x.doc_type==='RESULT');
+    const pd=plan?.data||{}, rd=result?.data||{};
+    const rowMap=(rows)=>{const m={};(Array.isArray(rows)?rows:[]).forEach(r=>{if(Array.isArray(r)&&r[0])m[String(r[0]).trim()]=r[1]??'';});return m;};
+    const pm=rowMap(pd.overview), rm=rowMap(rd.overview);
+    const gv=(m,ks)=>{for(const k of ks){if(m[k]!==undefined&&m[k]!==null&&m[k]!=='')return m[k];}return '';};
+    const first=(...vs)=>vs.find(v=>v!==undefined&&v!==null&&String(v).trim()!=='')||'';
+
+    const staff=first(pd.staff,rd.staff,'-');
+    const purpose=first(gv(pm,['사업목적','목적','추진목적']),rd.purpose,gv(rm,['사업목적','목적','추진목적']),'-');
+    const planDate=gv(pm,['사업일시','운영일시','일시','기간','운영기간']);
+    const planLoc=gv(pm,['사업장소','장소']);
+    const resultDateLoc=first(rd.dateLoc,rd.r_dateLoc,gv(rm,['사업일시','운영일시','일시','기간','운영기간']));
+    const period=first([planDate,planLoc].filter(Boolean).join(' / '),resultDateLoc,'-');
+    const targetText=first(gv(pm,['참여대상','대상','사업대상']),rd.target,rd.r_target,gv(rm,['참여대상','대상','사업대상']));
+    const plannedPeople=firstNumV10(targetText||pd.targetCount||pd.participants||pd.target||pd.plannedParticipants);
+    const actualPeople=firstNumV10(rd.attendance||rd.actualParticipants||rd.participants||rd.participantCount||gv(rm,['참여인원','실제참여','참석인원']));
+    const sat=firstNumV10(rd.surveyScore||rd.satisfaction||rd.satisfactionScore||gv(rm,['만족도','평균만족도']));
+
+    document.getElementById('v10BasicSummary').innerHTML=`<table style="width:100%;border-collapse:collapse;background:#fff">
+    <tr><th style="border:1px solid #ddd;padding:8px;width:140px">사업명</th><td style="border:1px solid #ddd;padding:8px">${esc(p.project_name||'-')}</td></tr>
+    <tr><th style="border:1px solid #ddd;padding:8px">담당자</th><td style="border:1px solid #ddd;padding:8px">${esc(String(staff))}</td></tr>
+    <tr><th style="border:1px solid #ddd;padding:8px">운영기간/장소</th><td style="border:1px solid #ddd;padding:8px">${esc(String(period))}</td></tr>
+    <tr><th style="border:1px solid #ddd;padding:8px">목적</th><td style="border:1px solid #ddd;padding:8px">${esc(String(purpose))}</td></tr></table>
+    <div style="font-size:11px;color:#666;margin-top:6px">연동: 계획서 ${plan?'✅':'❌'} / 결과보고서 ${result?'✅':'❌'} / 동일 사업 ID ${plan&&result&&plan.project_id===result.project_id?'✅':'-'}</div>`;
+
+    const bs=await sb.from('project_budget_summary').select('*').eq('project_id',projectId).maybeSingle();
+    const planRows=normalizePlanBudgetV1031(pd);
+    const planBudget=(bs.data&&Number(bs.data.planned_total||0)>0)?Number(bs.data.planned_total):Number(pd.budgetTotal||pd.totalBudget||planRows.total||0);
+    const actualBudget=bs.data?Number(bs.data.actual_total||0):Number(rd.actualBudget||rd.settlementTotal||rd.totalExpense||0);
+    const rate=planBudget>0?Math.round(actualBudget/planBudget*1000)/10:0,remain=planBudget-actualBudget;
+    document.getElementById('v10BudgetBox').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px">${[['계획예산',moneyV10(planBudget)],['실제집행',moneyV10(actualBudget)],['잔액',moneyV10(remain)],['집행률',rate+'%']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:13px"><div style="font-size:12px;color:#666">${x[0]}</div><strong style="font-size:20px">${x[1]}</strong></div>`).join('')}</div>`;
+
+    const achievement=plannedPeople>0?Math.round(actualPeople/plannedPeople*1000)/10:0;
+    document.getElementById('v10PerformanceBox').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px">${[['계획인원',plannedPeople+'명'],['실제참여',actualPeople+'명'],['참여달성률',achievement+'%'],['만족도',sat?String(sat):'-']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:12px"><div style="font-size:12px;color:#666">${x[0]}</div><strong>${esc(x[1])}</strong></div>`).join('')}</div>`;
+
+    const prog=Array.isArray(pd.programs)?pd.programs:[];
+    document.getElementById('v10ScheduleBox').innerHTML=prog.length?`<table style="width:100%;border-collapse:collapse"><tr><th style="border:1px solid #ddd;padding:7px">프로그램</th><th style="border:1px solid #ddd;padding:7px">계획내용</th></tr>${prog.map(x=>`<tr><td style="border:1px solid #ddd;padding:7px">${esc(Array.isArray(x)?(x[0]||''):String(x))}</td><td style="border:1px solid #ddd;padding:7px">${esc(Array.isArray(x)?(x[1]||''):'')}</td></tr>`).join('')}</table>`:'<div style="color:#666">저장된 프로그램 정보가 없습니다.</div>';
+    const rr=await sb.from('project_reviews').select('review_action,comment,created_at').eq('project_id',projectId).order('created_at',{ascending:false}).limit(10);
+    document.getElementById('v10ReviewBox').innerHTML=(rr.data||[]).length?rr.data.map(x=>`<div style="padding:8px;border-bottom:1px solid #eee"><small>${new Date(x.created_at).toLocaleString()}</small><br>${esc(x.comment||x.review_action)}</div>`).join(''):'<div style="color:#666">등록된 검토 의견이 없습니다.</div>';
+  }
+
+  const openProjectDetailV10Base = openProjectDetailV85;
+  openProjectDetailV85 = async function(projectId){
+    await openProjectDetailV1044Base(projectId);
+    await renderIntegratedProjectV10(projectId);
+    showProjectTabV10('basic', document.querySelector('.v10-tabs button'));
   };
+
+  let v10CurrentProjectId=null;
+  let budgetProjectIdV101=null;
+  let budgetRowsDataV101=[];
+  let budgetAutosaveTimerV101=null;
+
+  function budgetDraftKeyV101(){ return 'v101_budget_draft_'+(budgetProjectIdV101||'none'); }
+  function numV101(v){ const n=Number(String(v??'').replace(/,/g,'')); return Number.isFinite(n)?n:0; }
+  function escAttrV101(v){ return String(v??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function renderBudgetRowsV101(){
+    const tb=document.getElementById('budgetRowsV101'); if(!tb) return;
+    if(!budgetRowsDataV101.length) budgetRowsDataV101=[{item:'',basis:'',planned:0,actual:0,note:''}];
+    tb.innerHTML=budgetRowsDataV101.map((r,i)=>{
+      const remain=numV101(r.planned)-numV101(r.actual);
+      return `<tr>
+        <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.item)}" oninput="updateBudgetCellV101(${i},'item',this.value)"></td>
+        <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.basis)}" oninput="updateBudgetCellV101(${i},'basis',this.value)"></td>
+        <td style="border:1px solid #ddd;padding:5px"><input type="number" style="width:120px" value="${numV101(r.planned)}" oninput="updateBudgetCellV101(${i},'planned',this.value)"></td>
+        <td style="border:1px solid #ddd;padding:5px"><input type="number" style="width:120px" value="${numV101(r.actual)}" oninput="updateBudgetCellV101(${i},'actual',this.value)"></td>
+        <td style="border:1px solid #ddd;padding:7px;text-align:right">${moneyV10(remain)}</td>
+        <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.note)}" oninput="updateBudgetCellV101(${i},'note',this.value)"></td>
+        <td style="border:1px solid #ddd;padding:5px"><button class="btn btn-del" onclick="removeBudgetRowV101(${i})">삭제</button></td>
+      </tr>`;
+    }).join('');
+    renderBudgetSummaryV101();
+  }
+  function updateBudgetCellV101(i,k,v){
+    if(!budgetRowsDataV101[i]) return;
+    budgetRowsDataV101[i][k]=(k==='planned'||k==='actual')?numV101(v):v;
+    scheduleBudgetDraftV101();
+    renderBudgetSummaryV101();
+    const tr=document.querySelectorAll('#budgetRowsV101 tr')[i];
+    if(tr) tr.children[4].textContent=moneyV10(numV101(budgetRowsDataV101[i].planned)-numV101(budgetRowsDataV101[i].actual));
+  }
+  function addBudgetRowV101(){ budgetRowsDataV101.push({item:'',basis:'',planned:0,actual:0,note:''}); renderBudgetRowsV101(); scheduleBudgetDraftV101(); }
+  function removeBudgetRowV101(i){ budgetRowsDataV101.splice(i,1); renderBudgetRowsV101(); scheduleBudgetDraftV101(); }
+  function renderBudgetSummaryV101(){
+    const p=budgetRowsDataV101.reduce((a,r)=>a+numV101(r.planned),0);
+    const a=budgetRowsDataV101.reduce((x,r)=>x+numV101(r.actual),0);
+    const rem=p-a, rate=p?Math.round(a/p*1000)/10:0;
+    document.getElementById('budgetSummaryV101').innerHTML=
+      `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
+        <div style="border:1px solid #ddd;padding:10px;border-radius:8px">계획예산<br><strong>${moneyV10(p)}</strong></div>
+        <div style="border:1px solid #ddd;padding:10px;border-radius:8px">실제집행<br><strong>${moneyV10(a)}</strong></div>
+        <div style="border:1px solid #ddd;padding:10px;border-radius:8px">잔액<br><strong>${moneyV10(rem)}</strong></div>
+        <div style="border:1px solid #ddd;padding:10px;border-radius:8px">집행률<br><strong>${rate}%</strong></div>
+      </div>${rem<0?'<div style="color:#b91c1c;margin-top:8px">⚠ 계획예산을 초과했습니다.</div>':''}`;
+  }
+  function scheduleBudgetDraftV101(){
+    clearTimeout(budgetAutosaveTimerV101);
+    const st=document.getElementById('autosaveStateV101'); if(st) st.textContent='입력 중…';
+    budgetAutosaveTimerV101=setTimeout(()=>{
+      localStorage.setItem(budgetDraftKeyV101(),JSON.stringify({rows:budgetRowsDataV101,savedAt:new Date().toISOString()}));
+      if(st) st.textContent='임시저장 '+new Date().toLocaleTimeString();
+    },500);
+  }
+  function clearBudgetDraftV101(){ localStorage.removeItem(budgetDraftKeyV101()); const st=document.getElementById('autosaveStateV101'); if(st) st.textContent='임시저장 삭제됨'; }
+  async function openBudgetManagerV101(projectId){
+    if(!projectId) return alert('사업을 먼저 선택해주세요.');
+    budgetProjectIdV101=projectId;
+    const pr=await sb.from('projects').select('project_name').eq('id',projectId).single();
+    document.getElementById('budgetProjectNameV101').textContent=pr.data?.project_name||'';
+    const rr=await sb.from('project_budget_items').select('*').eq('project_id',projectId).order('sort_order',{ascending:true});
+    budgetRowsDataV101=(rr.data||[]).map(x=>({id:x.id,item:x.item_name||'',basis:x.calculation_basis||'',planned:numV101(x.planned_amount),actual:numV101(x.actual_amount),note:x.note||''}));
+    const draft=localStorage.getItem(budgetDraftKeyV101());
+    if(draft){ try{ const d=JSON.parse(draft); if(Array.isArray(d.rows) && confirm('이전에 자동 임시저장된 예산 내용을 복원할까요?')) budgetRowsDataV101=d.rows; }catch(e){} }
+    renderBudgetRowsV101();
+    document.getElementById('budgetModalV101').style.display='flex';
+  }
+  function closeBudgetManagerV101(){ document.getElementById('budgetModalV101').style.display='none'; }
+  async function saveBudgetManagerV101(){
+    if(!budgetProjectIdV101) return;
+    const uid=v81Profile?.id || (await sb.auth.getUser()).data.user?.id;
+    const del=await sb.from('project_budget_items').delete().eq('project_id',budgetProjectIdV101);
+    if(del.error) return alert('기존 예산항목 정리 실패: '+del.error.message);
+    const rows=budgetRowsDataV101.filter(r=>r.item||r.basis||numV101(r.planned)||numV101(r.actual)||r.note).map((r,i)=>({
+      project_id:budgetProjectIdV101,item_name:r.item||'예산항목',calculation_basis:r.basis||null,
+      planned_amount:numV101(r.planned),actual_amount:numV101(r.actual),note:r.note||null,sort_order:i,updated_by:uid
+    }));
+    if(rows.length){
+      const ins=await sb.from('project_budget_items').insert(rows);
+      if(ins.error) return alert('예산·정산 저장 실패: '+ins.error.message);
+    }
+    await sb.from('project_history').insert({project_id:budgetProjectIdV101,action:'BUDGET_UPDATED',snapshot:{budget_items:rows},changed_by:uid});
+    clearBudgetDraftV101();
+    alert('예산·정산이 저장되었습니다.');
+    await renderIntegratedProjectV10(budgetProjectIdV101);
+  }
+
+  const V102_DRAFT_PREFIX='v102_form_draft_';
+  let globalDraftTimerV102=null;
+  let restoredDraftV102=false;
+
+  function currentModeV102(){
+    const plan=document.getElementById('section-input-plan');
+    const result=document.getElementById('section-input-result');
+    if(plan && getComputedStyle(plan).display!=='none') return 'PLAN';
+    if(result && getComputedStyle(result).display!=='none') return 'RESULT';
+    return null;
+  }
+  function draftKeyV102(mode){
+    const pid=(typeof currentProjectId!=='undefined' && currentProjectId)?currentProjectId:
+              (typeof v10CurrentProjectId!=='undefined' && v10CurrentProjectId)?v10CurrentProjectId:'NEW';
+    return V102_DRAFT_PREFIX+mode+'_'+pid;
+  }
+  function collectInputsV102(root){
+    const data={};
+    root.querySelectorAll('input,textarea,select').forEach((el,i)=>{
+      if(el.type==='button'||el.type==='submit'||el.type==='file'||el.type==='password') return;
+      const key=el.id||el.name||('field_'+i);
+      if(el.type==='checkbox'||el.type==='radio') data[key]={checked:el.checked,value:el.value,type:el.type};
+      else data[key]={value:el.value,type:el.type};
+    });
+    return data;
+  }
+  function restoreInputsV102(root,data){
+    if(!data) return;
+    root.querySelectorAll('input,textarea,select').forEach((el,i)=>{
+      const key=el.id||el.name||('field_'+i), v=data[key];
+      if(!v) return;
+      if(el.type==='checkbox'||el.type==='radio') el.checked=!!v.checked;
+      else if(v.value!==undefined) el.value=v.value;
+      el.dispatchEvent(new Event('change',{bubbles:true}));
+    });
+  }
+  function showAutosaveV102(text){
+    const b=document.getElementById('globalAutosaveV102'), t=document.getElementById('globalAutosaveTextV102');
+    if(b&&t){ b.style.display='block'; t.textContent=text; }
+  }
+  function saveGlobalDraftV102(){
+    const mode=currentModeV102(); if(!mode) return;
+    const root=document.getElementById(mode==='PLAN'?'section-input-plan':'section-input-result'); if(!root) return;
+    localStorage.setItem(draftKeyV102(mode),JSON.stringify({mode,savedAt:new Date().toISOString(),fields:collectInputsV102(root)}));
+    showAutosaveV102('임시저장 '+new Date().toLocaleTimeString());
+  }
+  function scheduleGlobalDraftV102(){
+    const mode=currentModeV102(); if(!mode) return;
+    showAutosaveV102('입력 중…');
+    clearTimeout(globalDraftTimerV102);
+    globalDraftTimerV102=setTimeout(saveGlobalDraftV102,700);
+  }
+  function tryRestoreDraftV102(){
+    if(restoredDraftV102) return;
+    const mode=currentModeV102(); if(!mode) return;
+    const raw=localStorage.getItem(draftKeyV102(mode)); if(!raw) return;
+    try{
+      const d=JSON.parse(raw);
+      const when=d.savedAt?new Date(d.savedAt).toLocaleString():'이전';
+      if(confirm(`${when}에 자동 임시저장된 ${mode==='PLAN'?'사업계획서':'결과보고서'} 입력내용이 있습니다.\n복원할까요?`)){
+        const root=document.getElementById(mode==='PLAN'?'section-input-plan':'section-input-result');
+        restoreInputsV102(root,d.fields); showAutosaveV102('임시저장 복원됨');
+      }
+      restoredDraftV102=true;
+    }catch(e){}
+  }
+  function clearCurrentDraftV102(mode){
+    try{ localStorage.removeItem(draftKeyV102(mode||currentModeV102())); }catch(e){}
+  }
+  document.addEventListener('input',e=>{
+    if(e.target && e.target.closest && (e.target.closest('#section-input-plan')||e.target.closest('#section-input-result'))) scheduleGlobalDraftV102();
+  },true);
+  document.addEventListener('change',e=>{
+    if(e.target && e.target.closest && (e.target.closest('#section-input-plan')||e.target.closest('#section-input-result'))) scheduleGlobalDraftV102();
+  },true);
+  window.addEventListener('beforeunload',()=>{ try{saveGlobalDraftV102();}catch(e){} });
+  setTimeout(tryRestoreDraftV102,1300);
+
+  async function syncBudgetToDocumentsV102(){
+    if(!budgetProjectIdV101) return alert('사업을 먼저 선택해주세요.');
+    const planned=budgetRowsDataV101.reduce((a,r)=>a+numV101(r.planned),0);
+    const actual=budgetRowsDataV101.reduce((a,r)=>a+numV101(r.actual),0);
+    const items=budgetRowsDataV101.map((r,i)=>({
+      item:r.item||'예산항목', basis:r.basis||'', planned:numV101(r.planned),
+      actual:numV101(r.actual), balance:numV101(r.planned)-numV101(r.actual), note:r.note||'', sort_order:i
+    }));
+    const docs=await sb.from('project_documents').select('id,doc_type,data').eq('project_id',budgetProjectIdV101);
+    if(docs.error) return alert('문서 조회 실패: '+docs.error.message);
+    const uid=v81Profile?.id || (await sb.auth.getUser()).data.user?.id;
+    for(const d of (docs.data||[])){
+      const data={...(d.data||{})};
+      data.budgetItems=items;
+      if(d.doc_type==='PLAN'){
+        data.budgetTotal=planned;
+        data.totalBudget=planned;
+      }else if(d.doc_type==='RESULT'){
+        data.plannedBudget=planned;
+        data.actualBudget=actual;
+        data.settlementTotal=actual;
+      }
+      const up=await sb.from('project_documents').update({data,updated_by:uid}).eq('id',d.id);
+      if(up.error) return alert(`${d.doc_type} 문서 반영 실패: `+up.error.message);
+    }
+    await sb.from('project_history').insert({
+      project_id:budgetProjectIdV101, action:'BUDGET_SYNCED_TO_DOCUMENTS',
+      snapshot:{planned_total:planned,actual_total:actual,budget_items:items}, changed_by:uid
+    });
+    clearBudgetDraftV101();
+    alert('예산·정산 내역을 사업계획서와 결과보고서 데이터에 반영했습니다.');
+    await renderIntegratedProjectV10(budgetProjectIdV101);
+  }
+
+  document.addEventListener('click',e=>{
+    const txt=(e.target?.textContent||'').trim();
+    if(/저장/.test(txt) && (e.target?.closest?.('#section-input-plan')||e.target?.closest?.('#section-input-result'))){
+      setTimeout(()=>{ saveGlobalDraftV102(); },900);
+    }
+  },true);
+
+  async function roleV103(){
+    if(v81Profile?.role) return v81Profile.role;
+    const u=(await sb.auth.getUser()).data.user; if(!u) return null;
+    const r=await sb.from('profiles').select('role').eq('id',u.id).single();
+    return r.data?.role||null;
+  }
+  async function archiveProjectV103(projectId, projectName){
+    if(!confirm(`"${projectName}" 사업을 보관 처리할까요?\n보관된 사업은 삭제되지 않고 데이터가 유지됩니다.`)) return;
+    const uid=(await sb.auth.getUser()).data.user?.id;
+    const r=await sb.from('projects').update({archived:true,archived_at:new Date().toISOString(),updated_by:uid}).eq('id',projectId);
+    if(r.error) return alert('보관 처리 실패: '+r.error.message);
+    await sb.from('project_history').insert({project_id:projectId,action:'PROJECT_ARCHIVED',snapshot:{project_name:projectName},changed_by:uid});
+    alert('사업을 보관 처리했습니다.');
+    if(typeof loadDashboardV831==='function') await loadDashboardV831();
+    else if(typeof loadDashboardV83==='function') await loadDashboardV83();
+  }
+  async function deleteProjectV103(projectId, projectName){
+    const role=await roleV103();
+    if(role!=='admin') return alert('사업 영구삭제는 관리자(admin)만 가능합니다.');
+    if(!confirm(`⚠ "${projectName}" 사업을 영구 삭제하시겠습니까?\n\n계획서, 결과보고서, 예산·정산, 검토의견, 변경이력 등 연결 자료도 함께 삭제됩니다.`)) return;
+    const typed=prompt(`영구삭제 확인을 위해 사업명을 정확히 입력하세요.\n\n${projectName}`);
+    if(typed!==projectName) return alert('사업명이 일치하지 않아 삭제를 취소했습니다.');
+    const finalOk=confirm('마지막 확인입니다.\n삭제 후에는 시스템에서 복구할 수 없습니다. 계속하시겠습니까?');
+    if(!finalOk) return;
+    const r=await sb.rpc('admin_delete_project_v103',{target_project:projectId});
+    if(r.error) return alert('사업 삭제 실패: '+r.error.message);
+    alert('사업과 연결 자료를 영구 삭제했습니다.');
+    if(typeof loadDashboardV831==='function') await loadDashboardV831();
+    else if(typeof loadDashboardV83==='function') await loadDashboardV83();
+  }
+  function pctV103(actual,target){
+    target=Number(target||0); actual=Number(actual||0);
+    return target>0?Math.round(actual/target*1000)/10:0;
+  }
+  async function renderPerformanceV103(projectId){
+    const dr=await sb.from('project_documents').select('doc_type,data').eq('project_id',projectId);
+    const docs=dr.data||[], pd=docs.find(x=>x.doc_type==='PLAN')?.data||{}, rd=docs.find(x=>x.doc_type==='RESULT')?.data||{};
+    const mapRows=(rows)=>{const m={};(Array.isArray(rows)?rows:[]).forEach(r=>{if(Array.isArray(r)&&r[0])m[String(r[0]).trim()]=r[1]??'';});return m;};
+    const pm=mapRows(pd.overview), rm=mapRows(rd.overview);
+    const gv=(m,ks)=>{for(const k of ks)if(m[k]!==undefined&&m[k]!=='')return m[k];return '';};
+    const target=firstNumV10(gv(pm,['참여대상','대상','사업대상'])||pd.targetCount||pd.participants||pd.target||pd.plannedParticipants);
+    const actual=firstNumV10(rd.attendance||rd.actualParticipants||rd.participants||rd.participantCount||gv(rm,['참여인원','실제참여','참석인원']));
+    const satisfaction=firstNumV10(rd.surveyScore||rd.satisfaction||rd.satisfactionScore||gv(rm,['만족도','평균만족도']));
+    const bs=await sb.from('project_budget_summary').select('*').eq('project_id',projectId).maybeSingle();
+    const n=normalizePlanBudgetV1031(pd);
+    const plannedBudget=(bs.data&&Number(bs.data.planned_total||0)>0)?Number(bs.data.planned_total):Number(pd.budgetTotal||pd.totalBudget||n.total||0);
+    const actualBudget=bs.data?Number(bs.data.actual_total||0):Number(rd.actualBudget||rd.settlementTotal||rd.totalExpense||0);
+    const participationRate=pctV103(actual,target), executionRate=plannedBudget>0?Math.round(actualBudget/plannedBudget*1000)/10:0;
+    const el=document.getElementById('v103PerformanceCompare'); if(!el)return;
+    el.innerHTML=`<h3 style="margin:0 0 8px">계획 대비 실적 자동분석</h3><table style="width:100%;border-collapse:collapse">
+    <tr><th style="border:1px solid #ddd;padding:7px">지표</th><th style="border:1px solid #ddd;padding:7px">계획</th><th style="border:1px solid #ddd;padding:7px">실적</th><th style="border:1px solid #ddd;padding:7px">달성/집행률</th></tr>
+    <tr><td style="border:1px solid #ddd;padding:7px">참여인원</td><td style="border:1px solid #ddd;padding:7px">${target}명</td><td style="border:1px solid #ddd;padding:7px">${actual}명</td><td style="border:1px solid #ddd;padding:7px"><strong>${participationRate}%</strong></td></tr>
+    <tr><td style="border:1px solid #ddd;padding:7px">예산</td><td style="border:1px solid #ddd;padding:7px">${moneyV10(plannedBudget)}</td><td style="border:1px solid #ddd;padding:7px">${moneyV10(actualBudget)}</td><td style="border:1px solid #ddd;padding:7px"><strong>${executionRate}%</strong></td></tr>
+    <tr><td style="border:1px solid #ddd;padding:7px">만족도</td><td style="border:1px solid #ddd;padding:7px">-</td><td style="border:1px solid #ddd;padding:7px">${satisfaction||'-'}</td><td style="border:1px solid #ddd;padding:7px">-</td></tr></table>`;
+  }
+  const renderIntegratedProjectV103Base=renderIntegratedProjectV10;
+  renderIntegratedProjectV10=async function(projectId){
+    await renderIntegratedProjectV103Base(projectId);
+    await renderPerformanceV103(projectId);
+  };
+
+  // 수식 및 입력 안전 처리 연산기
+  function safeArithmeticV115(expr){
+    const raw=String(expr||'').replace(/\s+/g,'');
+    if(!raw) return null;
+    const tokens=raw.match(/\d+(?:\.\d+)?|[()+\-*/]/g);
+    if(!tokens || tokens.join('')!==raw) return null;
+    let pos=0;
+    function primary(){
+      if(pos>=tokens.length) throw new Error('Unbalanced expression');
+      const t=tokens[pos++];
+      if(t==='('){
+        const v=addSub();
+        if(pos>=tokens.length || tokens[pos++]!==')') throw new Error('Missing bracket');
+        return v;
+      }
+      if(t==='+') return primary();
+      if(t==='-') return -primary();
+      const n=Number(t);
+      if(!Number.isFinite(n)) throw new Error('Invalid number');
+      return n;
+    }
+    function mulDiv(){
+      let v=primary();
+      while(pos<tokens.length && (tokens[pos]==='*'||tokens[pos]==='/')){
+        const op=tokens[pos++], r=primary();
+        if(op==='/' && r===0) throw new Error('Division by zero');
+        v = op==='*' ? v*r : v/r;
+      }
+      return v;
+    }
+    function addSub(){
+      let v=mulDiv();
+      while(pos<tokens.length && (tokens[pos]==='+'||tokens[pos]==='-')){
+        const op=tokens[pos++], r=mulDiv();
+        v = op==='+' ? v+r : v-r;
+      }
+      return v;
+    }
+    try{
+      const v=addSub();
+      return pos===tokens.length && Number.isFinite(v) ? v : null;
+    }catch(_){ return null; }
+  }
+
+  function evalBudgetBasisV1031(text){
+    let t=String(text||'').replace(/,/g,'').replace(/원|명|개|회|식|건|세트|박스|대|시간|일|개월|회기/g,'');
+    t=t.replace(/[×xX＊*]/g,'*').replace(/[÷]/g,'/').replace(/[＋]/g,'+').replace(/[－–—]/g,'-');
+    if(!t.trim() || /[^0-9+\-*/().\s]/.test(t)) return null;
+    const v=safeArithmeticV115(t);
+    return v!==null&&v>=0?Math.round(v):null;
+  }
+  function calcBasisAmountV1031(input){
+    const row=input.closest('tr'); if(!row) return;
+    const amount=row.querySelector('.p-bg-amount'); if(!amount) return;
+    const v=evalBudgetBasisV1031(input.value);
+    if(v!==null){ amount.value=v; calcPlanBudget(); amount.dispatchEvent(new Event('input',{bubbles:true})); }
+  }
+  function normalizePlanBudgetV1031(data){
+    const budget=(data?.budget||[]).map(r=>{
+      const item=r['p-bg-item']??r[0]??'';
+      const basis=r['p-bg-calc']??r[1]??'';
+      let amount=Number(String(r['p-bg-amount']??r[2]??0).replace(/,/g,''))||0;
+      const note=r['p-bg-note']??r[3]??'';
+      const calc=evalBudgetBasisV1031(basis); if(calc!==null) amount=calc;
+      return {item,basis,planned:amount,actual:0,note};
+    });
+    return {budget, total:budget.reduce((a,r)=>a+r.planned,0)};
+  }
+  async function syncPlanBudgetRowsV1031(projectId,data,uid){
+    const n=normalizePlanBudgetV1031(data);
+    data.budgetTotal=n.total; data.totalBudget=n.total;
+    const del=await sb.from('project_budget_items').delete().eq('project_id',projectId);
+    if(del.error) throw del.error;
+    if(n.budget.length){
+      const rows=n.budget.map((r,i)=>({project_id:projectId,item_name:r.item||'예산항목',calculation_basis:r.basis||null,planned_amount:r.planned,actual_amount:0,note:r.note||null,sort_order:i,updated_by:uid}));
+      const ins=await sb.from('project_budget_items').insert(rows); if(ins.error) throw ins.error;
+    }
+    return n.total;
+  }
+
+  const saveCloudDocumentV1031Base=saveCloudDocument;
+  saveCloudDocument=async function(type){
+    if(type!=='PLAN') return saveCloudDocumentV1031Base(type);
+    if(!v8User) return alert('먼저 로그인하세요.');
+    const data=getPlanData();
+    const name=planProjectName(data);
+    let projectId=window.currentCloudPlanProjectId;
+    try{
+      if(!projectId){
+        const pr=await sb.from('projects').insert({project_name:name,owner_id:v8User.id,created_by:v8User.id,updated_by:v8User.id}).select().single();
+        if(pr.error) throw pr.error; projectId=pr.data.id;
+      }else{
+        const up=await sb.from('projects').update({project_name:name,updated_by:v8User.id}).eq('id',projectId); if(up.error) throw up.error;
+      }
+      const total=await syncPlanBudgetRowsV1031(projectId,data,v8User.id);
+      const ex=await sb.from('project_documents').select('id').eq('project_id',projectId).eq('doc_type','PLAN').maybeSingle(); if(ex.error) throw ex.error;
+      let doc;
+      if(ex.data){
+        const u=await sb.from('project_documents').update({data,updated_by:v8User.id}).eq('id',ex.data.id).select().single(); if(u.error) throw u.error; doc=u.data;
+      }else{
+        const i=await sb.from('project_documents').insert({project_id:projectId,doc_type:'PLAN',data,created_by:v8User.id,updated_by:v8User.id}).select().single(); if(i.error) throw i.error; doc=i.data;
+      }
+      await sb.from('project_history').insert({project_id:projectId,document_id:doc.id,action:ex.data?'UPDATE_PLAN':'CREATE_PLAN',snapshot:{...data,budgetTotal:total},changed_by:v8User.id});
+      window.currentCloudPlanProjectId=projectId;
+      alert('공동 DB에 저장되었습니다. 계획서 예산도 계획예산으로 연동했습니다.');
+      await renderCloudDB();
+    }catch(e){ console.error(e); alert('공동 DB 저장 오류: '+e.message); }
+  };
+  async function openResultFromDashboardV1031(projectId){
+    try{
+      await cloudPlanToResult(projectId);
+      const dash=document.getElementById('dashboard-mode'); if(dash) dash.style.display='none';
+      document.querySelectorAll('.form-section').forEach(x=>x.classList.remove('active'));
+      document.getElementById('section-input-result')?.classList.add('active');
+      document.getElementById('btn-mode-result').className='mode-btn active-result';
+      window.scrollTo({top:0,behavior:'smooth'});
+    }catch(e){ console.error(e); alert('결과보고서 작성 화면 이동 오류: '+e.message); }
+  }
+  document.addEventListener('input',e=>{
+    if(e.target?.classList?.contains('p-bg-calc')) calcBasisAmountV1031(e.target);
+  },true);
+
+  async function openResultFromDashboardV104(projectId){
+   try{
+    const pr=await sb.from('project_documents').select('id,data').eq('project_id',projectId).eq('doc_type','PLAN').maybeSingle();
+    if(pr.error) throw pr.error; if(!pr.data) return alert('연동할 사업계획서가 없습니다.');
+    await cloudPlanToResult(projectId); window.currentCloudResultProjectId=projectId;
+    const dash=document.getElementById('dashboard-mode'); if(dash) dash.style.display='none';
+    document.querySelectorAll('.form-section').forEach(x=>x.classList.remove('active'));
+    const result=document.getElementById('section-input-result'); if(result){result.style.display='block';result.classList.add('active');}
+    const plan=document.getElementById('section-input-plan'); if(plan) plan.style.display='none';
+    const list=document.getElementById('section-input-list'); if(list) list.style.display='none';
+    document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active-plan','active-result','active-list'));
+    document.getElementById('btn-mode-result')?.classList.add('active-result'); window.scrollTo({top:0,behavior:'smooth'});
+   }catch(e){console.error(e);alert('계획서→결과보고서 연동 오류: '+e.message);}
+  }
+  async function deleteProjectEasyV104(projectId,projectName){
+   const role=await roleV103(); if(role!=='admin') return alert('사업 삭제는 관리자(admin)만 가능합니다.');
+   if(!confirm(`"${projectName}" 사업을 삭제하시겠습니까?\n\n계획서·결과보고서·예산·검토·변경이력이 함께 삭제됩니다.\n중요 사업은 삭제 대신 [보관]을 사용하세요.`)) return;
+   const typed=prompt(`삭제 확인: 사업명을 입력하세요.\n${projectName}`); if(typed!==projectName) return alert('사업명이 일치하지 않아 삭제하지 않았습니다.');
+   const r=await sb.rpc('admin_delete_project_v104',{target_project:projectId}); if(r.error) return alert('삭제 실패: '+r.error.message);
+   alert('사업이 삭제되었습니다.'); if(typeof loadDashboardV831==='function') await loadDashboardV831(); else if(typeof loadDashboardV83==='function') await loadDashboardV83();
+  }
+  async function verifyPlanResultLinkV104(projectId){
+   const r=await sb.from('project_documents').select('id,doc_type,project_id').eq('project_id',projectId);
+   if(r.error)return{ok:false,message:r.error.message}; const plan=(r.data||[]).find(x=>x.doc_type==='PLAN'),result=(r.data||[]).find(x=>x.doc_type==='RESULT');
+   return{ok:!!plan,plan:!!plan,result:!!result,linked:!!(plan&&result&&plan.project_id===result.project_id),message:!plan?'계획서 없음':(!result?'결과보고서 미작성':'계획서와 결과보고서가 동일 사업에 정상 연결됨')};
+  }
+
+  let currentResultLinkedProjectV1043 = null;
+
+  async function findPlanForResultV1043(){
+    const exactId = window.currentCloudResultProjectId || currentResultLinkedProjectV1043;
+    if(exactId){
+      const q=await sb.from('project_documents')
+        .select('id,project_id,data,updated_at')
+        .eq('project_id',exactId).eq('doc_type','PLAN').maybeSingle();
+      if(!q.error && q.data) return q.data;
+    }
+
+    const name=(document.getElementById('r_projName')?.value||'').trim();
+    if(name){
+      const pq=await sb.from('projects').select('id,project_name,updated_at')
+        .eq('project_name',name).order('updated_at',{ascending:false}).limit(5);
+      if(!pq.error && pq.data?.length){
+        for(const p of pq.data){
+          const dq=await sb.from('project_documents').select('id,project_id,data,updated_at')
+            .eq('project_id',p.id).eq('doc_type','PLAN').maybeSingle();
+          if(!dq.error && dq.data) return dq.data;
+        }
+      }
+    }
+
+    const dq=await sb.from('project_documents').select('id,project_id,data,updated_at')
+      .eq('doc_type','PLAN').order('updated_at',{ascending:false}).limit(20);
+    if(dq.error) throw dq.error;
+    const plans=dq.data||[];
+    if(!plans.length) return null;
+    const labels=plans.map((d,i)=>`${i+1}. ${projectNameFromPlan(d.data)||'(사업명 없음)'} / ${new Date(d.updated_at).toLocaleString()}`).join('\n');
+    const pick=prompt('불러올 저장 계획서 번호를 입력하세요.\n\n'+labels);
+    const idx=Number(pick)-1;
+    return Number.isInteger(idx)&&idx>=0&&idx<plans.length ? plans[idx] : null;
+  }
+
+  async function loadSavedPlanIntoResultV1043(){
+    try{
+      if(!v8User) return alert('먼저 로그인하세요.');
+      const doc=await findPlanForResultV1043();
+      if(!doc) return alert('저장된 사업계획서를 찾지 못했거나 선택하지 않았습니다.');
+      currentResultLinkedProjectV1043=doc.project_id;
+      window.currentCloudResultProjectId=doc.project_id;
+      await applyPlanDataToResultV1043(doc.data||{});
+      const notice=document.getElementById('resultPlanLinkNoticeV1043');
+      if(notice) notice.innerHTML='✅ 연결된 사업계획서: <strong>'+esc(projectNameFromPlan(doc.data||{})||'-')+'</strong>';
+      alert('저장된 사업계획서를 결과보고서에 불러왔습니다.');
+    }catch(e){ console.error(e); alert('저장된 계획서 불러오기 오류: '+e.message); }
+  }
+  async function applyPlanDataToResultV1043(d){
+    const set=(id,v)=>{const el=document.getElementById(id);if(el){el.value=v??'';el.dispatchEvent(new Event('change',{bubbles:true}));}};
+    set('r_orgName',d.orgName||''); set('r_staff',d.staff||''); set('r_reviewer',d.reviewer||''); set('r_approver',d.approver||'');
+    set('r_projName',projectNameFromPlan(d)||'');
+    const om={};(Array.isArray(d.overview)?d.overview:[]).forEach(a=>{if(Array.isArray(a)&&a[0])om[a[0]]=a[1]||'';});
+    set('r_dateLoc',[om['사업일시']||om['운영일시']||om['일시']||'',om['사업장소']||om['장소']||''].filter(Boolean).join(' / '));
+    set('r_target',om['참여대상']||om['대상']||'');
+    set('r_content',(Array.isArray(d.programs)?d.programs:[]).map(a=>Array.isArray(a)&&a[0]?`${a[0]}: ${a[1]||''}`:'').filter(Boolean).join('\n'));
+    set('r_budgetSource',d.budgetSource||''); set('r_budgetCategory',d.budgetCategory||'');
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    const candidates=[...document.querySelectorAll('button')].filter(b=>(b.textContent||'').includes('저장된 계획서 불러오기'));
+    candidates.forEach(b=>{
+      b.onclick=(ev)=>{ev.preventDefault();loadSavedPlanIntoResultV1043();};
+    });
+    const result=document.getElementById('section-input-result');
+    if(result){
+      const warning=[...result.querySelectorAll('div')].find(x=>(x.textContent||'').includes('연결된 사업계획서가 없습니다'));
+      if(warning){warning.id='resultPlanLinkNoticeV1043';}
+    }
+  });
+
+  async function repairPlanResultDataV1044(projectId){
+    try{
+      const q=await sb.from('project_documents').select('id,doc_type,data').eq('project_id',projectId);
+      if(q.error)throw q.error;
+      const plan=(q.data||[]).find(x=>x.doc_type==='PLAN'),result=(q.data||[]).find(x=>x.doc_type==='RESULT');
+      if(!plan)return alert('이 사업에는 저장된 계획서가 없습니다.');
+      if(!result)return alert('아직 결과보고서가 없습니다. [결과보고서 작성]을 먼저 실행하세요.');
+      const pd=plan.data||{},rd={...(result.data||{})};
+      const om={};(Array.isArray(pd.overview)?pd.overview:[]).forEach(a=>{if(Array.isArray(a)&&a[0])om[a[0]]=a[1]||'';});
+      rd.orgName=rd.orgName||pd.orgName||'';
+      rd.staff=rd.staff||pd.staff||'';
+      rd.reviewer=rd.reviewer||pd.reviewer||'';
+      rd.approver=rd.approver||pd.approver||'';
+      rd.projName=rd.projName||projectNameFromPlan(pd)||'';
+      rd.dateLoc=rd.dateLoc||[om['사업일시']||om['운영일시']||om['일시']||'',om['사업장소']||om['장소']||''].filter(Boolean).join(' / ');
+      rd.target=rd.target||om['참여대상']||om['대상']||'';
+      rd.content=rd.content||(Array.isArray(pd.programs)?pd.programs:[]).map(a=>Array.isArray(a)&&a[0]?`${a[0]}: ${a[1]||''}`:'').filter(Boolean).join('\n');
+      rd.budgetSource=rd.budgetSource||pd.budgetSource||''; rd.budgetCategory=rd.budgetCategory||pd.budgetCategory||'';
+      rd.linkedPlanDocumentId=plan.id; rd.linkedProjectId=projectId;
+      const u=(await sb.auth.getUser()).data.user;
+      const up=await sb.from('project_documents').update({data:rd,updated_by:u?.id}).eq('id',result.id);
+      if(up.error)throw up.error;
+      await sb.from('project_history').insert({project_id:projectId,document_id:result.id,action:'REPAIR_PLAN_RESULT_LINK',snapshot:{linked_plan_document_id:plan.id},changed_by:u?.id});
+      alert('계획서↔결과보고서 연결 데이터를 복구했습니다.');
+      await renderIntegratedProjectV10(projectId);
+    }catch(e){console.error(e);alert('연동 복구 오류: '+e.message);}
+  }
+
+  const openProjectDetailV1044Base=openProjectDetailV85;
+  openProjectDetailV85=async function(projectId){
+    await openProjectDetailV1044Base(projectId);
+    const box=document.getElementById('detailActionsV85');
+    if(box && !document.getElementById('repairLinkBtnV1044')){
+      const b=document.createElement('button'); b.id='repairLinkBtnV1044'; b.className='btn btn-result';
+      b.textContent='🔗 계획↔결과 연동 복구'; b.onclick=()=>repairPlanResultDataV1044(projectId); box.appendChild(b);
+    }
+  };
+
+  function rowsMapV105(rows){
+    const m={}; (Array.isArray(rows)?rows:[]).forEach(r=>{if(Array.isArray(r)&&r[0])m[String(r[0]).trim()]=r[1]??'';}); return m;
+  }
+  function firstV105(...vals){ return vals.find(v=>v!==undefined&&v!==null&&String(v).trim()!=='') ?? ''; }
+  function numberV105(v){ return firstNumV10(v); }
+  function extractCanonicalV105(pd={},rd={},budgetSummary=null){
+    const pm=rowsMapV105(pd.overview), rm=rowsMapV105(rd.overview);
+    const gv=(m,ks)=>{for(const k of ks)if(m[k]!==undefined&&m[k]!==null&&m[k]!=='')return m[k];return '';};
+    const planBudgetRows=normalizePlanBudgetV1031(pd);
+    const plannedBudget=(budgetSummary&&Number(budgetSummary.planned_total||0)>0)
+      ?Number(budgetSummary.planned_total):Number(pd.budgetTotal||pd.totalBudget||planBudgetRows.total||0);
+    const actualBudget=budgetSummary?Number(budgetSummary.actual_total||0):Number(rd.actualBudget||rd.settlementTotal||rd.totalExpense||0);
+    return {
+      purpose:firstV105(gv(pm,['사업목적','목적','추진목적']),pd.purpose,rd.purpose,gv(rm,['사업목적','목적','추진목적'])),
+      operation_date:firstV105(gv(pm,['사업일시','운영일시','일시','기간','운영기간']),pd.operationDate),
+      location:firstV105(gv(pm,['사업장소','장소']),pd.location),
+      planned_participants:numberV105(firstV105(gv(pm,['참여대상','대상','사업대상']),pd.targetCount,pd.plannedParticipants,pd.target)),
+      actual_participants:numberV105(firstV105(rd.attendance,rd.actualParticipants,rd.participantCount,gv(rm,['참여인원','실제참여','참석인원']))),
+      planned_budget:plannedBudget,
+      actual_budget:actualBudget,
+      satisfaction_score:(()=>{const n=Number(firstV105(rd.surveyScore,rd.satisfactionScore,rd.satisfaction,gv(rm,['만족도','평균만족도']))||0);return Number.isFinite(n)?n:0;})(),
+      manager_name:firstV105(pd.staff,rd.staff),
+      source_version:'v10.5'
+    };
+  }
+  async function getCanonicalV105(projectId){
+    const r=await sb.from('project_metrics').select('*').eq('project_id',projectId).maybeSingle();
+    if(r.error) throw r.error; return r.data;
+  }
+  async function migrateCanonicalV105(projectId,silent=false){
+    const d=await sb.from('project_documents').select('id,doc_type,data').eq('project_id',projectId);
+    if(d.error)throw d.error;
+    const pd=(d.data||[]).find(x=>x.doc_type==='PLAN')?.data||{}, rd=(d.data||[]).find(x=>x.doc_type==='RESULT')?.data||{};
+    const bs=await sb.from('project_budget_summary').select('*').eq('project_id',projectId).maybeSingle();
+    const c=extractCanonicalV105(pd,rd,bs.data);
+    ['planned_participants','actual_participants','planned_budget','actual_budget','satisfaction_score'].forEach(k=>{
+      const n=Number(c[k]); c[k]=Number.isFinite(n)&&n>=0?n:0;
+    });
+    const u=(await sb.auth.getUser()).data.user;
+    const up=await sb.from('project_metrics').upsert({
+      project_id:projectId,...c,updated_by:u?.id,updated_at:new Date().toISOString()
+    },{onConflict:'project_id'}).select().single();
+    if(up.error)throw up.error;
+    await sb.from('project_history').insert({project_id:projectId,action:'CANONICAL_DATA_SYNC',snapshot:c,changed_by:u?.id});
+    if(!silent) alert('사업 데이터를 표준 구조로 진단·동기화했습니다.');
+    return up.data;
+  }
+  function statusCardV105(label,value,ok){
+    return `<div style="border:1px solid #ddd;border-radius:7px;padding:8px"><small>${label}</small><br><strong>${ok?'✅':'⚠'} ${esc(String(value||'미확인'))}</strong></div>`;
+  }
+  async function diagnoseAndMigrateV105(projectId){
+    try{
+      const c=await migrateCanonicalV105(projectId,false);
+      renderCanonicalStatusV105(c);
+      await renderIntegratedProjectV105(projectId,c);
+    }catch(e){console.error(e);alert('데이터 진단 오류: '+e.message);}
+  }
+  function renderCanonicalStatusV105(c){
+    const el=document.getElementById('canonicalStatusV105'); if(!el)return;
+    el.innerHTML=`<div style="font-size:12px;font-weight:700;margin-bottom:5px">표준 데이터 연결상태</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:6px">
+    ${statusCardV105('계획인원',c?.planned_participants?c.planned_participants+'명':'',!!c?.planned_participants)}
+    ${statusCardV105('실제참여',c?.actual_participants?c.actual_participants+'명':'',!!c?.actual_participants)}
+    ${statusCardV105('계획예산',c?.planned_budget?moneyV10(c.planned_budget):'',!!c?.planned_budget)}
+    ${statusCardV105('실제집행',c?.actual_budget?moneyV10(c.actual_budget):'',!!c?.actual_budget)}
+    ${statusCardV105('만족도',c?.satisfaction_score||'',!!c?.satisfaction_score)}
+    </div>`;
+  }
+  async function renderIntegratedProjectV105(projectId,c){
+    c=c||await getCanonicalV105(projectId);
+    if(!c){ c=await migrateCanonicalV105(projectId,true); }
+    renderCanonicalStatusV105(c);
+    const pr=await sb.from('projects').select('project_name').eq('id',projectId).single();
+    const basic=document.getElementById('v10BasicSummary');
+    if(basic) basic.innerHTML=`<table style="width:100%;border-collapse:collapse;background:#fff">
+      <tr><th style="border:1px solid #ddd;padding:8px;width:140px">사업명</th><td style="border:1px solid #ddd;padding:8px">${esc(pr.data?.project_name||'-')}</td></tr>
+      <tr><th style="border:1px solid #ddd;padding:8px">담당자</th><td style="border:1px solid #ddd;padding:8px">${esc(c.manager_name||'-')}</td></tr>
+      <tr><th style="border:1px solid #ddd;padding:8px">운영일시</th><td style="border:1px solid #ddd;padding:8px">${esc(c.operation_date||'-')}</td></tr>
+      <tr><th style="border:1px solid #ddd;padding:8px">장소</th><td style="border:1px solid #ddd;padding:8px">${esc(c.location||'-')}</td></tr>
+      <tr><th style="border:1px solid #ddd;padding:8px">목적</th><td style="border:1px solid #ddd;padding:8px">${esc(c.purpose||'-')}</td></tr></table>`;
+    const pb=Number(c.planned_budget||0),ab=Number(c.actual_budget||0),rem=pb-ab,br=pb?Math.round(ab/pb*1000)/10:0;
+    const bb=document.getElementById('v10BudgetBox'); if(bb)bb.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px">${[['계획예산',moneyV10(pb)],['실제집행',moneyV10(ab)],['잔액',moneyV10(rem)],['집행률',br+'%']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:13px"><small>${x[0]}</small><br><strong style="font-size:20px">${x[1]}</strong></div>`).join('')}</div>`;
+    const pp=Number(c.planned_participants||0),ap=Number(c.actual_participants||0),ar=pp?Math.round(ap/pp*1000)/10:0;
+    const pf=document.getElementById('v10PerformanceBox'); if(pf)pf.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px">${[['계획인원',pp+'명'],['실제참여',ap+'명'],['참여달성률',ar+'%'],['만족도',c.satisfaction_score||'-']].map(x=>`<div style="border:1px solid #ddd;border-radius:8px;padding:12px"><small>${x[0]}</small><br><strong>${x[1]}</strong></div>`).join('')}</div>`;
+    const cmp=document.getElementById('v103PerformanceCompare'); if(cmp)cmp.innerHTML=`<h3>계획 대비 실적 자동분석</h3><table style="width:100%;border-collapse:collapse"><tr><th style="border:1px solid #ddd;padding:7px">지표</th><th style="border:1px solid #ddd;padding:7px">계획</th><th style="border:1px solid #ddd;padding:7px">실적</th><th style="border:1px solid #ddd;padding:7px">달성/집행률</th></tr><tr><td style="border:1px solid #ddd;padding:7px">참여인원</td><td style="border:1px solid #ddd;padding:7px">${pp}명</td><td style="border:1px solid #ddd;padding:7px">${ap}명</td><td style="border:1px solid #ddd;padding:7px">${ar}%</td></tr><tr><td style="border:1px solid #ddd;padding:7px">예산</td><td style="border:1px solid #ddd;padding:7px">${moneyV10(pb)}</td><td style="border:1px solid #ddd;padding:7px">${moneyV10(ab)}</td><td style="border:1px solid #ddd;padding:7px">${br}%</td></tr><tr><td style="border:1px solid #ddd;padding:7px">만족도</td><td style="border:1px solid #ddd;padding:7px">-</td><td style="border:1px solid #ddd;padding:7px">${c.satisfaction_score||'-'}</td><td style="border:1px solid #ddd;padding:7px">-</td></tr></table>`;
+  }
+  const renderIntegratedProjectV105Base=renderIntegratedProjectV10;
+  renderIntegratedProjectV10=async function(projectId){
+    await renderIntegratedProjectV105Base(projectId);
+    try{await renderIntegratedProjectV105(projectId);}catch(e){console.error('v10.5 canonical render',e);}
+  };
+
+  let customPlanFieldsV106=[];
+  function v106Val(id){return document.getElementById(id)?.value?.trim()||'';}
+  function addCustomPlanFieldV106(label='',value=''){
+    const id='cpf_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+    customPlanFieldsV106.push({id,label,value}); renderCustomPlanFieldsV106();
+  }
+  function renderCustomPlanFieldsV106(){
+   const box=document.getElementById('customPlanFieldsV106'); if(!box)return;
+   box.innerHTML=customPlanFieldsV106.map((x,i)=>`<div style="display:grid;grid-template-columns:180px 1fr 70px;gap:6px;margin:5px 0">
+   <input value="${esc(x.label||'')}" placeholder="추가 항목명" oninput="customPlanFieldsV106[${i}].label=this.value">
+   <input value="${esc(x.value||'')}" placeholder="내용" oninput="customPlanFieldsV106[${i}].value=this.value">
+   <button type="button" class="btn btn-del" onclick="customPlanFieldsV106.splice(${i},1);renderCustomPlanFieldsV106()">삭제</button></div>`).join('');
+  }
+  function getStandardPlanV106(){
+   return {
+    project_name:v106Val('sp_project_name'),
+    background:v106Val('sp_background'),
+    purpose:v106Val('sp_purpose'),
+    expected_effect:v106Val('sp_expected_effect'),
+    operation_date:v106Val('sp_operation_date'),
+    target_group:v106Val('sp_target_group'),
+    planned_participants:Number(v106Val('sp_planned_participants')||0),
+    content:v106Val('sp_content'),
+    location:v106Val('sp_location'),
+    operation_method:v106Val('sp_operation_method'),
+    evaluation_plan:v106Val('sp_evaluation_plan'),
+    custom_fields:customPlanFieldsV106.map(x=>({label:x.label||'',value:x.value||''})).filter(x=>x.label||x.value)
+   };
+  }
+  function applyStandardPlanV106(std={}){
+   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??''};
+   set('sp_project_name',std.project_name); set('sp_background',std.background); set('sp_purpose',std.purpose);
+   set('sp_expected_effect',std.expected_effect); set('sp_operation_date',std.operation_date); set('sp_target_group',std.target_group);
+   set('sp_planned_participants',std.planned_participants||0); set('sp_content',std.content); set('sp_location',std.location);
+   set('sp_operation_method',std.operation_method); set('sp_evaluation_plan',std.evaluation_plan);
+   customPlanFieldsV106=Array.isArray(std.custom_fields)?std.custom_fields.map(x=>({id:'cpf_'+Math.random().toString(36).slice(2),label:x.label||'',value:x.value||''})):[];
+   renderCustomPlanFieldsV106();
+  }
+  function standardFromLegacyV106(d={}){
+   const m=rowsMapV105(d.overview);
+   const gv=(ks)=>{for(const k of ks)if(m[k]!==undefined&&m[k]!=='')return m[k];return ''};
+   return {
+    project_name:projectNameFromPlan(d)||'',
+    background:gv(['추진배경 및 필요성','추진배경','필요성']),
+    purpose:gv(['사업목적','목적','추진목적']),
+    expected_effect:gv(['기대효과']),
+    operation_date:gv(['사업일시','운영일시','교육일시','일시']),
+    target_group:gv(['참여대상','교육대상','대상','사업대상']),
+    planned_participants:firstNumV10(gv(['계획인원','모집인원'])||d.targetCount||d.plannedParticipants),
+    content:gv(['주요내용','교육내용','사업내용'])||(Array.isArray(d.programs)?d.programs.map(x=>Array.isArray(x)?[x[0],x[1]].filter(Boolean).join(': '):'').filter(Boolean).join('\n'):''),
+    location:gv(['운영장소','교육장소','사업장소','장소']),
+    operation_method:gv(['운영방법','교육운영']),
+    evaluation_plan:gv(['평가·환류 계획','사업평가 및 환류 계획']),
+    custom_fields:[]
+   };
+  }
+  async function syncStandardMetricsV106(projectId,std){
+   const u=(await sb.auth.getUser()).data.user;
+   const existing=await sb.from('project_metrics').select('*').eq('project_id',projectId).maybeSingle();
+   if(existing.error)throw existing.error;
+   const old=existing.data||{};
+   const row={
+    project_id:projectId,
+    purpose:std.purpose||'',
+    operation_date:std.operation_date||'',
+    location:std.location||'',
+    planned_participants:Number(std.planned_participants||0),
+    actual_participants:Number(old.actual_participants||0),
+    planned_budget:Number(old.planned_budget||0),
+    actual_budget:Number(old.actual_budget||0),
+    satisfaction_score:Number(old.satisfaction_score||0),
+    manager_name:v106Val('p_staff')||old.manager_name||'',
+    source_version:'v10.6',
+    updated_by:u?.id,updated_at:new Date().toISOString()
+   };
+   const r=await sb.from('project_metrics').upsert(row,{onConflict:'project_id'}); if(r.error)throw r.error;
+  }
+  const getPlanDataV106Base=getPlanData;
+  getPlanData=function(){
+   const d=getPlanDataV106Base();
+   const std=getStandardPlanV106();
+   d.standard=std;
+   if(std.project_name) d.projectName=std.project_name;
+   d.targetCount=std.planned_participants;
+   d.plannedParticipants=std.planned_participants;
+   return d;
+  };
+  const saveCloudDocumentV106Base=saveCloudDocument;
+  saveCloudDocument=async function(type){
+   await saveCloudDocumentV106Base(type);
+   if(type==='PLAN'&&window.currentCloudPlanProjectId){
+     try{await syncStandardMetricsV106(window.currentCloudPlanProjectId,getStandardPlanV106());}
+     catch(e){console.error(e);alert('계획서 저장은 완료되었으나 표준 데이터 동기화 오류: '+e.message);}
+   }
+  };
+  const loadCloudDocumentV106Base=loadCloudDocument;
+  loadCloudDocument=async function(docId){
+   const r=await sb.from('project_documents').select('doc_type,data').eq('id',docId).single();
+   await loadCloudDocumentV106Base(docId);
+   if(!r.error&&r.data?.doc_type==='PLAN'){
+     const d=r.data.data||{}; applyStandardPlanV106(d.standard||standardFromLegacyV106(d));
+   }
+  };
+  const extractCanonicalV106Base=extractCanonicalV105;
+  extractCanonicalV105=function(pd={},rd={},budgetSummary=null){
+   const c=extractCanonicalV106Base(pd,rd,budgetSummary),st=pd.standard||{};
+   if(st.purpose)c.purpose=st.purpose;
+   if(st.operation_date)c.operation_date=st.operation_date;
+   if(st.location)c.location=st.location;
+   if(Number(st.planned_participants||0)>0)c.planned_participants=Number(st.planned_participants);
+   return c;
+  };
+
+  function syncStandardToLegacyV1061(){
+    const std=getStandardPlanV106();
+    const nameTargets=['p_projName','p_projectName'];
+    nameTargets.forEach(id=>{const e=document.getElementById(id);if(e)e.value=std.project_name||'';});
+    const map={
+      '사업명':std.project_name,'추진배경 및 필요성':std.background,'사업목적':std.purpose,'기대효과':std.expected_effect,
+      '운영일시':std.operation_date,'참여대상':std.target_group,'계획인원':String(std.planned_participants||0),
+      '주요내용':std.content,'운영장소':std.location,'운영방법':std.operation_method,'평가·환류 계획':std.evaluation_plan
+    };
+    document.querySelectorAll('#section-input-plan .p-ov-row').forEach(row=>{
+      const k=row.querySelector('.p-ov-key'),v=row.querySelector('.p-ov-val');
+      if(k&&v&&Object.prototype.hasOwnProperty.call(map,k.value))v.value=map[k.value];
+    });
+  }
+  function hideDuplicateLegacyOverviewV1061(){
+    const panel=document.getElementById('standardPlanV106'); if(!panel)return;
+    const sec=document.getElementById('section-input-plan'); if(!sec)return;
+    const candidates=[...sec.querySelectorAll('.card,.tab-content,.input-group,section,fieldset')];
+    candidates.forEach(el=>{
+      if(el.contains(panel))return;
+      const txt=(el.textContent||'').replace(/\s+/g,' ');
+      if((txt.includes('사업 개요')||txt.includes('사업개요')) && el.querySelector('.p-ov-row')){
+        el.style.display='none'; el.dataset.hiddenByV1061='1';
+      }
+    });
+    const rows=[...sec.querySelectorAll('.p-ov-row')];
+    if(rows.length){
+      const table=rows[0].closest('table');
+      if(table && !table.closest('#standardPlanV106')) table.style.display='none';
+    }
+  }
+  function canonicalProjectNameV1061(d){
+    return d?.standard?.project_name || d?.projectName || projectNameFromPlan(d) || '';
+  }
+  const projectNameFromPlanV1061Base=projectNameFromPlan;
+  projectNameFromPlan=function(d){
+    return d?.standard?.project_name || d?.projectName || projectNameFromPlanV1061Base(d) || '제목 없는 사업';
+  };
+  const getPlanDataV1061Base=getPlanData;
+  getPlanData=function(){
+    syncStandardToLegacyV1061();
+    const d=getPlanDataV1061Base();
+    const std=getStandardPlanV106();
+    d.standard=std; d.projectName=std.project_name; d.targetCount=Number(std.planned_participants||0); d.plannedParticipants=Number(std.planned_participants||0);
+    return d;
+  };
+  syncStandardMetricsV106=async function(projectId,std){
+    const u=(await sb.auth.getUser()).data.user;
+    const ex=await sb.from('project_metrics').select('*').eq('project_id',projectId).maybeSingle(); if(ex.error)throw ex.error;
+    const old=ex.data||{};
+    const row={project_id:projectId,background:std.background||'',purpose:std.purpose||'',expected_effect:std.expected_effect||'',
+      operation_date:std.operation_date||'',target_group:std.target_group||'',planned_participants:Number(std.planned_participants||0),
+      content:std.content||'',location:std.location||'',operation_method:std.operation_method||'',evaluation_plan:std.evaluation_plan||'',
+      custom_fields:std.custom_fields||[],actual_participants:Number(old.actual_participants||0),planned_budget:Number(old.planned_budget||0),
+      actual_budget:Number(old.actual_budget||0),satisfaction_score:Number(old.satisfaction_score||0),manager_name:v106Val('p_staff')||old.manager_name||'',
+      source_version:'v10.6.1',updated_by:u?.id,updated_at:new Date().toISOString()};
+    const r=await sb.from('project_metrics').upsert(row,{onConflict:'project_id'});if(r.error)throw r.error;
+    const p=await sb.from('projects').update({project_name:std.project_name||'제목 없는 사업',updated_by:u?.id}).eq('id',projectId);if(p.error)throw p.error;
+  };
+  const extractCanonicalV1061Base=extractCanonicalV105;
+  extractCanonicalV105=function(pd={},rd={},budgetSummary=null){
+    const c=extractCanonicalV1061Base(pd,rd,budgetSummary),st=pd.standard||{};
+    if(st.background!==undefined)c.background=st.background||'';
+    if(st.purpose!==undefined)c.purpose=st.purpose||'';
+    if(st.expected_effect!==undefined)c.expected_effect=st.expected_effect||'';
+    if(st.operation_date!==undefined)c.operation_date=st.operation_date||'';
+    if(st.target_group!==undefined)c.target_group=st.target_group||'';
+    if(st.planned_participants!==undefined)c.planned_participants=Number(st.planned_participants||0);
+    if(st.content!==undefined)c.content=st.content||'';
+    if(st.location!==undefined)c.location=st.location||'';
+    if(st.operation_method!==undefined)c.operation_method=st.operation_method||'';
+    if(st.evaluation_plan!==undefined)c.evaluation_plan=st.evaluation_plan||'';
+    return c;
+  };
+  const loadCloudDocumentV1061Base=loadCloudDocument;
+  loadCloudDocument=async function(docId){
+    await loadCloudDocumentV1061Base(docId);
+    const q=await sb.from('project_documents').select('doc_type,data').eq('id',docId).single();
+    if(!q.error&&q.data?.doc_type==='PLAN'){
+      applyStandardPlanV106(q.data.data?.standard||standardFromLegacyV106(q.data.data||{}));
+      syncStandardToLegacyV1061(); hideDuplicateLegacyOverviewV1061();
+    }
+  };
+  document.addEventListener('DOMContentLoaded',()=>{
+    hideDuplicateLegacyOverviewV1061();
+    const p=document.getElementById('standardPlanV106');
+    if(p)p.addEventListener('input',syncStandardToLegacyV1061,true);
+  });
+
+  let customResultFieldsV107=[];
+  function srValV107(id){return document.getElementById(id)?.value?.trim()||'';}
+  function addCustomResultFieldV107(label='',value=''){
+   customResultFieldsV107.push({label,value});renderCustomResultFieldsV107();
+  }
+  function renderCustomResultFieldsV107(){
+   const box=document.getElementById('customResultFieldsV107');if(!box)return;
+   box.innerHTML=customResultFieldsV107.map((x,i)=>`<div style="display:grid;grid-template-columns:180px 1fr 70px;gap:6px;margin:5px 0">
+   <input value="${esc(x.label||'')}" placeholder="추가 항목명" oninput="customResultFieldsV107[${i}].label=this.value">
+   <input value="${esc(x.value||'')}" placeholder="내용" oninput="customResultFieldsV107[${i}].value=this.value">
+   <button type="button" class="btn btn-del" onclick="customResultFieldsV107.splice(${i},1);renderCustomResultFieldsV107()">삭제</button></div>`).join('');
+  }
+  function getStandardResultV107(){
+   return {
+    project_name:srValV107('sr_project_name'),
+    actual_date:srValV107('sr_actual_date'),
+    actual_target_group:srValV107('sr_actual_target_group'),
+    actual_participants:Number(srValV107('sr_actual_participants')||0),
+    actual_content:srValV107('sr_actual_content'),
+    actual_location:srValV107('sr_actual_location'),
+    actual_budget:Number(srValV107('sr_actual_budget')||0),
+    satisfaction_score:Number(srValV107('sr_satisfaction_score')||0),
+    achievements:srValV107('sr_achievements'),
+    improvements:srValV107('sr_improvements'),
+    evaluation_result:srValV107('sr_evaluation_result'),
+    custom_fields:customResultFieldsV107.map(x=>({label:x.label||'',value:x.value||''})).filter(x=>x.label||x.value)
+   };
+  }
+  function applyStandardResultV107(std={}){
+   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??''};
+   set('sr_project_name',std.project_name);set('sr_actual_date',std.actual_date);set('sr_actual_target_group',std.actual_target_group);
+   set('sr_actual_participants',std.actual_participants||0);set('sr_actual_content',std.actual_content);set('sr_actual_location',std.actual_location);
+   set('sr_actual_budget',std.actual_budget||0);set('sr_satisfaction_score',std.satisfaction_score||0);set('sr_achievements',std.achievements);
+   set('sr_improvements',std.improvements);set('sr_evaluation_result',std.evaluation_result);
+   customResultFieldsV107=Array.isArray(std.custom_fields)?std.custom_fields.map(x=>({...x})):[];
+   renderCustomResultFieldsV107();
+  }
+  async function inheritPlanToStandardResultV107(projectId){
+   if(!projectId)return;
+   const q=await sb.from('project_documents').select('data').eq('project_id',projectId).eq('doc_type','PLAN').maybeSingle();
+   if(q.error)throw q.error;if(!q.data)return;
+   const pd=q.data.data||{},st=pd.standard||standardFromLegacyV106(pd);
+   const set=(id,v)=>{const e=document.getElementById(id);if(e&&!e.value)e.value=v??''};
+   set('sr_project_name',st.project_name||projectNameFromPlan(pd));
+   set('sr_actual_date',st.operation_date);set('sr_actual_target_group',st.target_group);
+   set('sr_actual_content',st.content);set('sr_actual_location',st.location);
+   renderPlanCompareV107(st);
+  }
+  function renderPlanCompareV107(st={}){
+   const el=document.getElementById('resultPlanCompareV107');if(!el)return;
+   const rows=[
+    ['계획 운영일시',st.operation_date],
+    ['계획 참여대상',st.target_group],
+    ['계획인원',st.planned_participants!==undefined&&st.planned_participants!==''?Number(st.planned_participants||0)+'명':''],
+    ['계획 운영장소',st.location]
+   ].filter(x=>String(x[1]??'').trim());
+   el.innerHTML=rows.length
+    ? `<div style="background:#f5f8fb;border:1px solid #d6dee8;border-radius:8px;padding:10px"><strong>연결된 계획 정보</strong>${rows.map(x=>`<div style="margin-top:5px"><span style="color:#64748b">${esc(x[0])}</span> : ${esc(x[1])}</div>`).join('')}</div>`
+    : '';
+  }
+
+  const getResultDataV107Base=getResultData;
+  getResultData=function(){
+    const d=getResultDataV107Base();
+    d.standard=getStandardResultV107();
+    return d;
+  };
+
+  const loadCloudDocumentV107Base=loadCloudDocument;
+  loadCloudDocument=async function(docId){
+    await loadCloudDocumentV107Base(docId);
+    const q=await sb.from('project_documents').select('doc_type,data,project_id').eq('id',docId).single();
+    if(!q.error&&q.data?.doc_type==='RESULT'){
+      const d=q.data.data||{};
+      if(d.standard) applyStandardResultV107(d.standard);
+      await inheritPlanToStandardResultV107(q.data.project_id);
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    renderCustomPlanFieldsV106();
+    renderCustomResultFieldsV107();
+    initV8Auth().catch(e=>{
+      console.error('앱 초기화 오류:',e);
+      const msg=document.getElementById('authMsg');
+      if(msg) msg.textContent='시스템 초기화 오류: '+(e.message||e);
+    });
+  });
 </script>
 </body>
 </html>
