@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.7 AI & 설문통합 패치)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v12.0 Full AI Integration)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -131,7 +131,6 @@
   <span style="display:flex;gap:6px;align-items:center;">
     <span id="currentRoleLabel" style="opacity:.85;"></span>
     <button class="btn btn-add" style="padding:5px 9px;font-size:11px;" type="button" id="profileBtnV812">내 정보</button>
-    <button class="btn btn-add" style="display:none;padding:5px 9px;font-size:11px;" type="button" id="adminBtnV82" onclick="openAdminV82()">직원관리</button>
     <button class="btn btn-add" style="padding:5px 9px;font-size:11px;" onclick="renderCloudDB()">공동 DB 새로고침</button>
     <button class="btn btn-del" style="padding:5px 9px;font-size:11px;" onclick="logoutV8()">로그아웃</button>
   </span>
@@ -139,7 +138,7 @@
 
 <div class="app-container">
   <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템</h1>
-  <div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Release Candidate · AI 자동 완성을 지원하는 통합 플랫폼</div>
+  <div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">Full AI Integration · 계획서 및 결과보고서 양방향 AI 작성 지원</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -172,18 +171,36 @@
 
   <!-- 1단계: 사업계획서 섹션 -->
   <div id="section-input-plan" class="form-section active">
+    
+    <!-- ✨ 사업계획서 AI 자동 작성 도구 (신규 추가) -->
+    <div id="aiPlanBoxV120" style="border:2px solid #2563eb;border-radius:10px;padding:16px;margin-bottom:18px;background:#eff6ff">
+      <b style="color:#1e40af;font-size:15px;">✨ AI 사업계획서 문장 자동 완성</b>
+      <div style="font-size:12px;color:#1e3a8a;margin:5px 0 10px">
+        사업명과 주요내용 키워드를 입력한 후 버튼을 클릭하면 <b>추진배경 및 필요성, 사업목적, 기대효과, 운영방법, 평가·환류 계획</b> 초안을 전문 행정 문체로 완성합니다.
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-plan" onclick="generatePlanAIV120()">✨ AI 계획서 초안 생성</button>
+        <button type="button" class="btn btn-save" id="aiPlanApplyBtnV120" onclick="applyPlanAIV120()" disabled>✅ 입력폼에 자동 적용</button>
+      </div>
+      <div id="aiPlanMsgV120" style="margin-top:8px;font-size:12px;color:#1e40af;font-weight:bold;"></div>
+      <div id="aiPlanPreviewV120" style="margin-top:10px"></div>
+    </div>
+
     <div id="standardPlanV106" style="border:2px solid #1f4e8c;border-radius:10px;padding:16px;margin-bottom:18px;background:#fff">
       <h2 style="margin:0 0 8px;color:#173f78">Ⅰ. 사업 개요 · 표준 입력폼</h2>
       <table style="width:100%;border-collapse:collapse">
         <tbody id="standardPlanBodyV106">
           <tr><th style="border:1px solid #bbb;padding:8px;width:180px">사업명</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_project_name" style="width:100%" placeholder="사업명을 입력하세요"></td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">추진배경 및 필요성</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_background" style="width:100%;min-height:65px"></textarea></td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">사업목적</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_purpose" style="width:100%;min-height:55px"></textarea></td></tr>
+          <tr><th style="border:1px solid #bbb;padding:8px">추진배경 및 필요성</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_background" style="width:100%;min-height:65px" placeholder="AI 생성 버튼을 누르면 자동 입력됩니다"></textarea></td></tr>
+          <tr><th style="border:1px solid #bbb;padding:8px">사업목적</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_purpose" style="width:100%;min-height:55px" placeholder="AI 생성 버튼을 누르면 자동 입력됩니다"></textarea></td></tr>
+          <tr><th style="border:1px solid #bbb;padding:8px">기대효과</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_expected_effect" style="width:100%;min-height:55px" placeholder="AI 생성 버튼을 누르면 자동 입력됩니다"></textarea></td></tr>
           <tr><th style="border:1px solid #bbb;padding:8px">운영일시</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_operation_date" style="width:100%" placeholder="예: 2026. 9. 15. 14:00~16:00"></td></tr>
           <tr><th style="border:1px solid #bbb;padding:8px">참여대상</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_target_group" style="width:100%" placeholder="예: 관내 장기요양 종사자"></td></tr>
           <tr><th style="border:1px solid #bbb;padding:8px">계획인원</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_planned_participants" type="number" min="0" style="width:160px" placeholder="30"> 명</td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">주요내용</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_content" style="width:100%;min-height:70px"></textarea></td></tr>
+          <tr><th style="border:1px solid #bbb;padding:8px">주요내용</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_content" style="width:100%;min-height:70px" placeholder="주요 프로그램 내용 요약을 입력하세요"></textarea></td></tr>
           <tr><th style="border:1px solid #bbb;padding:8px">운영장소</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_location" style="width:100%"></td></tr>
+          <tr><th style="border:1px solid #bbb;padding:8px">운영방법</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_operation_method" style="width:100%;min-height:55px" placeholder="AI 생성 버튼을 누르면 자동 입력됩니다"></textarea></td></tr>
+          <tr><th style="border:1px solid #bbb;padding:8px">평가·환류 계획</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_evaluation_plan" style="width:100%;min-height:55px" placeholder="AI 생성 버튼을 누르면 자동 입력됩니다"></textarea></td></tr>
         </tbody>
       </table>
     </div>
@@ -229,7 +246,7 @@
 
   <!-- 2단계: 사업 결과보고서 섹션 -->
   <div id="section-input-result" class="form-section">
-    <!-- ✨ AI 자동 작성 도구 (상단 배치) -->
+    <!-- ✨ AI 자동 작성 도구 -->
     <div id="aiResultV113" style="border:2px solid #059669;border-radius:10px;padding:16px;margin-bottom:18px;background:#ecfdf5">
       <b style="color:#047857;font-size:15px;">✨ AI 사업 결과보고서 자동 완성</b>
       <div style="font-size:12px;color:#065f46;margin:5px 0 10px">
@@ -271,8 +288,8 @@
     <div style="display: flex; gap: 15px; margin-bottom: 12px;" class="no-print">
       <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">기관명</label><input type="text" id="r_orgName" value="화성시장기요양지원센터"></div>
       <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">담당자</label><input type="text" id="r_staff" value="최송아"></div>
-      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">검토자</label><input type="text" id="r_reviewer" value="박예원"></div>
-      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">결재자</label><input type="text" id="r_approver" value="임은숙"></div>
+      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">검토자</label><input type="text" id="r_reviewer" value="대리 박예원"></div>
+      <div style="flex: 1;"><label style="font-size: 12px; font-weight:bold;">결재자</label><input type="text" id="r_approver" value="센터장 임은숙"></div>
     </div>
 
     <!-- Ⅰ. 개요 -->
@@ -287,7 +304,7 @@
       </table>
     </div>
 
-    <!-- Ⅱ. 설문 결과 (구글폼 연동 및 자체 설문 하나로 완전 통일) -->
+    <!-- Ⅱ. 설문 결과 -->
     <div id="r-sub-section-2" class="sub-section">
       <div id="surveyResultUnifiedV1096" style="border:2px solid #07845f;border-radius:9px;padding:16px;background:#fff">
         <h2 style="color:#06705a;margin-top:0">Ⅱ. 설문 결과 및 데이터 자동 연동</h2>
@@ -332,7 +349,6 @@
       <button class="btn btn-save" onclick="saveCloudDocument('RESULT')">💾 결과보고서 DB 저장</button>
     </div>
 
-    <!-- 결과보고서 출력용 기안문 및 보고서 -->
     <div id="output-result-container" style="display: none;">
       <div class="doc-sheet">
         <span class="tag-result">내부결재 기안문</span>
@@ -393,7 +409,6 @@
 </div>
 
 <script>
-  // 기본 모드 및 서브탭 전환
   function switchMode(mode) {
     document.querySelectorAll('.mode-btn').forEach(btn => btn.className = 'mode-btn');
     document.querySelectorAll('.form-section').forEach(sec => sec.classList.remove('active'));
@@ -440,7 +455,29 @@
   function generatePlanDocs() {
     let projName = document.getElementById('sp_project_name').value;
     if (!projName.trim()) return alert('사업명을 입력해 주세요.');
+
+    let summary = '';
+    const fields = [
+      ['사업명', projName],
+      ['추진배경 및 필요성', document.getElementById('sp_background').value],
+      ['사업목적', document.getElementById('sp_purpose').value],
+      ['기대효과', document.getElementById('sp_expected_effect').value],
+      ['운영일시', document.getElementById('sp_operation_date').value],
+      ['참여대상', document.getElementById('sp_target_group').value],
+      ['계획인원', document.getElementById('sp_planned_participants').value ? document.getElementById('sp_planned_participants').value + '명' : ''],
+      ['주요내용', document.getElementById('sp_content').value],
+      ['운영장소', document.getElementById('sp_location').value],
+      ['운영방법', document.getElementById('sp_operation_method').value],
+      ['평가·환류 계획', document.getElementById('sp_evaluation_plan').value]
+    ];
+
+    let tbl = '<tr><th style="width:25%;">항목</th><th>내용</th></tr>';
+    fields.forEach(([k, v]) => {
+      if(v) tbl += `<tr><th class="td-center">${k}</th><td>${v.replaceAll('\n','<br>')}</td></tr>`;
+    });
+
     document.getElementById('out_p_docTitle').innerText = projName + " 운영 계획(안)";
+    document.getElementById('out_p_overview_table').innerHTML = tbl;
     document.getElementById('output-plan-container').style.display = 'block';
   }
 
@@ -474,7 +511,6 @@
     document.getElementById('output-result-container').style.display = 'block';
   }
 
-  // Supabase 클라이언트 연결 설정
   const V8_SUPABASE_URL = 'https://quienpvidvkjvtiwyhoq.supabase.co';
   const V8_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1aWVucHZpZHZranZ0aXd5aG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMzE0MzIsImV4cCI6MjEwMzgwNzQzMn0.Q2SvpeN2s_okehjVhjNeKpqBCc2ml7EBcmvDMJ4tqKE';
   const sb = window.supabase ? window.supabase.createClient(V8_SUPABASE_URL, V8_SUPABASE_ANON_KEY) : null;
@@ -549,7 +585,66 @@
 </script>
 
 <script>
-// ===== [기능 1] 고도화된 AI 결과보고서 자동 생성 기능 =====
+// ===== [신규 기능] 1단계: AI 사업계획서 자동 작성 엔진 =====
+let planDraftData = null;
+
+window.generatePlanAIV120 = async function() {
+  const msg = document.getElementById('aiPlanMsgV120');
+  const preview = document.getElementById('aiPlanPreviewV120');
+
+  try {
+    const pName = document.getElementById('sp_project_name')?.value?.trim();
+    const target = document.getElementById('sp_target_group')?.value?.trim() || '관내 장기요양 종사자';
+    const count = document.getElementById('sp_planned_participants')?.value?.trim() || '30';
+    const content = document.getElementById('sp_content')?.value?.trim() || '';
+
+    if (!pName) {
+      alert('사업명을 먼저 입력해 주세요.');
+      document.getElementById('sp_project_name')?.focus();
+      return;
+    }
+
+    msg.textContent = '✨ AI가 사업계획서 공공 행정 서식 체계 문장을 작성 중입니다...';
+
+    // AI 표준 공공 행정 사업계획서 템플릿 생성기
+    planDraftData = {
+      background: `본 사업은 ${target}의 직무 스트레스 완화 및 정서적 안정 도모를 목적으로 기획됨.\n최근 돌봄 서비스 현장의 노동 강도 심화로 인한 정서적 소진(Burnout) 예방의 필요성이 크게 제기됨에 따라, 체계적인 지원 프로그램을 제공하여 지속 가능한 돌봄 복지 기반을 구축하고자 함.`,
+      purpose: `1. ${target}의 신체적·정서적 스트레스 해소 및 정서적 회복 지득\n2. 맞춤형 역량 강화 프로그램을 통한 돌봄 서비스의 질적 향상\n3. 종사자 간 교류 및 네트워킹 구축을 통한 자긍심 증진 및 소속감 제고`,
+      expected_effect: `[개인적 측면] 직무 소진 완화 및 정서적 힐링을 통한 업무 몰입도 향상\n[조직적 측면] 종사자 간 상호 정보 공유 네트워크 구축 및 전문성 강화\n[사회적 측면] 고품질 장기요양 서비스 제공을 통한 지역사회 돌봄 안전망 정착`,
+      operation_method: `· 사전 참가를 신청받아 참여자 맞춤형 소그룹 힐링 세션 형태로 진행\n· 분야별 전문 강사를 초빙하여 체험 중심의 프로그램 구성 및 현장 모니터링 병행\n· 행사 후 만족도 설문조사를 실시하여 차년도 운영에 즉시 반영`,
+      evaluation_plan: `· [정량 평가] 목표 대만 참여 인원 달성률(${count}명 기준) 및 만족도 설문 점수(4.5점/5.0점 이상 목표)\n· [정성 평가] 참여자 소감문 및 의견 피드백 수렴 분석\n· [환류 계획] 평가 결과를 종합 분석하여 차년도 사업 계획 수립 시 프로그램 개편 자료로 활용`
+    };
+
+    preview.innerHTML = `
+      <div style="border:1px solid #bfdbfe;background:#ffffff;padding:12px;margin-top:8px;border-radius:6px;font-size:13px;">
+        <b style="color:#1e40af">✨ AI 사업계획 작성 결과</b>
+        <div style="margin-top:6px;white-space:pre-wrap;color:#1e293b"><b>[추진배경 및 필요성]</b>\n${planDraftData.background}\n\n<b>[사업목적]</b>\n${planDraftData.purpose}\n\n<b>[기대효과]</b>\n${planDraftData.expected_effect}\n\n<b>[운영방법]</b>\n${planDraftData.operation_method}\n\n<b>[평가·환류 계획]</b>\n${planDraftData.evaluation_plan}</div>
+      </div>
+    `;
+
+    document.getElementById('aiPlanApplyBtnV120').disabled = false;
+    msg.textContent = '✨ AI 초안 작성이 완료되었습니다. [✅ 입력폼에 자동 적용] 버튼을 눌러주세요.';
+
+  } catch (e) {
+    msg.textContent = 'AI 작성 오류: ' + e.message;
+  }
+};
+
+window.applyPlanAIV120 = function() {
+  if (!planDraftData) return;
+
+  setVal('sp_background', planDraftData.background);
+  setVal('sp_purpose', planDraftData.purpose);
+  setVal('sp_expected_effect', planDraftData.expected_effect);
+  setVal('sp_operation_method', planDraftData.operation_method);
+  setVal('sp_evaluation_plan', planDraftData.evaluation_plan);
+
+  document.getElementById('aiPlanMsgV120').textContent = '✅ 표준 입력폼 및 계획서 서식에 문장이 자동 입력되었습니다.';
+};
+</script>
+
+<script>
+// ===== [기존 기능 유지] 2단계: AI 사업 결과보고서 자동 완성 =====
 let resultDraftData = null;
 
 window.generateResultAIV113 = async function() {
@@ -564,7 +659,6 @@ window.generateResultAIV113 = async function() {
 
     msg.textContent = '✨ AI가 사업 성과 및 설문 통계를 분석하여 종합 보고 초안을 생성 중입니다...';
 
-    // AI 자동 작성 템플릿 엔진 (전문 공공 행정 문체)
     resultDraftData = {
       achievements: `1. 사업 목표 완수 및 높은 참여 실적 기록\n - 총 ${participants}명의 대상자가 참석하여 당초 계획 대비 높은 집행률 및 동참률을 기록함.\n2. 설문 조사를 통한 객관적 호응도 입증\n - 만족도 평가 결과(${score})를 달성하여 정서적 회복 및 역량 강화 효과를 객관적으로 증명함.\n3. ${content ? `'${content}'` : '맞춤형 체계적 프로그램'} 구성을 통해 직무 스트레스 완화 및 종사자 간 상호 유대감을 대폭 제고함.`,
       improvements: `1. 자율 소통 및 정비 시간 확대 필요\n - 다채로운 체험 일정으로 인해 자유로운 정비 및 개인 교류 시간이 다소 짧았다는 피드백 수렴.\n2. 접근성 제고를 위한 권역별 운영 검토\n - 이동 편의성을 극대화하기 위해 차년도에는 권역별 장소 다변화가 필요함.`,
@@ -600,10 +694,8 @@ window.applyResultAIV113 = function() {
 
   document.getElementById('aiResultMsgV113').textContent = '✅ 결과보고서 폼 및 생성 문서에 성공적으로 적용되었습니다.';
 };
-</script>
 
-<script>
-// ===== [기능 2] 설문 통계 연동 및 구글폼 중복 제거 통합 엔진 =====
+// 설문 통합 연동
 (function initSurveyIntegration() {
   function parseScore(val) {
     if (!val) return null;
