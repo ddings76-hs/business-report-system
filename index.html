@@ -299,7 +299,7 @@
       📌 [1단계] 사업계획서 작성
     </div>
     <div id="btn-mode-result" class="mode-btn" onclick="switchMode('RESULT')">
-      ✅ [2단계] 사업 결과보고서 작성 (구글폼 연동)
+      ✅ [2단계] 사업 결과보고서 작성
     </div>
     <div id="btn-mode-list" class="mode-btn" onclick="switchMode('LIST')">
       📁 [3단계] 누적 사업 DB 목록
@@ -549,7 +549,7 @@
 
     <div class="sub-tab-container no-print">
       <div id="r-subtab-1" class="sub-tab active-res" onclick="switchSubTab('r', 1)">Ⅰ. 사업 결과 개요</div>
-      <div id="r-subtab-2" class="sub-tab" onclick="switchSubTab('r', 2)">Ⅱ. 설문 결과 (구글폼 연동)</div>
+      <div id="r-subtab-2" class="sub-tab" onclick="switchSubTab('r', 2)">Ⅱ. 설문 결과</div>
       <div id="r-subtab-3" class="sub-tab" onclick="switchSubTab('r', 3)">Ⅲ. 예산 정산 (재원/예산항목)</div>
     </div>
 
@@ -4316,7 +4316,7 @@ html.public-survey-mode #publicSurveyV1091 { display:block !important; }
    const sec=findResultSection()||document;
    return [...sec.querySelectorAll('button,a,.tab-btn')].filter(x=>{
      const t=(x.textContent||'').replace(/\s+/g,' ').trim();
-     return /^Ⅱ\.\s*설문 결과/.test(t)||t.includes('설문 결과 (구글폼 연동)');
+     return /^Ⅱ\.\s*설문 결과/.test(t)||t.includes('설문 결과');
    });
  }
  function locatePanel(tab){
