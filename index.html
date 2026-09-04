@@ -1380,5 +1380,74 @@
   });
 })();
 </script>
+<script>
+// ===== [v11.2 FIX] 계획서 열기 및 화면 연동 보정 스크립트 =====
+(function patchPlanOpenSystem() {
+  // 1. 기존 loadCloudDocument 함수 보강
+  const originalLoadCloudDocument = window.loadCloudDocument;
+  
+  window.loadCloudDocument = async function(docId) {
+    try {
+      // Supabase 및 기존 데이터 로드 함수 실행
+      if (typeof originalLoadCloudDocument === 'function') {
+        await originalLoadCloudDocument(docId);
+      }
+
+      // 대시보드 모드 숨기기 및 사업계획서 탭 활성화 강제 적용
+      const dashMode = document.getElementById('dashboard-mode');
+      if (dashMode) dashMode.style.display = 'none';
+
+      const homeSec = document.getElementById('section-home-v86');
+      if (homeSec) homeSec.classList.remove('active');
+
+      const listSec = document.getElementById('section-input-list');
+      if (listSec) listSec.classList.remove('active');
+
+      const planSec = document.getElementById('section-input-plan');
+      if (planSec) {
+        planSec.style.display = 'block';
+        planSec.classList.add('active');
+      }
+
+      // 모드 선택 버튼 스타일 업데이트
+      document.querySelectorAll('.mode-btn').forEach(btn => btn.className = 'mode-btn');
+      const planBtn = document.getElementById('btn-mode-plan');
+      if (planBtn) planBtn.className = 'mode-btn active-plan';
+
+      // 표준입력폼 동기화 강제 실행
+      if (typeof syncStandardToLegacyV1061 === 'function') {
+        syncStandardToLegacyV1061();
+      }
+      if (typeof calcPlanBudget === 'function') {
+        calcPlanBudget();
+      }
+
+      // 최상단으로 스크롤 이동
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+      console.error("계획서 열기 중 오류 발생:", err);
+      alert("계획서를 불러오는 중 오류가 발생했습니다: " + (err.message || err));
+    }
+  };
+
+  // 2. 이벤트 위임을 통한 '계획서 열기' 버튼 클릭 감지 강화
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+
+    const txt = (btn.textContent || '').trim();
+    if (txt.includes('계획서 열기')) {
+      setTimeout(() => {
+        const planSec = document.getElementById('section-input-plan');
+        if (planSec) {
+          planSec.style.display = 'block';
+          planSec.classList.add('active');
+        }
+      }, 100);
+    }
+  }, true);
+})();
+</script>  
 </body>
 </html>
