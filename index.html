@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.2.1 복구본)</title>
+<title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.2.2 계획서 단일화)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -118,7 +118,7 @@
 <body>
 <div id="authOverlay" style="position:fixed;inset:0;background:#f5f7fa;z-index:99999;display:flex;align-items:center;justify-content:center;">
   <div style="width:min(430px,92vw);background:#fff;border:1px solid #ddd;border-radius:14px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.12);">
-    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v11.2.1</h2>
+    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v11.2.2</h2>
     <p style="font-size:13px;color:#666;margin:0 0 20px;">직원 계정으로 로그인하면 공동 사업 DB를 사용할 수 있습니다.</p>
     <label>이메일</label><input id="loginEmail" type="email" style="width:100%;padding:10px;margin:5px 0 12px;box-sizing:border-box;">
     <label>비밀번호</label><input id="loginPassword" type="password" style="width:100%;padding:10px;margin:5px 0 14px;box-sizing:border-box;">
@@ -291,7 +291,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.2.1 복구본)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">1단계 정상화 · 공동업무/권한/사업관리 통합</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v11.2.2 계획서 단일화)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">2단계 · 사업계획 입력·생성 흐름 통합</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -346,28 +346,6 @@
   </div>
 
   <div id="section-input-plan" class="form-section active">
-    <div id="standardPlanV106" style="border:2px solid #1f4e8c;border-radius:10px;padding:16px;margin-bottom:18px;background:#fff">
-      <h2 style="margin:0 0 8px;color:#173f78">Ⅰ. 사업 개요 · 표준 입력폼</h2>
-      <div style="font-size:12px;color:#666;margin-bottom:12px">기본항목은 한 번만 입력하며, Ⅰ. 사업 개요와 생성 문서에 자동 반영됩니다. Ⅱ. 주요 프로그램 및 세부일정과 Ⅲ. 소요 예산(안) 및 재원은 별도 입력합니다.</div>
-      <table style="width:100%;border-collapse:collapse">
-        <tbody id="standardPlanBodyV106">
-          <tr><th style="border:1px solid #bbb;padding:8px;width:180px">사업명</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_project_name" style="width:100%" placeholder="사업명을 입력하세요"></td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">추진배경 및 필요성</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_background" style="width:100%;min-height:65px"></textarea></td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">사업목적</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_purpose" style="width:100%;min-height:55px"></textarea></td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">기대효과</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_expected_effect" style="width:100%;min-height:55px"></textarea></td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">운영일시</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_operation_date" style="width:100%" placeholder="예: 2026. 9. 15. 14:00~16:00"></td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">참여대상</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_target_group" style="width:100%" placeholder="예: 화성시 거주 청소년"></td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">계획인원</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_planned_participants" type="number" min="0" style="width:160px" placeholder="30"> 명</td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">주요내용</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_content" style="width:100%;min-height:70px"></textarea></td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">운영장소</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_location" style="width:100%"></td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">운영방법</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_operation_method" style="width:100%;min-height:55px"></textarea></td></tr>
-          <tr><th style="border:1px solid #bbb;padding:8px">평가·환류 계획</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_evaluation_plan" style="width:100%;min-height:55px"></textarea></td></tr>
-        </tbody>
-      </table>
-      <div style="margin-top:9px"><button type="button" class="btn btn-add" onclick="addCustomPlanFieldV106()">＋ 추가항목</button></div>
-      <div id="customPlanFieldsV106" style="margin-top:8px"></div>
-    </div>
-
     <div class="sub-tab-container no-print">
       <div id="subtab-1" class="sub-tab active" onclick="switchSubTab('p', 1)">Ⅰ. 사업 개요</div>
       <div id="subtab-2" class="sub-tab" onclick="switchSubTab('p', 2)">Ⅱ. 주요 프로그램 및 세부일정</div>
@@ -383,19 +361,34 @@
 
     <!-- 계획 서브탭 1: 사업 개요 -->
     <div id="p-sub-section-1" class="sub-section active">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 class="section-plan-head" style="margin:0;">Ⅰ. 사업 개요</h2>
-        <button class="btn btn-add" onclick="addOverviewRow()">+ 항목 추가</button>
+      <div id="standardPlanV106" style="border:2px solid #1f4e8c;border-radius:10px;padding:16px;margin-bottom:18px;background:#fff">
+        <h2 style="margin:0 0 8px;color:#173f78">Ⅰ. 사업 개요</h2>
+        <div style="font-size:12px;color:#666;margin-bottom:12px">입력한 내용은 내부기안문과 사업계획서에 동일하게 반영됩니다.</div>
+        <table style="width:100%;border-collapse:collapse">
+          <tbody id="standardPlanBodyV106">
+            <tr><th style="border:1px solid #bbb;padding:8px;width:180px">사업명</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_project_name" style="width:100%" placeholder="사업명을 입력하세요"></td></tr>
+            <tr><th style="border:1px solid #bbb;padding:8px">추진배경 및 필요성</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_background" style="width:100%;min-height:65px"></textarea></td></tr>
+            <tr><th style="border:1px solid #bbb;padding:8px">사업목적</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_purpose" style="width:100%;min-height:55px"></textarea></td></tr>
+            <tr><th style="border:1px solid #bbb;padding:8px">기대효과</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_expected_effect" style="width:100%;min-height:55px"></textarea></td></tr>
+            <tr><th style="border:1px solid #bbb;padding:8px">운영일시</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_operation_date" style="width:100%" placeholder="예: 2026. 9. 15. 14:00~16:00"></td></tr>
+            <tr><th style="border:1px solid #bbb;padding:8px">참여대상</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_target_group" style="width:100%" placeholder="예: 화성시 관내 장기요양종사자"></td></tr>
+            <tr><th style="border:1px solid #bbb;padding:8px">계획인원</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_planned_participants" type="number" min="0" style="width:160px" placeholder="30"> 명</td></tr>
+            <tr><th style="border:1px solid #bbb;padding:8px">주요내용</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_content" style="width:100%;min-height:70px"></textarea></td></tr>
+            <tr><th style="border:1px solid #bbb;padding:8px">운영장소</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_location" style="width:100%"></td></tr>
+            <tr><th style="border:1px solid #bbb;padding:8px">운영방법</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_operation_method" style="width:100%;min-height:55px"></textarea></td></tr>
+            <tr><th style="border:1px solid #bbb;padding:8px">평가·환류 계획</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_evaluation_plan" style="width:100%;min-height:55px"></textarea></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:9px"><button type="button" class="btn btn-add" onclick="addCustomPlanFieldV106()">＋ 추가항목</button></div>
+        <div id="customPlanFieldsV106" style="margin-top:8px"></div>
       </div>
-      <table class="form-table" style="margin-top: 8px;">
-        <colgroup><col style="width: 20%;"><col style="width: 72%;"><col style="width: 8%;"></colgroup>
-        <thead><tr><th>항목명</th><th>내용</th><th>삭제</th></tr></thead>
+      <table aria-hidden="true" style="display:none">
         <tbody id="p_overviewTbody">
-          <tr><td><input type="text" class="p-ov-key" value="사업명"></td><td><textarea class="p-ov-val">화성시 장기요양종사자 힐링 나들이 「마음충전 힐링데이」</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
-          <tr><td><input type="text" class="p-ov-key" value="사업일시"></td><td><textarea class="p-ov-val">2026. 05. 15. (금) 09:00 ~ 17:00</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
-          <tr><td><input type="text" class="p-ov-key" value="사업목적"></td><td><textarea class="p-ov-val">신체적·정서적 소진 회복, 직무 스트레스 해소 및 정서적 지지 강화</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
-          <tr><td><input type="text" class="p-ov-key" value="참여대상"></td><td><textarea class="p-ov-val">화성시 관내 장기요양종사자 30명 (기관별 최대 2인)</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
-          <tr><td><input type="text" class="p-ov-key" value="장소"></td><td><textarea class="p-ov-val">가평 아침고요수목원 (가평군 상면 수목원로 432)</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+          <tr><td><input type="text" class="p-ov-key" value="사업명"></td><td><textarea class="p-ov-val"></textarea></td></tr>
+          <tr><td><input type="text" class="p-ov-key" value="운영일시"></td><td><textarea class="p-ov-val"></textarea></td></tr>
+          <tr><td><input type="text" class="p-ov-key" value="사업목적"></td><td><textarea class="p-ov-val"></textarea></td></tr>
+          <tr><td><input type="text" class="p-ov-key" value="참여대상"></td><td><textarea class="p-ov-val"></textarea></td></tr>
+          <tr><td><input type="text" class="p-ov-key" value="운영장소"></td><td><textarea class="p-ov-val"></textarea></td></tr>
         </tbody>
       </table>
     </div>
@@ -417,8 +410,7 @@
         <table class="form-table" style="margin-top: 8px;">
           <colgroup><col style="width: 25%;"><col style="width: 67%;"><col style="width: 8%;"></colgroup>
           <tbody id="p_progTbody">
-            <tr><td><input type="text" class="p-prog-key" value="자연 힐링 활동"></td><td><textarea class="p-prog-val">수목원 자유 관람 및 산책</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
-            <tr><td><input type="text" class="p-prog-key" value="가드닝 클래스"></td><td><textarea class="p-prog-val">식물 심기 및 관리 체험 프로그램</textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+            <tr><td><input type="text" class="p-prog-key" placeholder="프로그램명"></td><td><textarea class="p-prog-val" placeholder="프로그램 내용을 입력하세요"></textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
           </tbody>
         </table>
       </div>
@@ -433,8 +425,7 @@
         <table class="form-table" style="margin-top: 8px;">
           <colgroup><col style="width: 25%;"><col style="width: 67%;"><col style="width: 8%;"></colgroup>
           <tbody id="p_schedTbody">
-            <tr><td><input type="text" class="p-sch-time" value="09:00 ~ 10:30"></td><td><input type="text" class="p-sch-val" value="집결 및 출발 (융건릉 주차장)"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
-            <tr><td><input type="text" class="p-sch-time" value="10:30 ~ 12:00"></td><td><input type="text" class="p-sch-val" value="가드닝 클래스 체험"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+            <tr><td><input type="text" class="p-sch-time" placeholder="예: 14:00~14:10"></td><td><input type="text" class="p-sch-val" placeholder="세부 일정을 입력하세요"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
           </tbody>
         </table>
       </div>
@@ -454,10 +445,9 @@
       <table class="form-table" style="margin-top: 8px;">
         <thead><tr><th>세목</th><th>산출 근거</th><th>금액(원)</th><th>비고</th><th>삭제</th></tr></thead>
         <tbody id="p_budgetTbody">
-          <tr><td><input type="text" class="p-bg-item" value="입장료"></td><td><input type="text" class="p-bg-calc" value="11,000원 × 40명" oninput="calcBasisAmountV1031(this)"></td><td><input type="number" class="p-bg-amount" value="440000" oninput="calcPlanBudget()"></td><td><input type="text" class="p-bg-note" value="수목원"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcPlanBudget();">삭제</button></td></tr>
-          <tr><td><input type="text" class="p-bg-item" value="식대"></td><td><input type="text" class="p-bg-calc" value="15,000원 × 40명" oninput="calcBasisAmountV1031(this)"></td><td><input type="number" class="p-bg-amount" value="600000" oninput="calcPlanBudget()"></td><td><input type="text" class="p-bg-note" value="중식"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcPlanBudget();">삭제</button></td></tr>
+          <tr><td><input type="text" class="p-bg-item" placeholder="세목"></td><td><input type="text" class="p-bg-calc" placeholder="예: 10,000원 × 30명" oninput="calcBasisAmountV1031(this)"></td><td><input type="number" class="p-bg-amount" value="0" oninput="calcPlanBudget()"></td><td><input type="text" class="p-bg-note" placeholder="비고"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcPlanBudget();">삭제</button></td></tr>
         </tbody>
-        <tfoot><tr><td colspan="2" class="td-center">합계</td><td class="td-right" style="font-weight:bold; color:#2563eb;" id="p_totalBudgetDisplay">1,040,000 원</td><td colspan="2"></td></tr></tfoot>
+        <tfoot><tr><td colspan="2" class="td-center">합계</td><td class="td-right" style="font-weight:bold; color:#2563eb;" id="p_totalBudgetDisplay">0 원</td><td colspan="2"></td></tr></tfoot>
       </table>
     </div>
 
@@ -927,14 +917,14 @@
     // 2. 주요 프로그램
     let pKeys = document.querySelectorAll('.p-prog-key'), pVals = document.querySelectorAll('.p-prog-val');
     let pTbl = '<tr><th style="width:25%;">구분</th><th>내용</th></tr>';
-    for(let i=0; i<pKeys.length; i++) if(pKeys[i].value) pTbl += `<tr><th class="td-center">${pKeys[i].value}</th><td>${pVals[i].value.replaceAll('\n','<br>')}</td></tr>`;
+    for(let i=0; i<pKeys.length; i++) if(pKeys[i].value) pTbl += `<tr><th class="td-center">${esc(pKeys[i].value)}</th><td>${esc(pVals[i].value).replaceAll('\n','<br>')}</td></tr>`;
     document.getElementById('out_p_prog_table').innerHTML = pTbl;
     document.getElementById('out_p_program_block').style.display = window.planProgramVisible === false ? 'none' : 'block';
 
     // 3. 세부 일정
     let sTimes = document.querySelectorAll('.p-sch-time'), sVals = document.querySelectorAll('.p-sch-val');
     let sTbl = '<tr><th style="width:25%;">시간</th><th>내용</th></tr>';
-    for(let i=0; i<sTimes.length; i++) if(sTimes[i].value) sTbl += `<tr><td class="td-center">${sTimes[i].value}</td><td>${sVals[i].value}</td></tr>`;
+    for(let i=0; i<sTimes.length; i++) if(sTimes[i].value) sTbl += `<tr><td class="td-center">${esc(sTimes[i].value)}</td><td>${esc(sVals[i].value)}</td></tr>`;
     document.getElementById('out_p_sched_table').innerHTML = sTbl;
     document.getElementById('out_p_schedule_block').style.display = window.planScheduleVisible === false ? 'none' : 'block';
     document.getElementById('out_p_program_schedule_section').style.display =
@@ -945,7 +935,7 @@
     let bItems = document.querySelectorAll('.p-bg-item'), bCalcs = document.querySelectorAll('.p-bg-calc'), bAmts = document.querySelectorAll('.p-bg-amount'), bNotes = document.querySelectorAll('.p-bg-note');
     let bTbl = '<tr><th>세목</th><th>산출 근거</th><th>금액(원)</th><th>비고</th></tr>';
     let totalAmt = calcPlanBudget();
-    for(let i=0; i<bItems.length; i++) if(bItems[i].value) bTbl += `<tr><td class="td-center">${bItems[i].value}</td><td>${bCalcs[i].value}</td><td class="td-right">${(parseInt(bAmts[i].value)||0).toLocaleString()}</td><td class="td-center">${bNotes[i].value}</td></tr>`;
+    for(let i=0; i<bItems.length; i++) if(bItems[i].value) bTbl += `<tr><td class="td-center">${esc(bItems[i].value)}</td><td>${esc(bCalcs[i].value)}</td><td class="td-right">${(parseInt(bAmts[i].value)||0).toLocaleString()}</td><td class="td-center">${esc(bNotes[i].value)}</td></tr>`;
     document.getElementById('out_p_budget_table').innerHTML = bTbl;
     document.getElementById('out_p_budget_total').innerText = totalAmt.toLocaleString() + ' 원';
     document.getElementById('out_p_budget_total_bottom').innerText = totalAmt.toLocaleString() + ' 원';
@@ -1203,11 +1193,13 @@
 
     if(type === 'PLAN') {
       window.currentPlanRecordId = null;
+      window.currentCloudPlanProjectId = null;
       window.planProgramVisible = true; window.planScheduleVisible = true;
       document.querySelectorAll('#section-input-plan input[type="text"], #section-input-plan input[type="number"], #section-input-plan textarea').forEach(el=>{
         if(!el.closest('#output-plan-container')) el.value = el.type === 'number' ? '0' : '';
       });
       p_overviewTbody.innerHTML=''; addOverviewRow();
+      customPlanFieldsV106=[]; renderCustomPlanFieldsV106();
       p_progTbody.innerHTML=''; addProgRow();
       p_schedTbody.innerHTML=''; addScheduleRow();
       p_budgetTbody.innerHTML=''; addPlanBudgetRow();
@@ -1216,12 +1208,13 @@
       document.getElementById('output-plan-container').style.display='none';
       calcPlanBudget(); switchSubTab('p',1); switchMode('PLAN');
     } else {
-      window.currentResultRecordId = null; window.currentSourcePlanId = null;
+      window.currentResultRecordId = null; window.currentCloudResultProjectId = null; window.currentSourcePlanId = null;
       document.querySelectorAll('#section-input-result input[type="text"], #section-input-result input[type="number"], #section-input-result textarea').forEach(el=>{
         if(!el.closest('#output-result-container')) el.value = el.type === 'number' ? '0' : '';
       });
       r_budgetTbody.innerHTML=''; addResultBudgetRow();
       r_attachTbody.innerHTML=''; addAttachRow();
+      customResultFieldsV107=[]; renderCustomResultFieldsV107();
       r_orgName.value='화성시장기요양지원센터';
       document.getElementById('validationBox').style.display='none';
       document.getElementById('output-result-container').style.display='none';
@@ -2798,7 +2791,7 @@
       '운영일시':std.operation_date,'참여대상':std.target_group,'계획인원':String(std.planned_participants||0),
       '주요내용':std.content,'운영장소':std.location,'운영방법':std.operation_method,'평가·환류 계획':std.evaluation_plan
     };
-    document.querySelectorAll('#section-input-plan .p-ov-row').forEach(row=>{
+    document.querySelectorAll('#p_overviewTbody tr').forEach(row=>{
       const k=row.querySelector('.p-ov-key'),v=row.querySelector('.p-ov-val');
       if(k&&v&&Object.prototype.hasOwnProperty.call(map,k.value))v.value=map[k.value];
     });
