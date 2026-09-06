@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-build="v14.6.2-20260906">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v14.4 관리기능 보완)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v14.6.2 외부공문 보완)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -57,6 +57,10 @@
   .btn-add { background-color: #475569; color: #ffffff; font-size: 12px; padding: 5px 12px; border: none; border-radius: 3px; cursor: pointer; }
   .btn-del { background-color: #ef4444; color: #ffffff; font-size: 12px; padding: 4px 8px; border: none; border-radius: 3px; cursor: pointer; }
   .btn-gform { background-color: #7c3aed; color: #ffffff; font-size: 12px; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+  .mode-btn.active-external { background:#f5f3ff;border-color:#7c3aed;color:#6d28d9;box-shadow:0 2px 5px rgba(124,58,237,.15); }
+  .external-panel-v146 { border:1px solid #c4b5fd;border-radius:9px;padding:14px;background:#faf9ff;margin-bottom:14px; }
+  .external-grid-v146 { display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px; }
+  .external-task-v146 { display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee; }
   
   /* 공문서 서식 스타일 */
   .doc-sheet { background: #ffffff; border: 1px solid #94a3b8; padding: 40px; font-family: 'Batang', 'Gungsuh', serif; color: #000; box-shadow: 0 0 5px rgba(0,0,0,0.1); margin-top: 20px; line-height: 1.8; page-break-inside: auto; }
@@ -90,6 +94,7 @@
   /* 2단 고정 결재/시행선 스타일 */
   .doc-signature { position:relative;text-align:center;font-size:23px;font-weight:bold;letter-spacing:.08em;margin:55px 0 50px; }
   .doc-seal { position:absolute;width:64px;height:64px;object-fit:contain;margin-left:-19px;top:-18px; }
+  .doc-seal-text { display:inline-block;margin-left:10px;color:#b91c1c;font-size:17px;font-weight:bold;letter-spacing:0;vertical-align:middle;white-space:nowrap; }
   .doc-fixed-footer { width:100%; margin-top:auto; font-family:'Batang',serif; font-size:14px; line-height:1.55; }
   .doc-approval-container { width: 100%; border-top: 8px solid #b7b7b7; margin-top: 0; padding-top: 7px; font-size: 14px; line-height:1.55; font-family: 'Batang', serif; }
   .doc-approval-row { display: flex; justify-content: flex-start; min-height:22px; margin:0; line-height:1.55; }
@@ -164,14 +169,12 @@
 <body>
 <div id="authOverlay" style="position:fixed;inset:0;background:#f5f7fa;z-index:99999;display:flex;align-items:center;justify-content:center;">
   <div style="width:min(430px,92vw);background:#fff;border:1px solid #ddd;border-radius:14px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.12);">
-    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v14.4</h2>
+    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v14.6.2</h2>
     <p style="font-size:13px;color:#666;margin:0 0 20px;">직원 계정으로 로그인하면 공동 사업 DB를 사용할 수 있습니다.</p>
     <label>이메일</label><input id="loginEmail" type="email" style="width:100%;padding:10px;margin:5px 0 12px;box-sizing:border-box;">
     <label>비밀번호</label><input id="loginPassword" type="password" style="width:100%;padding:10px;margin:5px 0 14px;box-sizing:border-box;">
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-plan" style="flex:1;" onclick="loginV8()">로그인</button>
-      <button class="btn btn-add" style="flex:1;" onclick="signupV8()">직원 계정 생성</button>
-    </div>
+    <button class="btn btn-plan" style="width:100%;" onclick="loginV8()">로그인</button>
+    <div style="margin-top:10px;padding:9px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#475569;text-align:center;">신규 직원 계정과 임시비밀번호는 관리자가 발급합니다.</div>
     <div id="authMsg" style="margin-top:12px;font-size:12px;color:#b91c1c;"></div>
   </div>
 </div>
@@ -227,9 +230,24 @@
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
       <div>
         <h3 style="margin:0;">직원 및 권한 관리</h3>
-        <div style="font-size:12px;color:#666;margin-top:4px;">관리자만 직원의 담당자·검토자·관리자 권한을 변경할 수 있습니다.</div>
+        <div style="font-size:12px;color:#666;margin-top:4px;">관리자만 직원 계정·임시비밀번호·접근 권한을 관리할 수 있습니다.</div>
       </div>
       <button class="btn btn-del" onclick="closeAdminV82()">닫기</button>
+    </div>
+    <div style="border:1px solid #cbd5e1;border-radius:8px;padding:14px;margin-bottom:14px;background:#f8fafc;">
+      <strong style="display:block;margin-bottom:10px;">신규 직원 계정 발급</strong>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;">
+        <input id="adminNewEmailV145" type="email" placeholder="이메일">
+        <input id="adminNewPasswordV145" type="password" placeholder="임시비밀번호(8자 이상)">
+        <input id="adminNewNameV145" type="text" placeholder="이름">
+        <input id="adminNewPositionV145" type="text" placeholder="직급/직책">
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+        <select id="adminNewRoleV145" style="width:160px"><option value="staff">담당자</option><option value="reviewer">검토자</option><option value="admin">관리자</option></select>
+        <label style="font-size:12px;display:flex;align-items:center;gap:5px;"><input id="adminConfirmEmailV145" type="checkbox" checked style="width:auto"> 이메일 인증 완료로 생성</label>
+        <button type="button" class="btn btn-plan" id="adminCreateUserBtnV145" onclick="adminCreateUserV145()">계정 발급</button>
+      </div>
+      <div id="adminAccountMsgV145" style="font-size:12px;margin-top:8px;color:#475569;">비밀번호는 저장·표시되지 않습니다. 직원에게 임시비밀번호를 별도로 전달해 주세요.</div>
     </div>
     <div id="adminUserListV82">불러오는 중...</div>
   </div>
@@ -337,7 +355,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v14.4 관리기능 보완)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과기안 예산표기·사업삭제·직원 가입정보 확인</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v14.6.2 외부공문 보완)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">역할별 확인업무·사업 연계/일반 외부공문 작성·저장·검토·시행</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -349,6 +367,9 @@
     </div>
     <div id="btn-mode-result" class="mode-btn" onclick="switchMode('RESULT')">
       ✅ [2단계] 사업 결과보고서 작성 (자체 설문 연동)
+    </div>
+    <div id="btn-mode-external-v146" class="mode-btn" onclick="switchMode('EXTERNAL')">
+      📤 외부공문 작성
     </div>
     <div id="btn-mode-list" class="mode-btn" onclick="switchMode('LIST')">
       📁 [3단계] 누적 사업 DB 목록
@@ -376,6 +397,7 @@
           <div style="display:flex;gap:7px;flex-wrap:wrap;">
             <button class="btn btn-plan" onclick="switchMode('PLAN')">새 사업계획서</button>
             <button class="btn btn-result" onclick="switchMode('RESULT')">결과보고서</button>
+            <button class="btn" style="background:#7c3aed;color:#fff" onclick="switchMode('EXTERNAL')">외부공문</button>
             <button class="btn btn-add" onclick="switchModeV831Dashboard()">사업관리</button>
           </div>
         </div>
@@ -388,6 +410,78 @@
         <h3 style="margin:0 0 10px;">최근 사업</h3>
         <div id="homeRecentV86">불러오는 중...</div>
       </div>
+    </div>
+  </div>
+
+  <div id="section-external-v146" class="form-section">
+    <div class="no-print">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <div><h2 style="margin:0;color:#6d28d9;border-color:#7c3aed">외부공문 작성</h2><div style="font-size:12px;color:#64748b;margin-top:4px">사업 연계 공문과 사업과 무관한 일반 공문을 작성·저장·검토·시행합니다. 외부공문에는 예산이 포함되지 않습니다.</div></div>
+        <button class="btn btn-add" onclick="newExternalDocV146()">＋ 새 공문</button>
+      </div>
+      <div class="external-panel-v146">
+        <div class="external-grid-v146">
+          <label style="font-size:12px;font-weight:bold">작성 방식<select id="ext_mode_v146" onchange="changeExternalModeV146()"><option value="linked">사업 연계 공문</option><option value="manual">일반 공문 직접 작성</option></select></label>
+          <label style="font-size:12px;font-weight:bold">공문 유형<select id="ext_type_v146" onchange="applyExternalTemplateV146()"><option value="announcement">사업·교육 안내</option><option value="recruitment">참여자 모집</option><option value="cooperation">기관 협조 요청</option><option value="result">결과 통보</option><option value="submission">자료 제출</option><option value="general">일반 공문</option></select></label>
+          <label id="ext_project_label_v146" style="font-size:12px;font-weight:bold">연계 사업<select id="ext_project_v146" onchange="loadExternalProjectV146()"><option value="">사업을 선택하세요</option></select></label>
+          <label id="ext_source_label_v146" style="font-size:12px;font-weight:bold">연계 자료<select id="ext_source_v146" onchange="applyExternalTemplateV146()"><option value="PLAN">계획서 기준</option><option value="RESULT">결과보고서 기준</option></select></label>
+        </div>
+        <div id="ext_link_status_v146" style="font-size:11px;color:#64748b;margin-top:8px">저장된 사업을 선택하면 예산을 제외한 사업정보가 자동으로 반영됩니다.</div>
+      </div>
+
+      <div class="external-panel-v146" style="background:#fff">
+        <div class="external-grid-v146">
+          <label style="font-size:12px">수신자<input id="ext_recipient_v146" value="수신자 참조"></label>
+          <label style="font-size:12px">경유<input id="ext_via_v146" placeholder="해당 없으면 비워두세요"></label>
+          <label style="font-size:12px">시행번호<input id="ext_number_v146" placeholder="예: 화성시장기요양-00"></label>
+          <label style="font-size:12px">시행일<input id="ext_date_v146" placeholder="예: 2026. 9. 6."></label>
+          <label style="font-size:12px">공개 여부<input id="ext_disclosure_v146" value="공개"></label>
+          <label style="font-size:12px">발신기관장<input id="ext_sender_v146" value="화성시장기요양지원센터장"></label>
+        </div>
+        <label style="display:block;font-size:12px;margin-top:9px">제목<input id="ext_title_v146" placeholder="공문 제목"></label>
+        <label style="display:block;font-size:12px;margin-top:9px">관련 근거<textarea id="ext_reference_v146" placeholder="예: 화성시장기요양-00(2026. 9. 1.)"></textarea></label>
+        <label style="display:block;font-size:12px;margin-top:9px">본문<textarea id="ext_body_v146" style="min-height:180px" placeholder="공문 본문을 입력하세요"></textarea></label>
+        <label style="display:block;font-size:12px;margin-top:9px">붙임서류 <span style="color:#64748b">(한 줄에 한 건)</span><textarea id="ext_attachments_v146" placeholder="교육 안내문 1부.&#10;참가신청서 1부."></textarea></label>
+        <div class="file-manager-v142" style="margin-top:10px;border-color:#c4b5fd;background:#faf9ff"><strong>실제 붙임파일</strong><div style="font-size:11px;color:#64748b;margin-top:3px">공문을 먼저 임시저장한 후 파일을 업로드하세요. 파일당 최대 20MB</div><div class="file-toolbar-v142"><input type="file" id="ext_file_input_v146" multiple accept=".pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"><button type="button" class="btn" style="background:#7c3aed;color:#fff" onclick="uploadExternalFilesV146()">📎 업로드</button></div><div id="ext_file_status_v146" style="font-size:12px;color:#64748b"></div><div id="ext_file_list_v146" class="file-list-v142"></div></div>
+      </div>
+
+      <div class="external-panel-v146" style="background:#fff">
+        <strong style="display:block;margin-bottom:9px;color:#334155">결재라인 및 시행정보</strong>
+        <div class="external-grid-v146">
+          <label style="font-size:12px">담당<input id="ext_staff_v146" placeholder="예: 최송아"></label><label style="font-size:12px">대리<input id="ext_reviewer_v146" placeholder="예: 박예원"></label><label style="font-size:12px">센터장<input id="ext_approver_v146" placeholder="예: 임은숙"></label>
+          <label style="font-size:12px;font-weight:bold">문의 담당자 <span style="color:#dc2626">*</span><input id="ext_contact_name_v146" required placeholder="예: 박예원"></label><label style="font-size:12px;font-weight:bold">문의 전화번호 <span style="color:#dc2626">*</span><input id="ext_contact_phone_v146" required placeholder="예: 031-294-1630"></label>
+          <label style="font-size:12px">전화<input id="ext_phone_v146" value="(031) 294-1630"></label><label style="font-size:12px">팩스<input id="ext_fax_v146" value="(031) 294-1633"></label><label style="font-size:12px">이메일<input id="ext_email_v146" value="hsgoodcare@daum.net"></label>
+        </div>
+        <label style="display:block;font-size:12px;margin-top:9px">주소<input id="ext_address_v146" value="우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층"></label>
+      </div>
+
+      <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-bottom:14px">
+        <button class="btn" style="background:#7c3aed;color:#fff" onclick="generateExternalDocV146()">📄 공문 미리보기</button>
+        <button class="btn btn-plan" onclick="saveExternalDocV146('draft')">💾 임시저장</button>
+        <button class="btn btn-save" onclick="saveExternalDocV146('review_requested')">검토요청</button>
+        <button id="ext_approve_btn_v146" class="btn btn-result" style="display:none" onclick="saveExternalDocV146('approved')">검토완료</button>
+        <button id="ext_sent_btn_v146" class="btn btn-add" style="display:none" onclick="saveExternalDocV146('sent')">시행완료</button>
+      </div>
+      <div id="ext_save_status_v146" style="font-size:12px;text-align:center;color:#64748b;margin-bottom:14px"></div>
+
+      <div class="external-panel-v146" style="background:#fff">
+        <div style="display:flex;justify-content:space-between;align-items:center"><strong>저장된 외부공문</strong><button class="btn btn-add" onclick="loadExternalListV146()">새로고침</button></div>
+        <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap"><input id="ext_search_v146" oninput="filterExternalListV146()" placeholder="제목·수신자·시행번호 검색" style="flex:1;min-width:220px"><select id="ext_status_filter_v146" onchange="filterExternalListV146()" style="width:150px"><option value="">전체 상태</option><option value="draft">작성중</option><option value="review_requested">검토요청</option><option value="approved">검토완료</option><option value="sent">시행완료</option></select></div>
+        <div id="ext_list_v146" style="margin-top:9px">불러오는 중...</div>
+      </div>
+    </div>
+
+    <div id="output-external-v146" style="display:none">
+      <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;margin:14px 0">
+        <span style="background:#ede9fe;color:#6d28d9;padding:3px 7px;border-radius:4px;font-size:12px;font-weight:bold">외부공문</span>
+        <div><button class="btn btn-add" onclick="printDoc('output-external-v146')">🖨️ 인쇄</button> <button class="btn btn-save" onclick="exportDoc('output-external-v146','외부공문')">📥 Word 저장</button></div>
+      </div>
+      <div class="doc-sheet"><div class="doc-cover-page">
+        <table class="doc-letterhead"><tr><td style="width:110px"><img class="doc-center-logo" id="out_ext_center_logo_v146" alt="센터 로고"></td><td><div class="doc-org-header" id="out_ext_org_v146">화성시장기요양지원센터</div></td><td style="width:155px"><img class="doc-city-logo" id="out_ext_city_logo_v146" alt="화성특례시 로고"></td></tr></table>
+        <table class="doc-meta-table"><tr><td class="doc-meta-label">수신자</td><td id="out_ext_recipient_v146"></td></tr><tr><td class="doc-meta-label">(경유)</td><td id="out_ext_via_v146"></td></tr><tr class="doc-title-row"><td class="doc-meta-label">제&nbsp;&nbsp;목</td><td id="out_ext_title_v146" style="font-weight:bold"></td></tr></table>
+        <div class="doc-body-text"><div id="out_ext_body_v146"></div><div id="out_ext_contact_v146" style="margin-top:18px;padding-left:20px;font-weight:bold"></div><div id="out_ext_attachments_v146" style="margin-top:30px"></div><div class="doc-signature"><span id="out_ext_sender_v146">화성시장기요양지원센터장</span><span class="doc-seal-text">(직인)</span></div></div>
+        <div class="doc-fixed-footer"><div class="doc-approval-container"><div class="doc-approval-row"><div class="doc-app-item"><span class="doc-app-label">담당</span><span class="doc-app-value" id="out_ext_staff_v146"></span></div><div class="doc-app-item"><span class="doc-app-label">대리</span><span class="doc-app-value" id="out_ext_reviewer_v146"></span></div><div class="doc-app-item"><span class="doc-app-label">센터장</span><span class="doc-app-value" id="out_ext_approver_v146"></span></div></div><div class="doc-approval-row"><div class="doc-app-item">시행&nbsp;&nbsp;<span id="out_ext_number_v146"></span>&nbsp;&nbsp;(<span id="out_ext_date_v146"></span>)</div><div class="doc-app-item"><span class="doc-app-label">접수</span></div></div></div><div class="doc-footer-address"><div class="doc-footer-line"><span id="out_ext_address_v146"></span>&nbsp;&nbsp;전화 <span id="out_ext_phone_v146"></span> / 팩스 <span id="out_ext_fax_v146"></span> / <span id="out_ext_email_v146"></span> / <span id="out_ext_disclosure_v146"></span></div></div></div>
+      </div></div>
     </div>
   </div>
 
@@ -1036,7 +1130,7 @@
 
 <script>
   function resetMainPanelsV127() {
-    const ids=['section-home-v86','section-input-plan','section-input-result','section-input-list'];
+    const ids=['section-home-v86','section-external-v146','section-input-plan','section-input-result','section-input-list'];
     ids.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
     const dashboard=document.getElementById('dashboard-mode');if(dashboard)dashboard.style.display='none';
     const legacyDashboard=document.getElementById('mode-dashboard');if(legacyDashboard)legacyDashboard.style.display='none';
@@ -1053,6 +1147,10 @@
     } else if (mode === 'RESULT') {
       document.getElementById('btn-mode-result').className = 'mode-btn active-result';
       document.getElementById('section-input-result').classList.add('active');
+    } else if (mode === 'EXTERNAL') {
+      document.getElementById('btn-mode-external-v146').className = 'mode-btn active-external';
+      document.getElementById('section-external-v146').classList.add('active');
+      if(typeof initExternalV146==='function') initExternalV146();
     } else if (mode === 'LIST') {
       document.getElementById('btn-mode-list').className = 'mode-btn active-list';
       document.getElementById('section-input-list').classList.add('active');
@@ -1642,7 +1740,7 @@
       @page{size:A4 portrait;margin:15mm}body{font-family:Batang,serif;color:#000;line-height:1.55}
       .doc-sheet{width:100%;border:0;padding:0;margin:0}.doc-cover-page{min-height:250mm;display:flex;flex-direction:column;box-sizing:border-box}.doc-cover-page .doc-fixed-footer{margin-top:auto}.doc-letterhead{width:100%;border-collapse:collapse;table-layout:fixed;margin:2px 0 42px}.doc-letterhead td{border:0;padding:0 8px;vertical-align:middle}.doc-letterhead img{display:block;max-width:100%;height:auto}.doc-center-logo{width:88px;margin:auto}.doc-city-logo{width:120px;margin-left:auto}.doc-letterhead .doc-sub-header{display:none}
       .doc-org-header{font-size:31px;font-weight:bold;text-align:center;letter-spacing:-2px;white-space:nowrap}.doc-sub-header{font-size:10px;color:#2563eb;text-align:right;margin-top:3px}.doc-meta-table{width:100%;border-collapse:collapse;margin-bottom:15px;font-size:14px}
-      .doc-meta-table td{padding:4px 0;vertical-align:top}.doc-meta-label{width:72px;letter-spacing:.22em;white-space:nowrap}.doc-title-row td{border-bottom:1px solid #111;padding-bottom:6px}.doc-body-text{font-size:14px;text-align:justify;line-height:1.85}.doc-body-text p{margin:5px 0}.doc-divider{text-align:center;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px}.doc-list-item{margin:3px 0 3px 20px;padding-left:28px;text-indent:-28px;font-size:14px}
+      .doc-meta-table td{padding:4px 0;vertical-align:top}.doc-meta-label{width:72px;letter-spacing:.22em;white-space:nowrap}.doc-title-row td{border-bottom:1px solid #111;padding-bottom:6px}.doc-body-text{font-size:14px;text-align:justify;line-height:1.85}.doc-body-text p{margin:5px 0}.doc-divider{text-align:center;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px}.doc-list-item{margin:3px 0 3px 20px;padding-left:28px;text-indent:-28px;font-size:14px}.doc-signature{position:relative;text-align:center;font-size:23px;font-weight:bold;letter-spacing:.08em;margin:55px 0 50px}.doc-seal-text{display:inline-block;margin-left:10px;color:#b91c1c;font-size:17px;font-weight:bold;letter-spacing:0;vertical-align:middle;white-space:nowrap}
       .out-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:10px 0 20px;font-size:13px}.out-table th,.out-table td{border:1px solid #000;padding:6px 8px;overflow-wrap:anywhere}
       .out-table th{background:#f2f2f2;text-align:center}.td-center{text-align:center}.td-right{text-align:right}
       .doc-fixed-footer{width:100%;margin-top:auto;font-family:Batang,serif;font-size:14px;line-height:1.55}.doc-approval-container{border-top:8px solid #b7b7b7;margin-top:0;padding-top:7px;font-size:14px;line-height:1.55}.doc-approval-row{display:flex;min-height:22px;margin:0;line-height:1.55}.doc-app-item{display:flex;align-items:center;flex:1;font-size:14px;line-height:1.55}
@@ -1657,7 +1755,7 @@
   function printDoc(targetId) {
     const target=document.getElementById(targetId);
     if(!target)return alert('인쇄할 문서를 먼저 생성해 주세요.');
-    const title=targetId==='output-plan-container'?'사업계획서 통합본':'사업결과보고서 통합본';
+    const title=targetId==='output-plan-container'?'사업계획서 통합본':targetId==='output-external-v146'?'외부공문':'사업결과보고서 통합본';
     const source=documentFileHTMLV133(targetId,title);if(!source)return alert('인쇄할 문서를 찾을 수 없습니다.');
     const popup=window.open('','_blank','width=1000,height=820');
     if(popup){
@@ -5559,15 +5657,62 @@
     const labels={admin:'관리자',staff:'담당자',reviewer:'검토자'};
     const providers={email:'이메일',google:'Google',kakao:'Kakao',azure:'Microsoft',github:'GitHub'};
     box.innerHTML=setupWarning+'<div style="overflow:auto"><table style="width:100%;min-width:1150px;border-collapse:collapse;font-size:12px;">'+
-      '<tr><th style="border:1px solid #ddd;padding:8px;">이름</th><th style="border:1px solid #ddd;padding:8px;">직급/직책</th><th style="border:1px solid #ddd;padding:8px;">가입 이메일</th><th style="border:1px solid #ddd;padding:8px;">가입일</th><th style="border:1px solid #ddd;padding:8px;">이메일 인증</th><th style="border:1px solid #ddd;padding:8px;">최근 로그인</th><th style="border:1px solid #ddd;padding:8px;">가입 방식</th><th style="border:1px solid #ddd;padding:8px;">현재 권한</th><th style="border:1px solid #ddd;padding:8px;">권한 변경</th></tr>'+
+      '<tr><th style="border:1px solid #ddd;padding:8px;">이름</th><th style="border:1px solid #ddd;padding:8px;">직급/직책</th><th style="border:1px solid #ddd;padding:8px;">가입 이메일</th><th style="border:1px solid #ddd;padding:8px;">가입일</th><th style="border:1px solid #ddd;padding:8px;">이메일 인증</th><th style="border:1px solid #ddd;padding:8px;">최근 로그인</th><th style="border:1px solid #ddd;padding:8px;">가입 방식</th><th style="border:1px solid #ddd;padding:8px;">현재 권한</th><th style="border:1px solid #ddd;padding:8px;">권한 변경</th><th style="border:1px solid #ddd;padding:8px;">임시비밀번호 재설정</th></tr>'+
       (profilesQuery.data||[]).map(user=>{
         const signup=signupById[user.id]||{};
         const email=signup.email||user.email||'-';
         const joined=signup.signed_up_at||user.created_at;
         const confirmed=signup.email_confirmed_at;
         const provider=signup.signup_provider||'-';
-        return '<tr><td style="border:1px solid #ddd;padding:8px;">'+esc(user.name||'-')+(user.id===v8User.id?' <strong>(나)</strong>':'')+'</td><td style="border:1px solid #ddd;padding:8px;">'+esc(user.position||'-')+'</td><td style="border:1px solid #ddd;padding:8px;">'+esc(email)+'</td><td style="border:1px solid #ddd;padding:8px;white-space:nowrap">'+dateOnly(joined)+'</td><td style="border:1px solid #ddd;padding:8px;white-space:nowrap">'+(confirmed?'완료 · '+dateOnly(confirmed):(signupQuery.error?'-':'미완료'))+'</td><td style="border:1px solid #ddd;padding:8px;white-space:nowrap">'+dateTime(signup.last_sign_in_at)+'</td><td style="border:1px solid #ddd;padding:8px;">'+esc(providers[provider]||provider)+'</td><td style="border:1px solid #ddd;padding:8px;">'+esc(labels[user.role]||user.role||'-')+'</td><td style="border:1px solid #ddd;padding:8px;white-space:nowrap"><select id="role_'+user.id+'" style="padding:6px;width:auto"><option value="staff" '+(user.role==='staff'?'selected':'')+'>담당자</option><option value="reviewer" '+(user.role==='reviewer'?'selected':'')+'>검토자</option><option value="admin" '+(user.role==='admin'?'selected':'')+'>관리자</option></select> <button class="btn btn-plan" style="padding:5px 8px;font-size:11px;" onclick="updateUserRoleV82(\''+user.id+'\')">적용</button></td></tr>';
+        return '<tr><td style="border:1px solid #ddd;padding:8px;">'+esc(user.name||'-')+(user.id===v8User.id?' <strong>(나)</strong>':'')+'</td><td style="border:1px solid #ddd;padding:8px;">'+esc(user.position||'-')+'</td><td style="border:1px solid #ddd;padding:8px;">'+esc(email)+'</td><td style="border:1px solid #ddd;padding:8px;white-space:nowrap">'+dateOnly(joined)+'</td><td style="border:1px solid #ddd;padding:8px;white-space:nowrap">'+(confirmed?'완료 · '+dateOnly(confirmed):(signupQuery.error?'-':'미완료'))+'</td><td style="border:1px solid #ddd;padding:8px;white-space:nowrap">'+dateTime(signup.last_sign_in_at)+'</td><td style="border:1px solid #ddd;padding:8px;">'+esc(providers[provider]||provider)+'</td><td style="border:1px solid #ddd;padding:8px;">'+esc(labels[user.role]||user.role||'-')+'</td><td style="border:1px solid #ddd;padding:8px;white-space:nowrap"><select id="role_'+user.id+'" style="padding:6px;width:auto"><option value="staff" '+(user.role==='staff'?'selected':'')+'>담당자</option><option value="reviewer" '+(user.role==='reviewer'?'selected':'')+'>검토자</option><option value="admin" '+(user.role==='admin'?'selected':'')+'>관리자</option></select> <button class="btn btn-plan" style="padding:5px 8px;font-size:11px;" onclick="updateUserRoleV82(\''+user.id+'\')">적용</button></td><td style="border:1px solid #ddd;padding:8px;white-space:nowrap"><input id="reset_password_'+user.id+'" type="password" autocomplete="new-password" placeholder="새 임시비밀번호" style="width:145px;padding:6px"> <button class="btn btn-save" style="padding:5px 8px;font-size:11px" onclick="adminResetPasswordV145(\''+user.id+'\',\''+String(email).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">재설정</button></td></tr>';
       }).join('')+'</table></div>';
+  };
+
+  const accountMessage=(message,error=false)=>{
+    const el=document.getElementById('adminAccountMsgV145');
+    if(el){el.textContent=message;el.style.color=error?'#b91c1c':'#166534';}
+  };
+  const invokeAccount=async body=>{
+    const result=await sb.functions.invoke('admin-user-management-v145',{body});
+    if(result.error)throw new Error(result.error.message||'계정 관리 함수 호출에 실패했습니다.');
+    if(result.data?.error)throw new Error(result.data.error);
+    return result.data;
+  };
+  window.signupV8=function(){
+    const message=document.getElementById('authMsg');
+    if(message)message.textContent='신규 계정은 관리자에게 발급을 요청해 주세요.';
+  };
+  window.adminCreateUserV145=async function(){
+    if(v81Profile?.role!=='admin')return alert('관리자 권한이 필요합니다.');
+    const email=document.getElementById('adminNewEmailV145')?.value.trim()||'';
+    const password=document.getElementById('adminNewPasswordV145')?.value||'';
+    const name=document.getElementById('adminNewNameV145')?.value.trim()||'';
+    const position=document.getElementById('adminNewPositionV145')?.value.trim()||'';
+    const role=document.getElementById('adminNewRoleV145')?.value||'staff';
+    if(!email||!email.includes('@'))return accountMessage('올바른 이메일을 입력해 주세요.',true);
+    if(password.length<8)return accountMessage('임시비밀번호는 8자 이상이어야 합니다.',true);
+    if(!name)return accountMessage('직원 이름을 입력해 주세요.',true);
+    const button=document.getElementById('adminCreateUserBtnV145');
+    if(button){button.disabled=true;button.textContent='발급 중...';}
+    accountMessage('직원 계정을 발급하고 있습니다.');
+    try{
+      await invokeAccount({action:'create',email,password,name,position,role,email_confirm:document.getElementById('adminConfirmEmailV145')?.checked!==false});
+      ['adminNewEmailV145','adminNewPasswordV145','adminNewNameV145','adminNewPositionV145'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+      accountMessage(email+' 계정을 발급했습니다. 임시비밀번호를 직원에게 별도로 전달해 주세요.');
+      await renderAdminUsersV82();
+    }catch(error){accountMessage('계정 발급 실패: '+(error.message||error)+' · Edge Function 배포 상태를 확인해 주세요.',true);}
+    finally{if(button){button.disabled=false;button.textContent='계정 발급';}}
+  };
+  window.adminResetPasswordV145=async function(userId,email){
+    if(v81Profile?.role!=='admin')return alert('관리자 권한이 필요합니다.');
+    const input=document.getElementById('reset_password_'+userId),password=input?.value||'';
+    if(password.length<8)return alert('새 임시비밀번호를 8자 이상 입력해 주세요.');
+    if(!confirm(email+' 직원의 비밀번호를 새 임시비밀번호로 재설정하시겠습니까?'))return;
+    try{
+      await invokeAccount({action:'reset_password',user_id:userId,password});
+      if(input)input.value='';
+      alert('임시비밀번호를 재설정했습니다. 직원에게 새 비밀번호를 별도로 전달해 주세요.');
+    }catch(error){alert('비밀번호 재설정 실패: '+(error.message||error)+'\n\nadmin-user-management-v145 Edge Function 배포 상태를 확인해 주세요.');}
   };
 
   async function attachmentPaths(projectId){
@@ -5598,6 +5743,181 @@
       else if(typeof renderDashboardV831==='function')await renderDashboardV831();
       alert('사업과 연결 자료를 삭제했습니다.'+fileWarning);
     }catch(error){console.error('v14.4 사업삭제 오류:',error);alert('사업 삭제 실패: '+(error.message||error));}
+  };
+})();
+</script>
+<script>
+// ===== v14.6 역할별 확인업무·사업연계/일반 외부공문 =====
+(function(){
+  'use strict';
+  const TABLE='official_documents';
+  let currentId=null,currentStatus='draft',projects=[],documents=[],uploadedFiles=[],officialRows=[];
+  const value=id=>document.getElementById(id)?.value?.trim()||'';
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v??'';};
+  const missingTable=error=>/PGRST205|relation.*official_documents.*does not exist|schema cache/i.test(String(error?.code||'')+' '+String(error?.message||''));
+  const statusLabels={draft:'작성중',review_requested:'검토요청',approved:'검토완료',sent:'시행완료'};
+  const typeLabels={announcement:'사업·교육 안내',recruitment:'참여자 모집',cooperation:'기관 협조 요청',result:'결과 통보',submission:'자료 제출',general:'일반 공문'};
+  const currentRole=()=>v81Profile?.role||'staff';
+  const currentProfileName=()=>v81Profile?.name||v8User?.email||'';
+  function sourceData(){
+    const projectId=value('ext_project_v146'),source=value('ext_source_v146');
+    return documents.find(x=>x.project_id===projectId&&x.doc_type===source)||null;
+  }
+  function normalized(doc){
+    const d=doc?.data||{},st=d.standard||{},official=d.officialDocument||{};
+    if(doc?.doc_type==='RESULT')return{
+      project_name:st.project_name||d.projName||'',date:st.actual_date||d.actualDate||'',location:st.actual_location||d.actualLocation||'',
+      target:st.actual_target_group||d.targetGroup||'',people:st.actual_participants||d.actualParticipants||'',content:st.actual_content||d.summaryContent||'',
+      reference:official.reference||st.ref_doc||d.refDoc||'',attachment:'사업 운영결과보고서 1부.'
+    };
+    return{
+      project_name:st.project_name||d.projectName||'',date:st.operation_date||'',location:st.location||'',target:st.target_group||'',people:st.planned_participants||'',
+      content:st.content||'',reference:official.reference||'',attachment:'사업계획서(안) 1부.'
+    };
+  }
+  function templateText(type,n){
+    const project=n.project_name||'해당 사업',date=n.date||'세부 일정 참조',location=n.location||'세부 장소 참조',target=n.target||'관련 대상자';
+    const people=n.people?` / ${n.people}명`:'';
+    const detail=`가. 사 업 명 : ${project}\n나. 일    시 : ${date}\n다. 장    소 : ${location}\n라. 대    상 : ${target}${people}\n마. 주요내용 : ${n.content||'세부 내용 참조'}`;
+    if(type==='recruitment')return `2. 우리 센터에서는 「${project}」 참여자를 아래와 같이 모집하오니 많은 관심과 신청 바랍니다.\n\n- 아    래 -\n\n${detail}\n바. 협조사항 : 참여 대상자 안내 및 신청 협조`;
+    if(type==='cooperation')return `2. 우리 센터에서는 「${project}」을 아래와 같이 추진하고자 하오니 원활한 사업 운영을 위하여 적극 협조하여 주시기 바랍니다.\n\n- 아    래 -\n\n${detail}\n바. 협조사항 : 사업 안내 및 참여 협조`;
+    if(type==='result')return `2. 위 관련 근거에 따라 「${project}」 운영 결과를 다음과 같이 알려드립니다.\n\n- 아    래 -\n\n${detail}`;
+    if(type==='submission')return `2. 위 관련 근거에 따라 「${project}」 관련 자료를 붙임과 같이 제출합니다.`;
+    if(type==='general')return '';
+    return `2. 우리 센터에서는 「${project}」을 아래와 같이 운영하오니 업무에 참고하여 주시기 바랍니다.\n\n- 아    래 -\n\n${detail}`;
+  }
+  function defaultTitle(type,name){
+    const project=name||'사업';
+    return type==='recruitment'?project+' 참여자 모집 안내':type==='cooperation'?project+' 운영 협조 요청':type==='result'?project+' 운영 결과 안내':type==='submission'?project+' 관련 자료 제출':type==='general'?'':project+' 운영 안내';
+  }
+  function updateActionButtons(){
+    const privileged=['reviewer','admin'].includes(currentRole());
+    const approve=document.getElementById('ext_approve_btn_v146'),sent=document.getElementById('ext_sent_btn_v146');
+    if(approve)approve.style.display=privileged&&currentStatus==='review_requested'?'inline-block':'none';
+    if(sent)sent.style.display=privileged&&currentStatus==='approved'?'inline-block':'none';
+  }
+  function renderFiles(){
+    const box=document.getElementById('ext_file_list_v146');if(!box)return;
+    box.innerHTML=uploadedFiles.length?uploadedFiles.map((file,index)=>'<div class="file-row-v142" style="grid-template-columns:52px minmax(180px,1fr) 90px 190px"><div><strong>붙임 '+(index+1)+'.</strong></div><div>'+esc(file.original_name||'-')+'</div><div>'+Math.max(1,Math.round(Number(file.size_bytes||0)/1024))+' KB</div><div class="file-actions-v142"><button class="btn btn-add" onclick="openExternalFileV146(\''+file.id+'\')">열기</button><button class="btn btn-del" onclick="deleteExternalFileV146(\''+file.id+'\')">삭제</button></div></div>').join(''):'<div class="file-empty-v142">업로드된 실제 파일이 없습니다.</div>';
+  }
+  async function persistFiles(action){
+    if(!currentId)throw new Error('공문을 먼저 저장해 주세요.');const q=await sb.from(TABLE).update({uploaded_attachments:uploadedFiles,updated_by:v8User.id,updated_at:new Date().toISOString()}).eq('id',currentId);if(q.error)throw q.error;
+    await sb.from('official_document_history').insert({official_document_id:currentId,action,status:currentStatus,snapshot:{file_count:uploadedFiles.length},changed_by:v8User.id});
+  }
+  window.uploadExternalFilesV146=async function(){
+    if(currentStatus==='sent')return alert('시행완료된 공문에는 파일을 추가할 수 없습니다.');if(!currentId)return alert('공문을 먼저 임시저장한 후 파일을 업로드해 주세요.');const input=document.getElementById('ext_file_input_v146'),selected=Array.from(input?.files||[]),status=document.getElementById('ext_file_status_v146');if(!selected.length)return alert('업로드할 파일을 선택해 주세요.');
+    const allowed=new Set(['pdf','hwp','hwpx','doc','docx','xls','xlsx','ppt','pptx','jpg','jpeg','png']),before=uploadedFiles.map(x=>({...x})),paths=[];
+    try{for(const file of selected){const ext=(file.name.split('.').pop()||'').toLowerCase();if(!allowed.has(ext))throw new Error('지원하지 않는 파일 형식입니다: '+file.name);if(file.size>20*1024*1024)throw new Error('20MB를 초과했습니다: '+file.name);const id=crypto.randomUUID(),path=currentId+'/'+id+'.'+ext,result=await sb.storage.from('official-attachments').upload(path,file,{upsert:false,contentType:file.type||undefined});if(result.error)throw result.error;paths.push(path);uploadedFiles.push({id,storage_path:path,original_name:file.name,mime_type:file.type||'',size_bytes:file.size,uploaded_at:new Date().toISOString(),uploaded_by:v8User.id});}await persistFiles('FILES_UPLOADED');renderFiles();if(input)input.value='';if(status){status.style.color='#166534';status.textContent=selected.length+'개 파일을 업로드했습니다.';}}
+    catch(error){if(paths.length)await sb.storage.from('official-attachments').remove(paths);uploadedFiles=before;renderFiles();if(status){status.style.color='#b91c1c';status.textContent='파일 업로드 실패: '+(error.message||error);}}
+  };
+  window.openExternalFileV146=async function(id){const file=uploadedFiles.find(x=>x.id===id);if(!file)return;const q=await sb.storage.from('official-attachments').createSignedUrl(file.storage_path,120);if(q.error)return alert('파일 열기 오류: '+q.error.message);window.open(q.data.signedUrl,'_blank','noopener');};
+  window.deleteExternalFileV146=async function(id){if(currentStatus==='sent')return alert('시행완료된 공문의 파일은 삭제할 수 없습니다.');const index=uploadedFiles.findIndex(x=>x.id===id);if(index<0)return;const file=uploadedFiles[index];if(!confirm('「'+file.original_name+'」 파일을 삭제하시겠습니까?'))return;uploadedFiles.splice(index,1);try{await persistFiles('FILE_REMOVED');const q=await sb.storage.from('official-attachments').remove([file.storage_path]);if(q.error)throw q.error;renderFiles();}catch(error){uploadedFiles.splice(index,0,file);renderFiles();alert('파일 삭제 오류: '+(error.message||error));}};
+  window.changeExternalModeV146=function(suppressTemplate=false){
+    const linked=value('ext_mode_v146')==='linked';
+    ['ext_project_label_v146','ext_source_label_v146'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=linked?'block':'none';});
+    const info=document.getElementById('ext_link_status_v146');if(info)info.textContent=linked?'저장된 사업의 예산을 제외한 기본정보를 공문에 반영합니다.':'사업과 연결하지 않고 모든 내용을 직접 작성합니다.';
+    if(linked&&!suppressTemplate)window.applyExternalTemplateV146();
+  };
+  window.loadExternalProjectV146=function(){
+    const pid=value('ext_project_v146'),sourceSelect=document.getElementById('ext_source_v146'),available=documents.filter(x=>x.project_id===pid);
+    if(sourceSelect){sourceSelect.innerHTML=available.map(x=>`<option value="${x.doc_type}">${x.doc_type==='PLAN'?'계획서':'결과보고서'} 기준</option>`).join('')||'<option value="">연계 문서 없음</option>';}
+    window.applyExternalTemplateV146();
+  };
+  window.applyExternalTemplateV146=function(){
+    if(value('ext_mode_v146')!=='linked')return;
+    const doc=sourceData();if(!doc)return;
+    const n=normalized(doc),type=value('ext_type_v146');
+    set('ext_title_v146',defaultTitle(type,n.project_name));set('ext_reference_v146',n.reference);set('ext_body_v146',templateText(type,n));
+    if(!value('ext_attachments_v146'))set('ext_attachments_v146',n.attachment);
+    const info=document.getElementById('ext_link_status_v146');if(info)info.textContent=`${n.project_name||'선택 사업'} · ${doc.doc_type==='PLAN'?'계획서':'결과보고서'}에서 예산을 제외하고 반영했습니다.`;
+  };
+  function formData(status=currentStatus){
+    const mode=value('ext_mode_v146'),projectId=mode==='linked'?value('ext_project_v146')||null:null,source=mode==='linked'?sourceData():null;
+    return{project_id:projectId,source_document_id:source?.id||null,document_mode:mode,document_type:value('ext_type_v146'),recipient:value('ext_recipient_v146'),via:value('ext_via_v146'),title:value('ext_title_v146'),reference_text:value('ext_reference_v146'),body_text:value('ext_body_v146'),attachment_labels:value('ext_attachments_v146').split(/\r?\n/).map(x=>x.trim()).filter(Boolean),uploaded_attachments:uploadedFiles.map(x=>({...x})),document_number:value('ext_number_v146'),document_date:value('ext_date_v146'),disclosure:value('ext_disclosure_v146'),organization_name:'화성시장기요양지원센터',sender_name:value('ext_sender_v146'),staff_name:value('ext_staff_v146'),reviewer_name:value('ext_reviewer_v146'),approver_name:value('ext_approver_v146'),contact_name:value('ext_contact_name_v146'),contact_phone:value('ext_contact_phone_v146'),phone:value('ext_phone_v146'),fax:value('ext_fax_v146'),email:value('ext_email_v146'),address:value('ext_address_v146'),status};
+  }
+  function fillForm(row){
+    currentId=row.id||null;currentStatus=row.status||'draft';uploadedFiles=Array.isArray(row.uploaded_attachments)?row.uploaded_attachments.map(x=>({...x})):[];
+    const mapping={ext_mode_v146:row.document_mode,ext_type_v146:row.document_type,ext_project_v146:row.project_id,ext_recipient_v146:row.recipient,ext_via_v146:row.via,ext_title_v146:row.title,ext_reference_v146:row.reference_text,ext_body_v146:row.body_text,ext_attachments_v146:(row.attachment_labels||[]).join('\n'),ext_number_v146:row.document_number,ext_date_v146:row.document_date,ext_disclosure_v146:row.disclosure,ext_sender_v146:row.sender_name,ext_staff_v146:row.staff_name,ext_reviewer_v146:row.reviewer_name,ext_approver_v146:row.approver_name,ext_contact_name_v146:row.contact_name||row.staff_name,ext_contact_phone_v146:row.contact_phone||row.phone,ext_phone_v146:row.phone,ext_fax_v146:row.fax,ext_email_v146:row.email,ext_address_v146:row.address};
+    Object.entries(mapping).forEach(([id,v])=>set(id,v));window.changeExternalModeV146(true);
+    if(row.project_id){const available=documents.filter(x=>x.project_id===row.project_id),sourceSelect=document.getElementById('ext_source_v146');if(sourceSelect){sourceSelect.innerHTML=available.map(x=>`<option value="${x.doc_type}">${x.doc_type==='PLAN'?'계획서':'결과보고서'} 기준</option>`).join('');set('ext_source_v146',documents.find(x=>x.id===row.source_document_id)?.doc_type||'PLAN');}}
+    renderFiles();updateActionButtons();window.generateExternalDocV146();
+  }
+  window.newExternalDocV146=function(){
+    currentId=null;currentStatus='draft';uploadedFiles=[];
+    ['ext_project_v146','ext_via_v146','ext_title_v146','ext_reference_v146','ext_body_v146','ext_attachments_v146','ext_number_v146','ext_date_v146'].forEach(id=>set(id,''));
+    set('ext_mode_v146','linked');set('ext_type_v146','announcement');set('ext_recipient_v146','수신자 참조');set('ext_disclosure_v146','공개');set('ext_sender_v146','화성시장기요양지원센터장');
+    set('ext_staff_v146',currentProfileName());set('ext_reviewer_v146','대리 박예원');set('ext_approver_v146','센터장 임은숙');set('ext_contact_name_v146',currentProfileName());set('ext_contact_phone_v146','031-294-1630');set('ext_phone_v146','(031) 294-1630');set('ext_fax_v146','(031) 294-1633');set('ext_email_v146','hsgoodcare@daum.net');set('ext_address_v146','우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층');
+    document.getElementById('output-external-v146').style.display='none';renderFiles();window.changeExternalModeV146();updateActionButtons();
+  };
+  window.generateExternalDocV146=function(){
+    const d=formData();if(!d.title)return alert('공문 제목을 입력해 주세요.');if(!d.recipient)return alert('수신자를 입력해 주세요.');if(!d.body_text)return alert('공문 본문을 입력해 주세요.');if(!d.contact_name)return alert('문의 담당자를 입력해 주세요.');if(!d.contact_phone)return alert('문의 전화번호를 입력해 주세요.');
+    const text=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||'';};
+    const center=document.getElementById('out_p_center_logo'),city=document.getElementById('out_p_city_logo');if(center)document.getElementById('out_ext_center_logo_v146').src=center.src;if(city)document.getElementById('out_ext_city_logo_v146').src=city.src;
+    text('out_ext_org_v146',d.organization_name);text('out_ext_recipient_v146',d.recipient);text('out_ext_via_v146',d.via);text('out_ext_title_v146',d.title);text('out_ext_sender_v146',d.sender_name);text('out_ext_staff_v146',String(d.staff_name||'').replace(/^담당\s*/,''));text('out_ext_reviewer_v146',String(d.reviewer_name||'').replace(/^(검토자|대리)\s*/,''));text('out_ext_approver_v146',String(d.approver_name||'').replace(/^(결재자|센터장)\s*/,''));text('out_ext_number_v146',d.document_number||'화성시장기요양-');text('out_ext_date_v146',d.document_date||'시행일 미입력');text('out_ext_address_v146',d.address);text('out_ext_phone_v146',d.phone);text('out_ext_fax_v146',d.fax);text('out_ext_email_v146',d.email);text('out_ext_disclosure_v146',d.disclosure);
+    const body=document.getElementById('out_ext_body_v146'),parts=[];if(d.reference_text)parts.push('<p>1. 관련 근거 : '+esc(d.reference_text)+'</p>');parts.push(d.body_text.split(/\r?\n/).map(line=>{const trimmed=line.trim();if(!trimmed)return '<div style="height:8px"></div>';const listClass=/^[가나다라마바사아자차카타파하]\.\s*/.test(trimmed)?' class="doc-list-item"':'';return '<p'+listClass+' style="white-space:pre-wrap">'+esc(trimmed)+'</p>';}).join(''));body.innerHTML=parts.join('');text('out_ext_contact_v146','문의 : '+d.contact_name+' / '+d.contact_phone);
+    const allAttachments=[...d.attachment_labels,...uploadedFiles.map(file=>String(file.original_name||'').replace(/\.[^.]+$/,'')+' 1부.')].filter((x,i,a)=>x&&a.indexOf(x)===i),att=document.getElementById('out_ext_attachments_v146');att.innerHTML=allAttachments.length?allAttachments.map((x,i)=>'<div style="padding-left:58px;text-indent:-58px">'+(i===0?'붙임&nbsp;&nbsp;':'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;')+(i+1)+'. '+esc(x)+(i===allAttachments.length-1?'&nbsp;&nbsp;끝.':'')+'</div>').join(''):'<div>붙임&nbsp;&nbsp;없음.&nbsp;&nbsp;끝.</div>';
+    document.getElementById('output-external-v146').style.display='block';document.getElementById('output-external-v146').scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  window.saveExternalDocV146=async function(status){
+    if(!v8User)return alert('로그인 후 저장할 수 있습니다.');const d=formData(status);if(!d.contact_name)return alert('문의 담당자를 입력해 주세요.');if(!d.contact_phone)return alert('문의 전화번호를 입력해 주세요.');
+    if(currentStatus==='sent')return alert('시행완료된 공문은 원본 보호를 위해 수정할 수 없습니다. 새 공문으로 작성해 주세요.');
+    if(!d.title||!d.recipient||!d.body_text)return alert('수신자·제목·본문을 입력해 주세요.');
+    if(status==='approved'&&!['reviewer','admin'].includes(currentRole()))return alert('검토완료는 검토자 또는 관리자만 처리할 수 있습니다.');
+    if(status==='sent'&&!['reviewer','admin'].includes(currentRole()))return alert('시행완료는 검토자 또는 관리자만 처리할 수 있습니다.');
+    if(status==='sent'&&(!d.document_number||!d.document_date))return alert('시행번호와 시행일을 입력한 후 시행완료 처리해 주세요.');
+    const payload={...d,updated_by:v8User.id,updated_at:new Date().toISOString()},wasNew=!currentId;let query;
+    if(currentId)query=await sb.from(TABLE).update(payload).eq('id',currentId).select().single();else query=await sb.from(TABLE).insert({...payload,owner_id:v8User.id,created_by:v8User.id}).select().single();
+    const statusBox=document.getElementById('ext_save_status_v146');
+    if(query.error){if(statusBox){statusBox.style.color='#b91c1c';statusBox.textContent=missingTable(query.error)?'외부공문 DB 설정이 필요합니다. 제공된 v14.6 SQL을 먼저 실행해 주세요.':query.error.message;}return;}
+    currentId=query.data.id;currentStatus=query.data.status;
+    const history=await sb.from('official_document_history').insert({official_document_id:currentId,action:wasNew?'CREATE':'SAVE_'+String(currentStatus).toUpperCase(),status:currentStatus,snapshot:{title:d.title,recipient:d.recipient,document_number:d.document_number,document_date:d.document_date},changed_by:v8User.id});if(history.error&&!missingTable(history.error))console.warn('외부공문 이력 저장 경고:',history.error.message);
+    if(statusBox){statusBox.style.color='#166534';statusBox.textContent='외부공문을 '+statusLabels[currentStatus]+' 상태로 저장했습니다.';}updateActionButtons();await window.loadExternalListV146();
+  };
+  window.loadExternalDocV146=async function(id){
+    const q=await sb.from(TABLE).select('*').eq('id',id).single();if(q.error)return alert('공문 불러오기 오류: '+q.error.message);fillForm(q.data);window.scrollTo({top:0,behavior:'smooth'});
+  };
+  window.deleteExternalDocV146=async function(id,title){
+    const found=await sb.from(TABLE).select('status,uploaded_attachments').eq('id',id).maybeSingle();if(found.data?.status==='sent')return alert('시행완료된 공문은 원본 보호를 위해 삭제할 수 없습니다.');if(!confirm('「'+title+'」 공문과 실제 붙임파일을 삭제하시겠습니까?'))return;const paths=(found.data?.uploaded_attachments||[]).map(x=>x.storage_path).filter(Boolean);if(paths.length){const removed=await sb.storage.from('official-attachments').remove(paths);if(removed.error)return alert('붙임파일 삭제 오류: '+removed.error.message);}const q=await sb.from(TABLE).delete().eq('id',id);if(q.error)return alert('공문 삭제 오류: '+q.error.message);if(currentId===id)window.newExternalDocV146();await window.loadExternalListV146();
+  };
+  function drawExternalList(rows){
+    const box=document.getElementById('ext_list_v146');if(!box)return;
+    box.innerHTML=rows.length?'<div style="overflow:auto"><table style="width:100%;min-width:980px;border-collapse:collapse;font-size:12px"><tr><th style="border:1px solid #ddd;padding:7px">제목</th><th style="border:1px solid #ddd;padding:7px">수신자</th><th style="border:1px solid #ddd;padding:7px">구분</th><th style="border:1px solid #ddd;padding:7px">상태</th><th style="border:1px solid #ddd;padding:7px">시행번호</th><th style="border:1px solid #ddd;padding:7px">최종수정</th><th style="border:1px solid #ddd;padding:7px">관리</th></tr>'+rows.map(row=>{const safe=String(row.title||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");return '<tr><td style="border:1px solid #ddd;padding:7px;font-weight:bold">'+esc(row.title||'-')+'</td><td style="border:1px solid #ddd;padding:7px">'+esc(row.recipient||'-')+'</td><td style="border:1px solid #ddd;padding:7px">'+(row.document_mode==='linked'?'사업 연계':'일반')+' · '+esc(typeLabels[row.document_type]||row.document_type)+'</td><td style="border:1px solid #ddd;padding:7px">'+esc(statusLabels[row.status]||row.status)+'</td><td style="border:1px solid #ddd;padding:7px">'+esc(row.document_number||'-')+'</td><td style="border:1px solid #ddd;padding:7px">'+new Date(row.updated_at).toLocaleString('ko-KR')+'</td><td style="border:1px solid #ddd;padding:7px;white-space:nowrap"><button class="btn btn-add" onclick="loadExternalDocV146(\''+row.id+'\')">열기</button> <button class="btn btn-add" onclick="showExternalHistoryV146(\''+row.id+'\')">이력</button> <button class="btn btn-del" onclick="deleteExternalDocV146(\''+row.id+'\',\''+safe+'\')">삭제</button></td></tr>';}).join('')+'</table></div>':'<div style="color:#64748b">조건에 맞는 외부공문이 없습니다.</div>';
+  }
+  window.filterExternalListV146=function(){const query=value('ext_search_v146').toLowerCase(),status=value('ext_status_filter_v146');drawExternalList(officialRows.filter(row=>(!status||row.status===status)&&(!query||[row.title,row.recipient,row.document_number].some(v=>String(v||'').toLowerCase().includes(query)))));};
+  window.showExternalHistoryV146=async function(id){const q=await sb.from('official_document_history').select('action,status,snapshot,changed_at').eq('official_document_id',id).order('changed_at',{ascending:false}).limit(20);if(q.error)return alert('공문 이력 조회 오류: '+q.error.message);alert(q.data?.length?q.data.map(x=>new Date(x.changed_at).toLocaleString('ko-KR')+' · '+(statusLabels[x.status]||x.status)+' · '+x.action).join('\n'):'저장된 수정이력이 없습니다.');};
+  window.loadExternalListV146=async function(){
+    const box=document.getElementById('ext_list_v146');if(!box||!v8User)return;box.textContent='외부공문을 불러오는 중...';
+    const q=await sb.from(TABLE).select('*').order('updated_at',{ascending:false}).limit(100);if(q.error){box.innerHTML=missingTable(q.error)?'<div style="color:#b45309">외부공문 저장공간이 아직 설정되지 않았습니다. v14.6 SQL을 실행하면 저장·검토·시행 기능이 활성화됩니다.</div>':'<div style="color:#b91c1c">'+esc(q.error.message)+'</div>';return;}
+    officialRows=q.data||[];window.filterExternalListV146();
+  };
+  async function loadSources(){
+    const [pq,dq]=await Promise.all([sb.from('projects').select('id,project_name,status,owner_id,updated_at').order('updated_at',{ascending:false}),sb.from('project_documents').select('id,project_id,doc_type,data,updated_at').in('doc_type',['PLAN','RESULT'])]);
+    if(pq.error)throw pq.error;if(dq.error)throw dq.error;projects=pq.data||[];documents=dq.data||[];const select=document.getElementById('ext_project_v146');if(select)select.innerHTML='<option value="">사업을 선택하세요</option>'+projects.map(p=>'<option value="'+p.id+'">'+esc(p.project_name||'-')+'</option>').join('');
+  }
+  window.initExternalV146=async function(){
+    try{await loadSources();if(!currentId&&!value('ext_staff_v146'))window.newExternalDocV146();await window.loadExternalListV146();updateActionButtons();}catch(error){const box=document.getElementById('ext_save_status_v146');if(box){box.style.color='#b91c1c';box.textContent='외부공문 초기화 오류: '+error.message;}}
+  };
+
+  window.openProjectTaskV146=function(projectId){if(typeof openProjectDetailV85==='function')openProjectDetailV85(projectId);};
+  window.openExternalTaskV146=function(id){switchMode('EXTERNAL');setTimeout(()=>window.loadExternalDocV146(id),100);};
+  renderHomeV86=async function(){
+    if(!v8User)return;const welcome=document.getElementById('homeWelcomeV86'),name=currentProfileName();welcome.textContent=name+'님의 사업 업무현황입니다.';
+    const pr=await sb.from('projects').select('id,project_name,status,owner_id,updated_at').order('updated_at',{ascending:false});if(pr.error){document.getElementById('homeTasksV86').textContent=pr.error.message;return;}
+    const allProjects=pr.data||[],ids=allProjects.map(x=>x.id);let docs=[],reviews=[],official=[];
+    if(ids.length){const [dq,rq]=await Promise.all([sb.from('project_documents').select('id,project_id,doc_type').in('project_id',ids),sb.from('project_reviews').select('project_id,review_action,created_at').in('project_id',ids).order('created_at',{ascending:false})]);docs=dq.data||[];reviews=rq.data||[];}
+    const oq=await sb.from(TABLE).select('id,title,status,owner_id,updated_at').order('updated_at',{ascending:false}).limit(100);if(!oq.error)official=oq.data||[];
+    const counts={all:allProjects.length,review:allProjects.filter(x=>x.status==='review_requested').length,reviewed:allProjects.filter(x=>x.status==='reviewed').length,completed:allProjects.filter(x=>x.status==='completed').length};
+    document.getElementById('homeCardsV86').innerHTML=[['전체 사업',counts.all],['검토 대기',counts.review],['검토 완료',counts.reviewed],['사업 완료',counts.completed]].map(x=>'<div style="background:#fff;border:1px solid #d1d5db;border-radius:9px;padding:14px"><div style="font-size:12px;color:#64748b">'+x[0]+'</div><div style="font-size:25px;font-weight:700">'+x[1]+'</div></div>').join('');
+    const tasks=[],role=currentRole(),privileged=['reviewer','admin'].includes(role);
+    allProjects.forEach(p=>{const plan=docs.some(d=>d.project_id===p.id&&d.doc_type==='PLAN'),result=docs.some(d=>d.project_id===p.id&&d.doc_type==='RESULT'),latest=reviews.find(r=>r.project_id===p.id),mine=p.owner_id===v8User.id;
+      if(privileged&&p.status==='review_requested')tasks.push({label:p.project_name+' · '+(result?'결과보고서':'계획서')+' 검토 대기',kind:'project',id:p.id,color:'#b45309'});
+      if(mine&&latest?.review_action==='revision_requested'&&p.status==='draft')tasks.push({label:p.project_name+' · 수정요청 반영 필요',kind:'project',id:p.id,color:'#b91c1c'});
+      if(mine&&plan&&!result&&p.status==='reviewed')tasks.push({label:p.project_name+' · 결과보고서 미작성',kind:'project',id:p.id,color:'#1d4ed8'});
+      if(mine&&result&&p.status!=='completed'&&p.status!=='review_requested')tasks.push({label:p.project_name+' · 사업완료 처리 대기',kind:'project',id:p.id,color:'#047857'});
+    });
+    official.forEach(o=>{if(privileged&&o.status==='review_requested')tasks.push({label:o.title+' · 외부공문 검토 대기',kind:'official',id:o.id,color:'#7c3aed'});if(o.owner_id===v8User.id&&o.status==='approved')tasks.push({label:o.title+' · 시행번호 입력 및 시행 대기',kind:'official',id:o.id,color:'#6d28d9'});});
+    document.getElementById('homeTasksV86').innerHTML=tasks.length?tasks.slice(0,8).map(t=>'<div class="external-task-v146"><span style="color:'+t.color+'">'+esc(t.label)+'</span><button class="btn btn-add" style="padding:4px 7px;font-size:11px" onclick="'+(t.kind==='official'?'openExternalTaskV146':'openProjectTaskV146')+'(\''+t.id+'\')">확인</button></div>').join(''):'<span style="color:#666">현재 우선 확인할 업무가 없습니다.</span>';
+    const L={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'};document.getElementById('homeRecentV86').innerHTML=allProjects.length?allProjects.slice(0,7).map(p=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #eee"><span><strong>'+esc(p.project_name||'-')+'</strong> · '+(L[p.status]||esc(p.status))+'</span><button class="btn btn-add" style="padding:4px 7px;font-size:11px" onclick="openProjectDetailV85(\''+p.id+'\')">상세</button></div>').join(''):'<span style="color:#666">등록된 사업이 없습니다.</span>';
   };
 })();
 </script>
