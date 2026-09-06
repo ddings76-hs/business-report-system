@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v14.6.2-20260906">
+<html lang="ko" data-build="v14.6-20260906">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v14.6.2 외부공문 보완)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v14.6 외부공문 관리)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -94,7 +94,6 @@
   /* 2단 고정 결재/시행선 스타일 */
   .doc-signature { position:relative;text-align:center;font-size:23px;font-weight:bold;letter-spacing:.08em;margin:55px 0 50px; }
   .doc-seal { position:absolute;width:64px;height:64px;object-fit:contain;margin-left:-19px;top:-18px; }
-  .doc-seal-text { display:inline-block;margin-left:10px;color:#b91c1c;font-size:17px;font-weight:bold;letter-spacing:0;vertical-align:middle;white-space:nowrap; }
   .doc-fixed-footer { width:100%; margin-top:auto; font-family:'Batang',serif; font-size:14px; line-height:1.55; }
   .doc-approval-container { width: 100%; border-top: 8px solid #b7b7b7; margin-top: 0; padding-top: 7px; font-size: 14px; line-height:1.55; font-family: 'Batang', serif; }
   .doc-approval-row { display: flex; justify-content: flex-start; min-height:22px; margin:0; line-height:1.55; }
@@ -169,7 +168,7 @@
 <body>
 <div id="authOverlay" style="position:fixed;inset:0;background:#f5f7fa;z-index:99999;display:flex;align-items:center;justify-content:center;">
   <div style="width:min(430px,92vw);background:#fff;border:1px solid #ddd;border-radius:14px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.12);">
-    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v14.6.2</h2>
+    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v14.6</h2>
     <p style="font-size:13px;color:#666;margin:0 0 20px;">직원 계정으로 로그인하면 공동 사업 DB를 사용할 수 있습니다.</p>
     <label>이메일</label><input id="loginEmail" type="email" style="width:100%;padding:10px;margin:5px 0 12px;box-sizing:border-box;">
     <label>비밀번호</label><input id="loginPassword" type="password" style="width:100%;padding:10px;margin:5px 0 14px;box-sizing:border-box;">
@@ -355,7 +354,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v14.6.2 외부공문 보완)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">역할별 확인업무·사업 연계/일반 외부공문 작성·저장·검토·시행</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v14.6 외부공문 관리)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">역할별 확인업무·사업 연계/일반 외부공문 작성·저장·검토·시행</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -446,10 +445,8 @@
       </div>
 
       <div class="external-panel-v146" style="background:#fff">
-        <strong style="display:block;margin-bottom:9px;color:#334155">결재라인 및 시행정보</strong>
         <div class="external-grid-v146">
-          <label style="font-size:12px">담당<input id="ext_staff_v146" placeholder="예: 최송아"></label><label style="font-size:12px">대리<input id="ext_reviewer_v146" placeholder="예: 박예원"></label><label style="font-size:12px">센터장<input id="ext_approver_v146" placeholder="예: 임은숙"></label>
-          <label style="font-size:12px;font-weight:bold">문의 담당자 <span style="color:#dc2626">*</span><input id="ext_contact_name_v146" required placeholder="예: 박예원"></label><label style="font-size:12px;font-weight:bold">문의 전화번호 <span style="color:#dc2626">*</span><input id="ext_contact_phone_v146" required placeholder="예: 031-294-1630"></label>
+          <label style="font-size:12px">담당자<input id="ext_staff_v146"></label><label style="font-size:12px">검토자<input id="ext_reviewer_v146"></label><label style="font-size:12px">결재자<input id="ext_approver_v146"></label>
           <label style="font-size:12px">전화<input id="ext_phone_v146" value="(031) 294-1630"></label><label style="font-size:12px">팩스<input id="ext_fax_v146" value="(031) 294-1633"></label><label style="font-size:12px">이메일<input id="ext_email_v146" value="hsgoodcare@daum.net"></label>
         </div>
         <label style="display:block;font-size:12px;margin-top:9px">주소<input id="ext_address_v146" value="우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층"></label>
@@ -479,8 +476,8 @@
       <div class="doc-sheet"><div class="doc-cover-page">
         <table class="doc-letterhead"><tr><td style="width:110px"><img class="doc-center-logo" id="out_ext_center_logo_v146" alt="센터 로고"></td><td><div class="doc-org-header" id="out_ext_org_v146">화성시장기요양지원센터</div></td><td style="width:155px"><img class="doc-city-logo" id="out_ext_city_logo_v146" alt="화성특례시 로고"></td></tr></table>
         <table class="doc-meta-table"><tr><td class="doc-meta-label">수신자</td><td id="out_ext_recipient_v146"></td></tr><tr><td class="doc-meta-label">(경유)</td><td id="out_ext_via_v146"></td></tr><tr class="doc-title-row"><td class="doc-meta-label">제&nbsp;&nbsp;목</td><td id="out_ext_title_v146" style="font-weight:bold"></td></tr></table>
-        <div class="doc-body-text"><div id="out_ext_body_v146"></div><div id="out_ext_contact_v146" style="margin-top:18px;padding-left:20px;font-weight:bold"></div><div id="out_ext_attachments_v146" style="margin-top:30px"></div><div class="doc-signature"><span id="out_ext_sender_v146">화성시장기요양지원센터장</span><span class="doc-seal-text">(직인)</span></div></div>
-        <div class="doc-fixed-footer"><div class="doc-approval-container"><div class="doc-approval-row"><div class="doc-app-item"><span class="doc-app-label">담당</span><span class="doc-app-value" id="out_ext_staff_v146"></span></div><div class="doc-app-item"><span class="doc-app-label">대리</span><span class="doc-app-value" id="out_ext_reviewer_v146"></span></div><div class="doc-app-item"><span class="doc-app-label">센터장</span><span class="doc-app-value" id="out_ext_approver_v146"></span></div></div><div class="doc-approval-row"><div class="doc-app-item">시행&nbsp;&nbsp;<span id="out_ext_number_v146"></span>&nbsp;&nbsp;(<span id="out_ext_date_v146"></span>)</div><div class="doc-app-item"><span class="doc-app-label">접수</span></div></div></div><div class="doc-footer-address"><div class="doc-footer-line"><span id="out_ext_address_v146"></span>&nbsp;&nbsp;전화 <span id="out_ext_phone_v146"></span> / 팩스 <span id="out_ext_fax_v146"></span> / <span id="out_ext_email_v146"></span> / <span id="out_ext_disclosure_v146"></span></div></div></div>
+        <div class="doc-body-text"><div id="out_ext_body_v146"></div><div id="out_ext_attachments_v146" style="margin-top:30px"></div><div class="doc-signature" id="out_ext_sender_v146">화성시장기요양지원센터장</div></div>
+        <div class="doc-fixed-footer"><div class="doc-approval-container"><div class="doc-approval-row"><div class="doc-app-item">시행&nbsp;&nbsp;<span id="out_ext_number_v146"></span>&nbsp;&nbsp;(<span id="out_ext_date_v146"></span>)</div><div class="doc-app-item"><span class="doc-app-label">접수</span></div></div></div><div class="doc-footer-address"><div class="doc-footer-line"><span id="out_ext_address_v146"></span>&nbsp;&nbsp;전화 <span id="out_ext_phone_v146"></span> / 팩스 <span id="out_ext_fax_v146"></span> / <span id="out_ext_email_v146"></span> / <span id="out_ext_disclosure_v146"></span></div></div></div>
       </div></div>
     </div>
   </div>
@@ -1740,7 +1737,7 @@
       @page{size:A4 portrait;margin:15mm}body{font-family:Batang,serif;color:#000;line-height:1.55}
       .doc-sheet{width:100%;border:0;padding:0;margin:0}.doc-cover-page{min-height:250mm;display:flex;flex-direction:column;box-sizing:border-box}.doc-cover-page .doc-fixed-footer{margin-top:auto}.doc-letterhead{width:100%;border-collapse:collapse;table-layout:fixed;margin:2px 0 42px}.doc-letterhead td{border:0;padding:0 8px;vertical-align:middle}.doc-letterhead img{display:block;max-width:100%;height:auto}.doc-center-logo{width:88px;margin:auto}.doc-city-logo{width:120px;margin-left:auto}.doc-letterhead .doc-sub-header{display:none}
       .doc-org-header{font-size:31px;font-weight:bold;text-align:center;letter-spacing:-2px;white-space:nowrap}.doc-sub-header{font-size:10px;color:#2563eb;text-align:right;margin-top:3px}.doc-meta-table{width:100%;border-collapse:collapse;margin-bottom:15px;font-size:14px}
-      .doc-meta-table td{padding:4px 0;vertical-align:top}.doc-meta-label{width:72px;letter-spacing:.22em;white-space:nowrap}.doc-title-row td{border-bottom:1px solid #111;padding-bottom:6px}.doc-body-text{font-size:14px;text-align:justify;line-height:1.85}.doc-body-text p{margin:5px 0}.doc-divider{text-align:center;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px}.doc-list-item{margin:3px 0 3px 20px;padding-left:28px;text-indent:-28px;font-size:14px}.doc-signature{position:relative;text-align:center;font-size:23px;font-weight:bold;letter-spacing:.08em;margin:55px 0 50px}.doc-seal-text{display:inline-block;margin-left:10px;color:#b91c1c;font-size:17px;font-weight:bold;letter-spacing:0;vertical-align:middle;white-space:nowrap}
+      .doc-meta-table td{padding:4px 0;vertical-align:top}.doc-meta-label{width:72px;letter-spacing:.22em;white-space:nowrap}.doc-title-row td{border-bottom:1px solid #111;padding-bottom:6px}.doc-body-text{font-size:14px;text-align:justify;line-height:1.85}.doc-body-text p{margin:5px 0}.doc-divider{text-align:center;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px}.doc-list-item{margin:3px 0 3px 20px;padding-left:28px;text-indent:-28px;font-size:14px}
       .out-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:10px 0 20px;font-size:13px}.out-table th,.out-table td{border:1px solid #000;padding:6px 8px;overflow-wrap:anywhere}
       .out-table th{background:#f2f2f2;text-align:center}.td-center{text-align:center}.td-right{text-align:right}
       .doc-fixed-footer{width:100%;margin-top:auto;font-family:Batang,serif;font-size:14px;line-height:1.55}.doc-approval-container{border-top:8px solid #b7b7b7;margin-top:0;padding-top:7px;font-size:14px;line-height:1.55}.doc-approval-row{display:flex;min-height:22px;margin:0;line-height:1.55}.doc-app-item{display:flex;align-items:center;flex:1;font-size:14px;line-height:1.55}
@@ -5833,11 +5830,11 @@
   };
   function formData(status=currentStatus){
     const mode=value('ext_mode_v146'),projectId=mode==='linked'?value('ext_project_v146')||null:null,source=mode==='linked'?sourceData():null;
-    return{project_id:projectId,source_document_id:source?.id||null,document_mode:mode,document_type:value('ext_type_v146'),recipient:value('ext_recipient_v146'),via:value('ext_via_v146'),title:value('ext_title_v146'),reference_text:value('ext_reference_v146'),body_text:value('ext_body_v146'),attachment_labels:value('ext_attachments_v146').split(/\r?\n/).map(x=>x.trim()).filter(Boolean),uploaded_attachments:uploadedFiles.map(x=>({...x})),document_number:value('ext_number_v146'),document_date:value('ext_date_v146'),disclosure:value('ext_disclosure_v146'),organization_name:'화성시장기요양지원센터',sender_name:value('ext_sender_v146'),staff_name:value('ext_staff_v146'),reviewer_name:value('ext_reviewer_v146'),approver_name:value('ext_approver_v146'),contact_name:value('ext_contact_name_v146'),contact_phone:value('ext_contact_phone_v146'),phone:value('ext_phone_v146'),fax:value('ext_fax_v146'),email:value('ext_email_v146'),address:value('ext_address_v146'),status};
+    return{project_id:projectId,source_document_id:source?.id||null,document_mode:mode,document_type:value('ext_type_v146'),recipient:value('ext_recipient_v146'),via:value('ext_via_v146'),title:value('ext_title_v146'),reference_text:value('ext_reference_v146'),body_text:value('ext_body_v146'),attachment_labels:value('ext_attachments_v146').split(/\r?\n/).map(x=>x.trim()).filter(Boolean),uploaded_attachments:uploadedFiles.map(x=>({...x})),document_number:value('ext_number_v146'),document_date:value('ext_date_v146'),disclosure:value('ext_disclosure_v146'),organization_name:'화성시장기요양지원센터',sender_name:value('ext_sender_v146'),staff_name:value('ext_staff_v146'),reviewer_name:value('ext_reviewer_v146'),approver_name:value('ext_approver_v146'),phone:value('ext_phone_v146'),fax:value('ext_fax_v146'),email:value('ext_email_v146'),address:value('ext_address_v146'),status};
   }
   function fillForm(row){
     currentId=row.id||null;currentStatus=row.status||'draft';uploadedFiles=Array.isArray(row.uploaded_attachments)?row.uploaded_attachments.map(x=>({...x})):[];
-    const mapping={ext_mode_v146:row.document_mode,ext_type_v146:row.document_type,ext_project_v146:row.project_id,ext_recipient_v146:row.recipient,ext_via_v146:row.via,ext_title_v146:row.title,ext_reference_v146:row.reference_text,ext_body_v146:row.body_text,ext_attachments_v146:(row.attachment_labels||[]).join('\n'),ext_number_v146:row.document_number,ext_date_v146:row.document_date,ext_disclosure_v146:row.disclosure,ext_sender_v146:row.sender_name,ext_staff_v146:row.staff_name,ext_reviewer_v146:row.reviewer_name,ext_approver_v146:row.approver_name,ext_contact_name_v146:row.contact_name||row.staff_name,ext_contact_phone_v146:row.contact_phone||row.phone,ext_phone_v146:row.phone,ext_fax_v146:row.fax,ext_email_v146:row.email,ext_address_v146:row.address};
+    const mapping={ext_mode_v146:row.document_mode,ext_type_v146:row.document_type,ext_project_v146:row.project_id,ext_recipient_v146:row.recipient,ext_via_v146:row.via,ext_title_v146:row.title,ext_reference_v146:row.reference_text,ext_body_v146:row.body_text,ext_attachments_v146:(row.attachment_labels||[]).join('\n'),ext_number_v146:row.document_number,ext_date_v146:row.document_date,ext_disclosure_v146:row.disclosure,ext_sender_v146:row.sender_name,ext_staff_v146:row.staff_name,ext_reviewer_v146:row.reviewer_name,ext_approver_v146:row.approver_name,ext_phone_v146:row.phone,ext_fax_v146:row.fax,ext_email_v146:row.email,ext_address_v146:row.address};
     Object.entries(mapping).forEach(([id,v])=>set(id,v));window.changeExternalModeV146(true);
     if(row.project_id){const available=documents.filter(x=>x.project_id===row.project_id),sourceSelect=document.getElementById('ext_source_v146');if(sourceSelect){sourceSelect.innerHTML=available.map(x=>`<option value="${x.doc_type}">${x.doc_type==='PLAN'?'계획서':'결과보고서'} 기준</option>`).join('');set('ext_source_v146',documents.find(x=>x.id===row.source_document_id)?.doc_type||'PLAN');}}
     renderFiles();updateActionButtons();window.generateExternalDocV146();
@@ -5846,20 +5843,20 @@
     currentId=null;currentStatus='draft';uploadedFiles=[];
     ['ext_project_v146','ext_via_v146','ext_title_v146','ext_reference_v146','ext_body_v146','ext_attachments_v146','ext_number_v146','ext_date_v146'].forEach(id=>set(id,''));
     set('ext_mode_v146','linked');set('ext_type_v146','announcement');set('ext_recipient_v146','수신자 참조');set('ext_disclosure_v146','공개');set('ext_sender_v146','화성시장기요양지원센터장');
-    set('ext_staff_v146',currentProfileName());set('ext_reviewer_v146','대리 박예원');set('ext_approver_v146','센터장 임은숙');set('ext_contact_name_v146',currentProfileName());set('ext_contact_phone_v146','031-294-1630');set('ext_phone_v146','(031) 294-1630');set('ext_fax_v146','(031) 294-1633');set('ext_email_v146','hsgoodcare@daum.net');set('ext_address_v146','우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층');
+    set('ext_staff_v146',currentProfileName());set('ext_reviewer_v146','대리 박예원');set('ext_approver_v146','센터장 임은숙');set('ext_phone_v146','(031) 294-1630');set('ext_fax_v146','(031) 294-1633');set('ext_email_v146','hsgoodcare@daum.net');set('ext_address_v146','우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층');
     document.getElementById('output-external-v146').style.display='none';renderFiles();window.changeExternalModeV146();updateActionButtons();
   };
   window.generateExternalDocV146=function(){
-    const d=formData();if(!d.title)return alert('공문 제목을 입력해 주세요.');if(!d.recipient)return alert('수신자를 입력해 주세요.');if(!d.body_text)return alert('공문 본문을 입력해 주세요.');if(!d.contact_name)return alert('문의 담당자를 입력해 주세요.');if(!d.contact_phone)return alert('문의 전화번호를 입력해 주세요.');
+    const d=formData();if(!d.title)return alert('공문 제목을 입력해 주세요.');if(!d.recipient)return alert('수신자를 입력해 주세요.');if(!d.body_text)return alert('공문 본문을 입력해 주세요.');
     const text=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||'';};
     const center=document.getElementById('out_p_center_logo'),city=document.getElementById('out_p_city_logo');if(center)document.getElementById('out_ext_center_logo_v146').src=center.src;if(city)document.getElementById('out_ext_city_logo_v146').src=city.src;
-    text('out_ext_org_v146',d.organization_name);text('out_ext_recipient_v146',d.recipient);text('out_ext_via_v146',d.via);text('out_ext_title_v146',d.title);text('out_ext_sender_v146',d.sender_name);text('out_ext_staff_v146',String(d.staff_name||'').replace(/^담당\s*/,''));text('out_ext_reviewer_v146',String(d.reviewer_name||'').replace(/^(검토자|대리)\s*/,''));text('out_ext_approver_v146',String(d.approver_name||'').replace(/^(결재자|센터장)\s*/,''));text('out_ext_number_v146',d.document_number||'화성시장기요양-');text('out_ext_date_v146',d.document_date||'시행일 미입력');text('out_ext_address_v146',d.address);text('out_ext_phone_v146',d.phone);text('out_ext_fax_v146',d.fax);text('out_ext_email_v146',d.email);text('out_ext_disclosure_v146',d.disclosure);
-    const body=document.getElementById('out_ext_body_v146'),parts=[];if(d.reference_text)parts.push('<p>1. 관련 근거 : '+esc(d.reference_text)+'</p>');parts.push(d.body_text.split(/\r?\n/).map(line=>{const trimmed=line.trim();if(!trimmed)return '<div style="height:8px"></div>';const listClass=/^[가나다라마바사아자차카타파하]\.\s*/.test(trimmed)?' class="doc-list-item"':'';return '<p'+listClass+' style="white-space:pre-wrap">'+esc(trimmed)+'</p>';}).join(''));body.innerHTML=parts.join('');text('out_ext_contact_v146','문의 : '+d.contact_name+' / '+d.contact_phone);
+    text('out_ext_org_v146',d.organization_name);text('out_ext_recipient_v146',d.recipient);text('out_ext_via_v146',d.via);text('out_ext_title_v146',d.title);text('out_ext_sender_v146',d.sender_name);text('out_ext_number_v146',d.document_number||'화성시장기요양-');text('out_ext_date_v146',d.document_date||'시행일 미입력');text('out_ext_address_v146',d.address);text('out_ext_phone_v146',d.phone);text('out_ext_fax_v146',d.fax);text('out_ext_email_v146',d.email);text('out_ext_disclosure_v146',d.disclosure);
+    const body=document.getElementById('out_ext_body_v146'),parts=[];if(d.reference_text)parts.push('<p>1. 관련 근거 : '+esc(d.reference_text)+'</p>');parts.push(d.body_text.split(/\r?\n/).map(line=>line.trim()?'<p style="white-space:pre-wrap">'+esc(line)+'</p>':'<div style="height:8px"></div>').join(''));body.innerHTML=parts.join('');
     const allAttachments=[...d.attachment_labels,...uploadedFiles.map(file=>String(file.original_name||'').replace(/\.[^.]+$/,'')+' 1부.')].filter((x,i,a)=>x&&a.indexOf(x)===i),att=document.getElementById('out_ext_attachments_v146');att.innerHTML=allAttachments.length?allAttachments.map((x,i)=>'<div style="padding-left:58px;text-indent:-58px">'+(i===0?'붙임&nbsp;&nbsp;':'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;')+(i+1)+'. '+esc(x)+(i===allAttachments.length-1?'&nbsp;&nbsp;끝.':'')+'</div>').join(''):'<div>붙임&nbsp;&nbsp;없음.&nbsp;&nbsp;끝.</div>';
     document.getElementById('output-external-v146').style.display='block';document.getElementById('output-external-v146').scrollIntoView({behavior:'smooth',block:'start'});
   };
   window.saveExternalDocV146=async function(status){
-    if(!v8User)return alert('로그인 후 저장할 수 있습니다.');const d=formData(status);if(!d.contact_name)return alert('문의 담당자를 입력해 주세요.');if(!d.contact_phone)return alert('문의 전화번호를 입력해 주세요.');
+    if(!v8User)return alert('로그인 후 저장할 수 있습니다.');const d=formData(status);
     if(currentStatus==='sent')return alert('시행완료된 공문은 원본 보호를 위해 수정할 수 없습니다. 새 공문으로 작성해 주세요.');
     if(!d.title||!d.recipient||!d.body_text)return alert('수신자·제목·본문을 입력해 주세요.');
     if(status==='approved'&&!['reviewer','admin'].includes(currentRole()))return alert('검토완료는 검토자 또는 관리자만 처리할 수 있습니다.');
