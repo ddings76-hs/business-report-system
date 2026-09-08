@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.0.0 사업 진행단계 관리)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.2.1 AI 혼잡 자동 재시도)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -384,7 +384,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.0.0 사업 진행단계 관리)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.2.1 AI 혼잡 자동 재시도)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -3870,19 +3870,41 @@ ${centerMissionV1493}
   const planWritingGuideV1492=`작성 지침:
 - 화성시장기요양지원센터가 추진하는 공공·복지 사업계획서 문체로 구체적이고 전문적으로 작성한다.
 - 입력된 사업명·대상·인원·일정·장소·예산 등 확인된 사실만 사용하며, 없는 수치·기관명·성과는 임의로 만들지 않는다.
+- 사용자가 한두 문장만 입력해도 핵심 조건을 누락하지 않고 실제 시행 가능한 수준으로 구체화한다.
+- 사업명이 없거나 임시 제목인 경우 사업내용과 대상이 드러나는 친근한 제목과 공식 부제를 제안한다.
 - 추진배경은 현장 문제, 대상자의 욕구, 센터 운영목적과의 연계성을 논리적으로 설명한다.
 - 목적은 사업으로 달성하려는 변화를 명확히 쓰고, 기대효과는 참여자·기관·지역사회 관점으로 구분한다.
 - 운영방법은 준비·실행·사후관리 단계, 담당 역할, 참여자 관리와 안전 유의사항이 드러나도록 작성한다.
+- 사업개요, 추진방향, 세부 추진내용, 추진절차, 추진일정, 소요예산, 행정사항을 서로 중복되지 않게 작성한다.
+- 확인되지 않은 날짜·인원·단가·금액은 20○○. ○. ○., ○명, ○○원처럼 빈칸 표시하며 임의로 확정하지 않는다.
+- 문장은 공공기관 계획서에 맞게 '~하고자 함', '~함', '~예정임' 형식으로 통일하고 항목별 ○ 기호를 사용한다.
 - 평가·환류는 산출지표와 성과지표, 만족도·의견수렴, 차기 사업 개선방안을 포함한다.
 - 각 항목은 단순 한두 문장이 아니라 실무자가 검토·보완해 바로 사용할 수 있는 분량으로 작성한다.`;
+  function suggestPlanTitleV152(idea,target){
+    const text=String(idea||'').trim(),audience=/장기요양(종사자|요원)|요양보호사|사회복지사/.test(text)?'장기요양종사자':'장기요양요원';
+    if(/영화|영화관|관람/.test(text))return '「오늘은 영화로 쉼표」 '+audience+' 맞춤형 영화관람 지원사업';
+    if(/원예|화분|식물|테라리움/.test(text))return '「초록으로 잇는 쉼」 '+audience+' 정서지원 원예활동';
+    if(/나들이|여행|문화체험/.test(text))return '「쉼표를 선물하다」 '+audience+' 힐링 문화체험 지원사업';
+    if(/노무|권익|인권|노동/.test(text))return '「현장에서 지키는 권리」 '+audience+' 권익증진 지원사업';
+    if(/근골격|건강|운동|재활/.test(text))return '「건강한 돌봄, 든든한 일터」 '+audience+' 건강증진 지원사업';
+    if(/교육|역량|직무|전문성/.test(text))return '「돌봄역량 더하기」 '+audience+' 직무역량 강화사업';
+    if(/캠페인|인식개선|홍보/.test(text))return '「존중받는 돌봄」 장기요양 인식개선 사업';
+    if(/동아리|모임|소통/.test(text))return '「함께 잇는 돌봄」 '+audience+' 동아리 지원사업';
+    const topic=(text.split(/[.。\n]/)[0]||'맞춤형 복지').replace(/사업|프로그램|지원/g,'').trim().slice(0,24);
+    return '「함께 만드는 좋은 돌봄」 '+audience+' '+(topic||'맞춤형 복지')+' 지원사업';
+  }
   function collectPlanAIInputV113(){
     const st=getStandardPlanV106();
-    const rawContent=st.content||'',alignment=centerStrategyV1492([st.project_name,st.target_group,rawContent,st.operation_method].join(' '));
+    const idea=document.getElementById('aiPlanIdeaV151')?.value?.trim()||'',suggestedTitle=suggestPlanTitleV152(idea,st.target_group),rawContent=[idea,st.content].filter(Boolean).join('\n'),alignment=centerStrategyV1492([st.project_name,st.target_group,rawContent,st.operation_method].join(' '));
     return {
-      project_name:st.project_name,
+      document_type:'PLAN',
+      business_idea:idea,
+      project_name:st.project_name||suggestedTitle,
+      project_name_input:st.project_name,
+      suggested_project_name:suggestedTitle,
       target:st.target_group,
       planned_participants:st.planned_participants,
-      main_content:[rawContent,'','[기관 설립목적 - 실제 사업내용과 구분]',centerMissionV1493,'','[AI 작성 지침 - 실제 사업내용과 구분]',`이 사업이 장기요양요원의 권익 보호·처우 개선·역량 강화와 돌봄서비스 질 향상에 어떻게 기여하는지 설명하고, 센터 경영목표 중 「${alignment.join('」 및 「')}」와 연결하여 작성한다.`,planWritingGuideV1492].join('\n'),
+      main_content:[rawContent,'','[기관 설립목적 - 실제 사업내용과 구분]',centerMissionV1493,'','[AI 작성 지침 - 실제 사업내용과 구분]',`이 사업이 장기요양요원의 권익 보호·처우 개선·역량 강화와 돌봄서비스 질 향상에 어떻게 기여하는지 설명하고, 센터 경영목표 중 「${alignment.join('」 및 「')}」와 연결하여 작성한다.`,planWritingGuideV1492,'','[필수 생성 요청]','사업명이 비어 있거나 임시 제목이면 사업의 대상·목적·방법이 드러나는 공식 사업명을 제안한다. 추진배경, 추진목적, 사업개요, 추진방향, 세부 추진내용, 추진절차, 추진일정, 소요예산, 기대효과, 행정사항, 평가·환류 계획을 빠짐없이 구분하여 작성한다. JSON 응답에는 project_name, background, purpose, overview, direction, details, procedure, schedule, budget_plan, expected_effect, administrative, method, evaluation_plan 필드를 포함한다. 기존 응답 규격상 추가 필드 작성이 어려우면 method 안에 추진방향·세부 추진내용·추진절차·추진일정·행정사항을 각각 소제목으로 구분하여 충분히 작성한다.'].join('\n'),
       operation_date:st.operation_date,
       location:st.location,
       method:st.operation_method,
@@ -3892,7 +3914,9 @@ ${centerMissionV1493}
       evaluation_plan:st.evaluation_plan,
       institution_context:centerAIContextV1492,
       strategic_alignment:alignment,
-      writing_instructions:planWritingGuideV1492
+      writing_instructions:planWritingGuideV1492,
+      required_sections:['project_name','background','purpose','overview','direction','details','procedure','schedule','budget_plan','expected_effect','administrative','method','evaluation_plan'],
+      expected_output_schema:{project_name:'사업명 또는 추천 제목',background:'추진배경 및 필요성',purpose:'추진목적',overview:'사업개요',direction:'추진방향',details:'세부 추진내용',procedure:'추진절차',schedule:'추진일정',budget_plan:'소요예산',expected_effect:'기대효과',administrative:'행정사항',method:'표준폼 운영방법',evaluation_plan:'평가·환류 계획'}
     };
   }
   function mountPlanAIV113(){
@@ -3902,7 +3926,9 @@ ${centerMissionV1493}
     box.id='aiPlanV110';
     box.className='no-print';
     box.innerHTML=`<b style="color:#1d4ed8">✨ AI 사업계획 초안</b>
-      <div style="font-size:12px;color:#666;margin:5px 0 10px">센터 설립목적인 장기요양요원의 권익 보호·처우 개선·역량 강화와 돌봄서비스 질 향상을 기준으로 추진배경, 목적, 기대효과, 운영방법, 평가·환류 계획을 작성합니다.</div>
+      <div style="font-size:12px;color:#666;margin:5px 0 8px">짧은 사업 아이디어를 입력하면 센터 설립목적과 연결하여 제목부터 행정사항까지 실제 계획서 수준으로 작성합니다.</div>
+      <label for="aiPlanIdeaV151" style="display:block;font-size:12px;font-weight:bold;color:#334155;margin-bottom:4px">사업 아이디어 간편입력</label>
+      <textarea id="aiPlanIdeaV151" placeholder="예: 장기요양종사자 대상 영화감상 사업. 기관별 4~5명이 신청하고 원하는 영화와 일정을 선택하는 맞춤형 지원사업" style="width:100%;min-height:72px;padding:9px;border:1px solid #94a3b8;border-radius:6px;margin-bottom:8px"></textarea>
       <div class="ai-actions">
         <button type="button" class="btn btn-plan" id="aiGenerateV110" onclick="generatePlanAIV110()">✨ AI 초안 작성</button>
         <button type="button" class="btn btn-save" id="aiApplyV110" onclick="applyPlanAIV110()" disabled>✅ 표준폼에 적용</button>
@@ -3910,6 +3936,17 @@ ${centerMissionV1493}
       <div id="aiMsgV110" role="status" aria-live="polite" style="margin-top:8px;font-size:12px"></div>
       <div id="aiPreviewV110" style="margin-top:10px"></div>`;
     std.insertAdjacentElement('beforebegin',box);
+  }
+  async function aiErrorDetailV1521(error){
+    let detail='';
+    try{const body=await error?.context?.clone?.().json();detail=body?.error||body?.message||body?.msg||'';}catch(_){try{detail=await error?.context?.clone?.().text()||'';}catch(__){}}
+    return String(detail||error?.message||'AI 서버 호출에 실패했습니다.');
+  }
+  function aiKoreanErrorV1521(detail){
+    const value=String(detail||'');
+    if(/high demand|overload|temporar|try again later|resource.?exhausted|429|503/i.test(value))return '현재 AI 이용량이 많아 초안을 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+    if(/timeout|timed out|deadline/i.test(value))return 'AI 응답시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.';
+    return value;
   }
   async function generatePlanAIV110(){
     const msg=document.getElementById('aiMsgV110');
@@ -3919,25 +3956,40 @@ ${centerMissionV1493}
     try{
       const input=collectPlanAIInputV113();
       if(!v8User)throw new Error('로그인 후 이용해 주세요.');
-      if(!input.project_name)throw new Error('사업명을 먼저 입력하세요.');
-      if(!input.target&&!input.main_content)throw new Error('참여대상 또는 주요내용을 입력해 주세요.');
+      if(!input.project_name_input&&!input.business_idea&&!input.target&&!getStandardPlanV106().content)throw new Error('사업명 또는 사업 아이디어를 입력하세요.');
       planAIDraftV113=null;
       applyBtn.disabled=true;
       generateBtn.disabled=true;
       msg.style.color='#1d4ed8';
       msg.textContent='AI 초안을 작성하고 있습니다...';
       preview.innerHTML='';
-      const {data:res,error}=await sb.functions.invoke('ai-plan-draft-v11',{body:input});
-      if(error)throw error;
+      const legacyInput={project_name:input.project_name,target:input.target,planned_participants:input.planned_participants,main_content:input.main_content,operation_date:input.operation_date,location:input.location,method:input.method,background:input.background,purpose:input.purpose,expected_effect:input.expected_effect,evaluation_plan:input.evaluation_plan,institution_context:input.institution_context,strategic_alignment:input.strategic_alignment,writing_instructions:input.writing_instructions};
+      let res=null,error=null,lastDetail='';
+      for(let attempt=1;attempt<=3;attempt++){
+        if(attempt>1){const seconds=attempt===2?3:6;msg.textContent='AI 이용량이 많아 '+seconds+'초 후 자동 재시도합니다. ('+attempt+'/3)';await new Promise(resolve=>setTimeout(resolve,seconds*1000));}
+        const response=await sb.functions.invoke('ai-plan-draft-v11',{body:attempt===1?input:legacyInput});res=response.data;error=response.error;
+        if(!error&&res?.draft)break;
+        lastDetail=error?await aiErrorDetailV1521(error):String(res?.error||'AI 응답 형식이 올바르지 않습니다.');
+      }
+      if(error||!res?.draft)throw new Error(aiKoreanErrorV1521(lastDetail));
       if(!res?.draft)throw new Error(res?.error||'AI 응답 형식이 올바르지 않습니다.');
       planAIDraftV113=res.draft;
+      if(!planAIDraftV113.project_name&&!planAIDraftV113.title)planAIDraftV113.project_name=input.suggested_project_name;
       const rows=[
+        ['사업명',planAIDraftV113.project_name||planAIDraftV113.title],
         ['추진배경 및 필요성',planAIDraftV113.background],
         ['사업목적',planAIDraftV113.purpose],
+        ['사업개요',planAIDraftV113.overview],
+        ['추진방향',planAIDraftV113.direction],
+        ['세부 추진내용',planAIDraftV113.details],
+        ['추진절차',planAIDraftV113.procedure],
+        ['추진일정',planAIDraftV113.schedule],
+        ['소요예산',planAIDraftV113.budget_plan||planAIDraftV113.budget],
         ['기대효과',planAIDraftV113.expected_effect],
         ['운영방법',planAIDraftV113.method],
-        ['평가·환류 계획',planAIDraftV113.evaluation_plan]
-      ];
+        ['평가·환류 계획',planAIDraftV113.evaluation_plan],
+        ['행정사항',planAIDraftV113.administrative]
+      ].filter(([,value])=>String(value||'').trim());
       preview.innerHTML=rows.map(([label,value])=>`<div style="border:1px solid #dbe3ea;border-radius:6px;padding:9px;margin:6px 0;background:#fff"><b>${esc(label)}</b><div style="white-space:pre-wrap;margin-top:5px">${esc(value||'')}</div></div>`).join('');
       applyBtn.disabled=false;
       msg.style.color='#166534';
@@ -3959,10 +4011,14 @@ ${centerMissionV1493}
       el.dispatchEvent(new Event('input',{bubbles:true}));
       el.dispatchEvent(new Event('change',{bubbles:true}));
     };
+    const suggestedName=planAIDraftV113.project_name||planAIDraftV113.title;
+    if(suggestedName&&suggestedName!=='사업명 제안 필요')set('sp_project_name',suggestedName);
     set('sp_background',planAIDraftV113.background);
     set('sp_purpose',planAIDraftV113.purpose);
     set('sp_expected_effect',planAIDraftV113.expected_effect);
-    set('sp_operation_method',planAIDraftV113.method);
+    const detailedMethod=[planAIDraftV113.direction&&'[추진방향]\n'+planAIDraftV113.direction,planAIDraftV113.details&&'[세부 추진내용]\n'+planAIDraftV113.details,planAIDraftV113.procedure&&'[추진절차]\n'+planAIDraftV113.procedure,planAIDraftV113.schedule&&'[추진일정]\n'+planAIDraftV113.schedule,planAIDraftV113.administrative&&'[행정사항]\n'+planAIDraftV113.administrative,planAIDraftV113.method].filter(Boolean).join('\n\n');
+    set('sp_content',planAIDraftV113.overview||planAIDraftV113.details||'');
+    set('sp_operation_method',detailedMethod);
     set('sp_evaluation_plan',planAIDraftV113.evaluation_plan);
     syncStandardToLegacyV1061();
     const msg=document.getElementById('aiMsgV110');
