@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v14.9.1 지출저장 복구)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.0.0 사업 진행단계 관리)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -289,6 +289,7 @@
       <button class="btn btn-add" onclick="showProjectTabV10('plan',this)">계획</button>
       <button class="btn btn-add" onclick="showProjectTabV10('budget',this)">예산</button>
       <button class="btn btn-add" onclick="showProjectTabV10('schedule',this)">일정·실적</button>
+      <button class="btn btn-add" onclick="showProjectTabV10('workflow',this)">진행단계</button>
       <button class="btn btn-add" onclick="showProjectTabV10('review',this)">검토</button>
       <button class="btn btn-add" onclick="showProjectTabV10('result',this)">결과·성과</button>
       <button class="btn btn-add" onclick="showProjectTabV10('history',this)">변경이력</button>
@@ -309,6 +310,10 @@
     <div id="v10tab-schedule" class="v10-project-tab" style="display:none;">
       <div id="v10ScheduleBox"></div>
     </div>
+    <div id="v10tab-workflow" class="v10-project-tab" style="display:none;">
+      <div id="v150WorkflowDetailSummary">진행단계 정보를 불러오려면 아래 버튼을 눌러주세요.</div>
+      <div style="margin-top:12px"><button class="btn btn-plan" onclick="openProjectWorkflowV150(v10CurrentProjectId)">📋 진행단계 상세관리</button></div>
+    </div>
     <div id="v10tab-review" class="v10-project-tab" style="display:none;">
       <div id="v10ReviewBox"></div>
     </div>
@@ -320,6 +325,24 @@
     <div id="v10tab-history" class="v10-project-tab" style="display:none;">
       <div id="detailHistoryV85"></div>
     </div>
+  </div>
+</div>
+
+<div id="projectWorkflowModalV150" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.58);z-index:100030;align-items:center;justify-content:center;">
+  <div style="width:min(1180px,97vw);max-height:94vh;overflow:auto;background:#fff;border-radius:12px;padding:22px;box-sizing:border-box;">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+      <div><h2 style="margin:0;color:#1d4ed8">사업 진행단계 관리</h2><div id="workflowProjectNameV150" style="font-size:12px;color:#64748b;margin-top:5px"></div></div>
+      <button class="btn btn-del" onclick="closeProjectWorkflowV150()">닫기</button>
+    </div>
+    <div id="workflowSummaryV150" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:14px 0"></div>
+    <div style="overflow:auto">
+      <table style="width:100%;min-width:980px;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#eff6ff"><th style="border:1px solid #cbd5e1;padding:8px;width:48px">순서</th><th style="border:1px solid #cbd5e1;padding:8px;width:145px">진행단계</th><th style="border:1px solid #cbd5e1;padding:8px;width:125px">상태</th><th style="border:1px solid #cbd5e1;padding:8px;width:145px">담당자</th><th style="border:1px solid #cbd5e1;padding:8px;width:130px">예정일</th><th style="border:1px solid #cbd5e1;padding:8px;width:130px">완료일</th><th style="border:1px solid #cbd5e1;padding:8px">메모</th></tr></thead>
+        <tbody id="workflowRowsV150"></tbody>
+      </table>
+    </div>
+    <div id="workflowMessageV150" style="min-height:18px;font-size:12px;color:#64748b;margin-top:9px"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:13px"><button class="btn btn-save" id="workflowSaveV150" onclick="saveProjectWorkflowV150()">☁ 진행단계 저장</button></div>
   </div>
 </div>
 
@@ -361,7 +384,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v14.9.1 지출저장 복구)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.0.0 사업 진행단계 관리)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -896,6 +919,7 @@
         <div id="sv119_summary" style="margin-top:8px;"></div>
         <div id="sv126_demographics" style="margin-top:10px;"></div>
         <div id="sv119_details" style="margin-top:10px;"></div>
+        <div id="sv1494_chartSelector" style="margin-top:10px;"></div>
         <div id="sv119_comments" style="margin-top:10px;"></div>
       </div>
 
@@ -1056,8 +1080,12 @@
           </table>
           <h3 style="font-size:15px;font-family:'Batang',serif;border-bottom:1px solid #000;padding-bottom:5px;margin-top:22px;">1. 문항별 집계 결과</h3>
           <table class="out-table" id="out_r_sv122_questions"></table>
+          <div id="out_r_sv1494_chartsBlock" style="display:none;">
+            <h3 style="font-size:15px;font-family:'Batang',serif;border-bottom:1px solid #000;padding-bottom:5px;margin-top:22px;">2. 선택 문항 그래프</h3>
+            <div id="out_r_sv1494_charts"></div>
+          </div>
           <div id="out_r_sv126_demographicsBlock" style="display:none;">
-            <h3 style="font-size:15px;font-family:'Batang',serif;border-bottom:1px solid #000;padding-bottom:5px;margin-top:22px;">2. 참여자 특성별 분석</h3>
+            <h3 id="out_r_sv126_demographicsTitle" style="font-size:15px;font-family:'Batang',serif;border-bottom:1px solid #000;padding-bottom:5px;margin-top:22px;">3. 참여자 특성별 분석</h3>
             <table class="out-table" id="out_r_sv126_demographics"></table>
           </div>
           <div id="out_r_sv122_commentsBlock">
@@ -1747,7 +1775,8 @@
       calcPlanBudget(); switchMode('PLAN');
     } else {
       window.currentResultRecordId = item.id;
-      fillResult(d); switchMode('RESULT');
+      fillResult(d); calcResultBudget(); switchMode('RESULT');
+      setTimeout(()=>{try{generateResultDocs();const out=document.getElementById('output-result-container');if(out)out.style.display='block';}catch(e){console.error('저장 결과보고서 자동생성 오류:',e);}},50);
     }
   }
   function fillResult(d) {
@@ -2490,6 +2519,7 @@
     rows=Array.isArray(rows)?rows:[];
     const resultRows=rows.filter(x=>x.result);
     const participationAvg=dashboardAverageV123(resultRows,'participation_rate'),budgetAvg=dashboardAverageV123(resultRows,'budget_rate'),satisfactionAvg=dashboardAverageV123(resultRows,'satisfaction'),responseAvg=dashboardAverageV123(resultRows,'response_rate');
+    const workflowRows=rows.filter(x=>x.workflow?.configured),workflowAvg=workflowRows.length?workflowRows.reduce((sum,x)=>sum+Number(x.workflow.progress||0),0)/workflowRows.length:null,workflowOverdue=rows.filter(x=>Number(x.workflow?.overdue||0)>0).length;
     el.innerHTML=
       dashboardSummaryCardV123('조회 사업',String(rows.length))+
       dashboardSummaryCardV123('결과보고 완료',String(resultRows.length),'#047857')+
@@ -2498,7 +2528,9 @@
       dashboardSummaryCardV123('평균 만족도',Number.isFinite(satisfactionAvg)?satisfactionAvg.toFixed(2)+'점':'미집계',dashboardMetricColorV123('satisfaction',satisfactionAvg))+
       dashboardSummaryCardV123('평균 설문 응답률',Number.isFinite(responseAvg)?responseAvg.toFixed(1)+'%':'미집계',dashboardMetricColorV123('response_rate',responseAvg))+
       dashboardSummaryCardV123('검토 요청',String(rows.filter(x=>x.status==='review_requested').length),'#b45309')+
-      dashboardSummaryCardV123('결과보고 미작성',String(rows.filter(x=>x.plan&&!x.result).length),'#b91c1c');
+      dashboardSummaryCardV123('결과보고 미작성',String(rows.filter(x=>x.plan&&!x.result).length),'#b91c1c')+
+      dashboardSummaryCardV123('평균 사업 진행률',Number.isFinite(workflowAvg)?workflowAvg.toFixed(1)+'%':'미설정','#1d4ed8')+
+      dashboardSummaryCardV123('기한 경과 사업',String(workflowOverdue),workflowOverdue?'#b91c1c':'#047857');
   }
   let dashboardFilteredRowsV124=[];
   let dashboardRowsV831=[];
@@ -2515,11 +2547,12 @@
     box.innerHTML='공동 DB에서 사업을 불러오는 중...';
     const pr=await sb.from('projects').select('id,project_name,status,owner_id,updated_by,updated_at').order('updated_at',{ascending:false});
     if(pr.error){box.innerHTML='사업 조회 오류: '+esc(pr.error.message);return;}
-    const projects=pr.data||[], pids=projects.map(x=>x.id); let docs=[];
+    const projects=pr.data||[], pids=projects.map(x=>x.id); let docs=[],workflowRows=[];
     if(pids.length){const dr=await sb.from('project_documents').select('id,project_id,doc_type,data,updated_at').in('project_id',pids); if(dr.error){box.innerHTML='문서 조회 오류: '+esc(dr.error.message);return;} docs=dr.data||[];}
+    if(pids.length){const wr=await sb.from('project_workflow_steps').select('project_id,step_key,status,due_date,completed_date').in('project_id',pids);if(!wr.error)workflowRows=wr.data||[];else console.warn('진행단계 조회 경고:',wr.error.message);}
     const uids=[...new Set(projects.flatMap(x=>[x.owner_id,x.updated_by]).filter(Boolean))]; let people={};
     if(uids.length){const ur=await sb.from('profiles').select('id,name,email').in('id',uids);(ur.data||[]).forEach(x=>people[x.id]=x);}
-    dashboardRowsV831=projects.map(p=>{const plan=docs.find(d=>d.project_id===p.id&&d.doc_type==='PLAN'),result=docs.find(d=>d.project_id===p.id&&d.doc_type==='RESULT');return {...p,plan,result,owner:people[p.owner_id],editor:people[p.updated_by],performance:dashboardPerformanceV123(plan,result)};});
+    dashboardRowsV831=projects.map(p=>{const plan=docs.find(d=>d.project_id===p.id&&d.doc_type==='PLAN'),result=docs.find(d=>d.project_id===p.id&&d.doc_type==='RESULT');return {...p,plan,result,owner:people[p.owner_id],editor:people[p.updated_by],performance:dashboardPerformanceV123(plan,result),workflow:workflowSummaryV150(workflowRows.filter(row=>row.project_id===p.id))};});
     updateDashboardYearOptionsV124(dashboardRowsV831);
     const resultRows=dashboardRowsV831.filter(x=>x.result);
     const participationAvg=dashboardAverageV123(resultRows,'participation_rate'),budgetAvg=dashboardAverageV123(resultRows,'budget_rate'),satisfactionAvg=dashboardAverageV123(resultRows,'satisfaction'),responseAvg=dashboardAverageV123(resultRows,'response_rate');
@@ -2544,7 +2577,7 @@
   function drawDashboardV831(rows){
    const b=document.getElementById('dashboardTableV831'),L={draft:'작성중',review_requested:'검토요청',reviewed:'검토완료',completed:'사업완료'};
    if(!rows.length){b.innerHTML='<div style="padding:25px;text-align:center;border:1px solid #ddd">등록된 사업이 없습니다.</div>';return;}
-   b.innerHTML=`<div style="overflow:auto"><table style="width:100%;min-width:1420px;border-collapse:collapse;font-size:12px;background:#fff"><tr>${['사업명','담당자','상태','계획서','결과보고서','연동상태','핵심 성과지표','최종수정자','최종수정일','사업관리','삭제'].map(x=>`<th style="border:1px solid #ddd;padding:8px">${x}</th>`).join('')}</tr>${rows.map(x=>{
+   b.innerHTML=`<div style="overflow:auto"><table style="width:100%;min-width:1540px;border-collapse:collapse;font-size:12px;background:#fff"><tr>${['사업명','담당자','상태','계획서','결과보고서','연동상태','진행률','핵심 성과지표','최종수정자','최종수정일','사업관리','삭제'].map(x=>`<th style="border:1px solid #ddd;padding:8px">${x}</th>`).join('')}</tr>${rows.map(x=>{
    const staff=x.plan?.data?.staff||x.result?.data?.staff||x.owner?.name||'-',ed=x.editor?.name||x.editor?.email||'-';
    const safeName=String(x.project_name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
    const linked=!!(x.plan&&x.result);
@@ -2553,9 +2586,10 @@
    <td style="border:1px solid #ddd;padding:8px">${x.plan?`<button class="btn btn-add" onclick="loadCloudDocument('${x.plan.id}')">계획서 열기</button>`:'미작성'}</td>
    <td style="border:1px solid #ddd;padding:8px">${x.result?`<button class="btn btn-add" onclick="loadCloudDocument('${x.result.id}')">결과보고서 열기</button>`:(x.plan?`<button class="btn btn-result" onclick="openResultFromDashboardV104('${x.id}')">결과보고서 작성</button>`:'계획서 필요')}</td>
    <td style="border:1px solid #ddd;padding:8px;text-align:center">${linked?'✅ 계획↔결과':(x.plan?'⏳ 결과 미작성':'⚠ 계획 미작성')}</td>
+   <td style="border:1px solid #ddd;padding:7px;text-align:center;min-width:115px">${workflowDashboardCellV150(x.id,x.workflow)}</td>
    <td style="border:1px solid #ddd;padding:6px;min-width:145px">${dashboardPerformanceCellV123(x.performance)}</td>
    <td style="border:1px solid #ddd;padding:8px">${esc(ed)}</td><td style="border:1px solid #ddd;padding:8px">${new Date(x.updated_at).toLocaleString()}</td>
-   <td style="border:1px solid #ddd;padding:8px;white-space:nowrap"><button class="btn btn-plan" onclick="openProjectDetailV85('${x.id}')">사업상세</button> <button class="btn" onclick="archiveProjectV103('${x.id}','${safeName}')">보관</button> ${x.status==='draft'?`<button class="btn btn-result" onclick="requestProjectReviewV84('${x.id}')">검토요청</button>`:''} <button class="btn btn-add" onclick="openReviewV84('${x.id}','${safeName}')">검토</button> <button class="btn btn-add" onclick="changeProjectStatusV81('${x.id}','${x.status}')">상태</button> <button class="btn btn-add" onclick="showHistoryV81('${x.id}')">이력</button></td>
+   <td style="border:1px solid #ddd;padding:8px;white-space:nowrap"><button class="btn btn-plan" onclick="openProjectDetailV85('${x.id}')">사업상세</button> <button class="btn btn-add" onclick="openProjectWorkflowV150('${x.id}')">진행단계</button> <button class="btn" onclick="archiveProjectV103('${x.id}','${safeName}')">보관</button> ${x.status==='draft'?`<button class="btn btn-result" onclick="requestProjectReviewV84('${x.id}')">검토요청</button>`:''} <button class="btn btn-add" onclick="openReviewV84('${x.id}','${safeName}')">검토</button> <button class="btn btn-add" onclick="changeProjectStatusV81('${x.id}','${x.status}')">상태</button> <button class="btn btn-add" onclick="showHistoryV81('${x.id}')">이력</button></td>
    <td style="border:1px solid #ddd;padding:8px;text-align:center;background:#fff7f7"><button class="btn btn-del" style="font-weight:700" onclick="deleteProjectEasyV104('${x.id}','${safeName}')">🗑 삭제</button></td></tr>`}).join('')}</table></div>`;
   }
 
@@ -3802,25 +3836,63 @@
         achievements:d.evalGood||'',improvements:d.evalBad||'',evaluation_result:'',follow_up_plan:d.evalPlan||''
       });
       await inheritPlanToStandardResultV107(q.data.project_id);
+      if(typeof calcResultBudget==='function')calcResultBudget();
+      await new Promise(resolve=>setTimeout(resolve,50));
+      if(typeof generateResultDocs==='function')generateResultDocs();
+      const output=document.getElementById('output-result-container');if(output)output.style.display='block';
     }
   };
 
   // ===== v11.3 Supabase Edge Function 기반 AI 사업계획 초안 복원 =====
   let planAIDraftV113=null;
+  const centerMissionV1493=`장기요양요원지원센터는 장기요양요원(요양보호사, 사회복지사 등)의 권익 보호, 처우 개선 및 역량 강화를 통해 돌봄서비스의 질을 높이기 위해 설립되었다.
+핵심 역할은 ① 근무환경 관련 고충상담, 심리적 소진 예방과 건강증진 등 처우 개선 및 복지 증진, ② 직무 전문성 향상을 위한 교육체계 구축과 필수·상시 직무교육 등 역량 강화, ③ 부당대우·인권침해 예방과 권리구제 지원 등 권익 보호 및 인권 존중, ④ 장기요양요원에 대한 사회적 인식 개선과 지속 가능한 좋은 돌봄환경 조성 등 돌봄문화 확산이다.`;
+  const centerAIContextV1492=`화성시장기요양지원센터 설립목적:
+${centerMissionV1493}
+
+화성시장기요양지원센터 운영목표와 전략과제:
+1. 장기요양기관 공공성 강화: 책임성·투명성 강화(노무·회계 관리, 부당청구 예방, 장기요양 정보 공개), 시설안전 강화, 장기요양기관 역량 강화(제공서비스 질 관리, 멘토지원, 업무표준화 지원, 존중돌봄체험실 운영).
+2. 장기요양종사자 직무역량 강화: 권익증진(노무교육 및 상담, 인권교육), 건강증진(근골격계질환 예방, 심리상담, 인플루엔자 예방접종 지원), 동아리 구성·운영, 종합상담지원, 돌봄종사자 쉼터 운영.
+3. 존중받는 돌봄문화 구축 및 홍보: 인식개선 홍보(캠페인·홍보, 돌봄가이드북 제작), 장기요양 정책제안, 지역사회 인식개선 교육, 우수사례 발굴.
+4. 지역사회자원 연계 및 협업체계 구축: 업무협약, 자원연계, 협회 간 소통 활성화, 유관기관 간담회, 운영위원회 운영, 장기요양기관 DB 구축, 자료실·홈페이지 운영.
+5. 장기요양 전문성 강화: 장기요양요원 전문성 향상(직무·맞춤형·법정의무교육), 요양보호사 교육원 운영, 교육 전산시스템 구축.`;
+  function centerStrategyV1492(text){
+    const value=String(text||'');
+    const rules=[
+      [/노무|회계|부당청구|시설|안전|기관장|관리자|서비스.?질|업무표준|멘토/, '장기요양기관 공공성 강화'],
+      [/권익|인권|근골격|심리|건강|예방접종|동아리|상담|쉼터|종사자/, '장기요양종사자 직무역량 강화'],
+      [/인식개선|캠페인|홍보|가이드북|정책|우수사례|존중돌봄/, '존중받는 돌봄문화 구축 및 홍보'],
+      [/협약|연계|협회|간담회|운영위원|DB|자료실|홈페이지|네트워크/, '지역사회자원 연계 및 협업체계 구축'],
+      [/전문성|직무교육|맞춤형교육|법정의무|요양보호사.?교육|전산시스템|역량강화/, '장기요양 전문성 강화']
+    ];
+    const matched=rules.filter(([pattern])=>pattern.test(value)).map(([,label])=>label);return matched.length?matched.slice(0,2):['장기요양종사자 직무역량 강화','존중받는 돌봄문화 구축 및 홍보'];
+  }
+  const planWritingGuideV1492=`작성 지침:
+- 화성시장기요양지원센터가 추진하는 공공·복지 사업계획서 문체로 구체적이고 전문적으로 작성한다.
+- 입력된 사업명·대상·인원·일정·장소·예산 등 확인된 사실만 사용하며, 없는 수치·기관명·성과는 임의로 만들지 않는다.
+- 추진배경은 현장 문제, 대상자의 욕구, 센터 운영목적과의 연계성을 논리적으로 설명한다.
+- 목적은 사업으로 달성하려는 변화를 명확히 쓰고, 기대효과는 참여자·기관·지역사회 관점으로 구분한다.
+- 운영방법은 준비·실행·사후관리 단계, 담당 역할, 참여자 관리와 안전 유의사항이 드러나도록 작성한다.
+- 평가·환류는 산출지표와 성과지표, 만족도·의견수렴, 차기 사업 개선방안을 포함한다.
+- 각 항목은 단순 한두 문장이 아니라 실무자가 검토·보완해 바로 사용할 수 있는 분량으로 작성한다.`;
   function collectPlanAIInputV113(){
     const st=getStandardPlanV106();
+    const rawContent=st.content||'',alignment=centerStrategyV1492([st.project_name,st.target_group,rawContent,st.operation_method].join(' '));
     return {
       project_name:st.project_name,
       target:st.target_group,
       planned_participants:st.planned_participants,
-      main_content:st.content,
+      main_content:[rawContent,'','[기관 설립목적 - 실제 사업내용과 구분]',centerMissionV1493,'','[AI 작성 지침 - 실제 사업내용과 구분]',`이 사업이 장기요양요원의 권익 보호·처우 개선·역량 강화와 돌봄서비스 질 향상에 어떻게 기여하는지 설명하고, 센터 경영목표 중 「${alignment.join('」 및 「')}」와 연결하여 작성한다.`,planWritingGuideV1492].join('\n'),
       operation_date:st.operation_date,
       location:st.location,
       method:st.operation_method,
       background:st.background,
       purpose:st.purpose,
       expected_effect:st.expected_effect,
-      evaluation_plan:st.evaluation_plan
+      evaluation_plan:st.evaluation_plan,
+      institution_context:centerAIContextV1492,
+      strategic_alignment:alignment,
+      writing_instructions:planWritingGuideV1492
     };
   }
   function mountPlanAIV113(){
@@ -3830,7 +3902,7 @@
     box.id='aiPlanV110';
     box.className='no-print';
     box.innerHTML=`<b style="color:#1d4ed8">✨ AI 사업계획 초안</b>
-      <div style="font-size:12px;color:#666;margin:5px 0 10px">사업명·대상·계획인원·주요내용 등 입력된 사실을 바탕으로 추진배경, 목적, 기대효과, 운영방법, 평가·환류 계획을 작성합니다.</div>
+      <div style="font-size:12px;color:#666;margin:5px 0 10px">센터 설립목적인 장기요양요원의 권익 보호·처우 개선·역량 강화와 돌봄서비스 질 향상을 기준으로 추진배경, 목적, 기대효과, 운영방법, 평가·환류 계획을 작성합니다.</div>
       <div class="ai-actions">
         <button type="button" class="btn btn-plan" id="aiGenerateV110" onclick="generatePlanAIV110()">✨ AI 초안 작성</button>
         <button type="button" class="btn btn-save" id="aiApplyV110" onclick="applyPlanAIV110()" disabled>✅ 표준폼에 적용</button>
@@ -3903,13 +3975,14 @@
   function collectResultAIInputV114(){
     const st=getStandardResultV107();
     const survey=window.surveyAnalyticsDataV119||null;
+    const rawContent=st.actual_content||document.getElementById('r_summaryContent')?.value?.trim()||'',alignment=centerStrategyV1492([st.project_name,st.actual_target_group,rawContent].join(' '));
     return {
       document_type:'RESULT',
       project_name:st.project_name||document.getElementById('r_projName')?.value?.trim()||'',
       actual_date:st.actual_date||document.getElementById('r_dateLoc')?.value?.trim()||'',
       actual_target:st.actual_target_group||document.getElementById('r_actualTarget')?.value?.trim()||'',
       actual_participants:st.actual_participants||extractFirstNumber(document.getElementById('r_actualTarget')?.value)||0,
-      actual_content:st.actual_content||document.getElementById('r_summaryContent')?.value?.trim()||'',
+      actual_content:[rawContent,'','[기관 설립목적 - 실제 추진내용과 구분]',centerMissionV1493,'','[AI 작성 지침 - 실제 추진내용과 구분]',`이 사업이 장기요양요원의 권익 보호·처우 개선·역량 강화와 돌봄서비스 질 향상에 기여한 정도를 평가하고, 센터 경영목표 중 「${alignment.join('」 및 「')}」와 연결한다.`,`계획 대비 실제 실적, 참여자 변화, 예산 집행, 설문 근거, 미흡사항과 다음 사업의 구체적 개선조치를 구분하여 작성한다. 확인되지 않은 성과나 수치는 만들지 않는다.`].join('\n'),
       actual_location:st.actual_location||'',
       actual_budget:calcResultBudget(),
       planned_participants:Number(document.getElementById('r_plannedParticipants')?.value||0),
@@ -3931,7 +4004,10 @@
       existing_achievements:st.achievements||document.getElementById('r_evalGood')?.value?.trim()||'',
       existing_improvements:st.improvements||document.getElementById('r_evalBad')?.value?.trim()||'',
       existing_evaluation:st.evaluation_result||'',
-      existing_follow_up_plan:document.getElementById('r_evalPlan')?.value?.trim()||''
+      existing_follow_up_plan:document.getElementById('r_evalPlan')?.value?.trim()||'',
+      institution_context:centerAIContextV1492,
+      strategic_alignment:alignment,
+      writing_instructions:'계획 대비 실적과 객관적 자료를 중심으로 주요성과·개선사항·종합평가·환류계획을 구체적으로 작성하고, 센터 운영목적에 대한 기여를 명시한다. 확인되지 않은 사실은 생성하지 않는다.'
     };
   }
   function mountResultAIV114(){
@@ -3941,7 +4017,7 @@
     box.id='aiResultV114';
     box.className='no-print';
     box.innerHTML=`<b style="color:#047857">✨ AI 결과보고서 초안</b>
-      <div style="font-size:12px;color:#666;margin:5px 0 10px">실제 참여인원·추진내용·예산·설문 결과를 바탕으로 주요성과, 개선사항, 종합평가, 환류계획을 작성합니다.</div>
+      <div style="font-size:12px;color:#666;margin:5px 0 10px">실제 실적과 설문 결과를 센터 설립목적 및 전략과제와 연결하여 주요성과, 개선사항, 종합평가, 환류계획을 구체적으로 작성합니다.</div>
       <div class="ai-actions">
         <button type="button" class="btn btn-result" id="aiResultGenerateV114" onclick="generateResultAIV114()">✨ AI 결과 초안 작성</button>
         <button type="button" class="btn btn-save" id="aiResultApplyV114" onclick="applyResultAIV114()" disabled>✅ 결과폼에 적용</button>
@@ -6497,6 +6573,77 @@ fillResult=function(data){fillResultBaseV1481(data);const noBudget=!!data?.noBud
 if(typeof generateCheckedResultV121==='function'){const generateResultBaseV1481=generateCheckedResultV121;generateCheckedResultV121=function(){if(!validateResultBudgetSourceV1481(true)){switchSubTab('r',3);return;}return generateResultBaseV1481();};}
 if(typeof saveCloudDocument==='function'){const saveCloudDocumentBaseV1481=saveCloudDocument;saveCloudDocument=async function(type){if(type==='RESULT'&&!validateResultBudgetSourceV1481(true)){switchSubTab('r',3);return;}return saveCloudDocumentBaseV1481(type);};}
 document.addEventListener('DOMContentLoaded',()=>{lockResultBudgetV1481();const body=document.getElementById('r_budgetTbody');if(body)new MutationObserver(lockResultBudgetV1481).observe(body,{childList:true,subtree:true});});
+
+// ===== v14.9.4: 설문 그래프 문항 선택·결과보고서 출력 =====
+window.surveyChartSelectionV1494=[];
+window.surveyChartSurveyIdV1494=null;
+function surveyChartEscapeV1494(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function surveyChartSnapshotV1494(){return typeof window.getResultSurveySnapshotV121==='function'?window.getResultSurveySnapshotV121():window.resultReportSurveySnapshotV121||null;}
+function surveyChartableV1494(question){return ['rating5','likert5','single','multi'].includes(question?.type);}
+function renderSurveyChartSelectorV1494(){
+  const root=document.getElementById('sv1494_chartSelector');if(!root)return;const snapshot=surveyChartSnapshotV1494(),questions=snapshot?.questions||[],available=questions.map((q,index)=>({q,index})).filter(item=>surveyChartableV1494(item.q));
+  if(!available.length){root.innerHTML='<div style="padding:10px;border:1px dashed #cbd5e1;border-radius:7px;color:#64748b;font-size:12px">그래프로 출력할 수 있는 척도형·선택형 문항이 없습니다.</div>';return;}
+  const selected=new Set((window.surveyChartSelectionV1494||[]).map(Number));window.surveyChartSelectionV1494=[...selected].filter(index=>available.some(item=>item.index===index));
+  root.innerHTML='<div style="border:1px solid #86efac;background:#f0fdf4;border-radius:8px;padding:12px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><div><b style="color:#166534">📊 결과보고서 그래프 선택</b><div style="font-size:11px;color:#64748b;margin-top:3px">체크한 문항만 설문결과 부록에 그래프로 출력됩니다.</div></div><div><button type="button" class="btn btn-add" style="padding:5px 8px;font-size:11px" onclick="selectAllSurveyChartsV1494(true)">전체 선택</button> <button type="button" class="btn btn-add" style="padding:5px 8px;font-size:11px" onclick="selectAllSurveyChartsV1494(false)">선택 해제</button></div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:6px;margin-top:10px">'+available.map(item=>'<label style="display:flex;gap:7px;align-items:flex-start;padding:8px;background:#fff;border:1px solid #d1fae5;border-radius:6px;font-size:12px"><input type="checkbox" style="width:auto;margin-top:2px" '+(selected.has(item.index)?'checked':'')+' onchange="toggleSurveyChartV1494('+item.index+',this.checked)"><span>Q'+(item.index+1)+'. '+surveyChartEscapeV1494(item.q.question)+'</span></label>').join('')+'</div><div id="sv1494_chartCount" style="font-size:11px;color:#047857;margin-top:8px">선택 '+window.surveyChartSelectionV1494.length+'개</div></div>';
+}
+function toggleSurveyChartV1494(index,checked){const selected=new Set((window.surveyChartSelectionV1494||[]).map(Number));if(checked)selected.add(Number(index));else selected.delete(Number(index));window.surveyChartSelectionV1494=[...selected].sort((a,b)=>a-b);const count=document.getElementById('sv1494_chartCount');if(count)count.textContent='선택 '+window.surveyChartSelectionV1494.length+'개';renderSelectedSurveyChartsV1494();}
+function selectAllSurveyChartsV1494(checked){const questions=surveyChartSnapshotV1494()?.questions||[];window.surveyChartSelectionV1494=checked?questions.map((q,index)=>surveyChartableV1494(q)?index:null).filter(index=>index!==null):[];renderSurveyChartSelectorV1494();renderSelectedSurveyChartsV1494();}
+function surveyChartRowsV1494(question){
+  const counts=Object.entries(question?.counts||{});if(question.type==='rating5'||question.type==='likert5')counts.sort((a,b)=>Number(b[0])-Number(a[0]));else counts.sort((a,b)=>Number(b[1])-Number(a[1])||String(a[0]).localeCompare(String(b[0]),'ko'));
+  const denominator=Number(question.respondent_count||question.answer_count||0);return counts.map(([label,count])=>({label:(question.type==='rating5'||question.type==='likert5')?label+'점':label,count:Number(count||0),pct:denominator?Number(count||0)/denominator*100:0}));
+}
+function renderSelectedSurveyChartsV1494(){
+  const block=document.getElementById('out_r_sv1494_chartsBlock'),root=document.getElementById('out_r_sv1494_charts');if(!block||!root)return false;const snapshot=surveyChartSnapshotV1494(),questions=snapshot?.questions||[],selected=(window.surveyChartSelectionV1494||[]).map(Number).filter(index=>surveyChartableV1494(questions[index]));
+  block.style.display=selected.length?'block':'none';if(!selected.length){root.innerHTML='';updateSurveyAppendixNumbersV1494(false);return false;}
+  root.innerHTML=selected.map(index=>{const q=questions[index],rows=surveyChartRowsV1494(q),summary=(q.type==='rating5'||q.type==='likert5')&&q.average!==null&&q.average!==undefined?' · 평균 '+Number(q.average).toFixed(2)+'점'+(q.satisfaction_rate!==null&&q.satisfaction_rate!==undefined?' · 만족률 '+Number(q.satisfaction_rate).toFixed(1)+'%':''):'';return '<div class="sv1494-print-chart"><div class="sv1494-chart-title">Q'+(index+1)+'. '+surveyChartEscapeV1494(q.question)+summary+'</div>'+rows.map(row=>'<div class="sv1494-chart-row"><div class="sv1494-chart-label">'+surveyChartEscapeV1494(row.label)+'</div><div class="sv1494-chart-track"><span style="width:'+Math.min(100,row.pct).toFixed(1)+'%"></span></div><div class="sv1494-chart-value">'+row.count+'건 ('+row.pct.toFixed(1)+'%)</div></div>').join('')+(q.type==='multi'?'<div class="sv1494-chart-note">※ 복수선택 비율은 해당 문항 응답자 기준</div>':'')+'</div>';}).join('');updateSurveyAppendixNumbersV1494(true);return true;
+}
+function updateSurveyAppendixNumbersV1494(hasCharts){const demographics=document.getElementById('out_r_sv126_demographicsBlock'),hasDemographics=demographics&&demographics.style.display!=='none',demoTitle=document.getElementById('out_r_sv126_demographicsTitle'),commentsTitle=document.getElementById('out_r_sv122_commentsTitle');if(demoTitle)demoTitle.textContent=(hasCharts?'3':'2')+'. 참여자 특성별 분석';if(commentsTitle)commentsTitle.textContent=(2+(hasCharts?1:0)+(hasDemographics?1:0))+'. 주관식 의견';}
+const renderSurveyAppendixBaseV1494=window.renderSurveyAppendixV122;
+if(typeof renderSurveyAppendixBaseV1494==='function')window.renderSurveyAppendixV122=function(){const result=renderSurveyAppendixBaseV1494.apply(this,arguments);renderSelectedSurveyChartsV1494();return result;};
+const loadSurveyAnalyticsBaseV1494=window.loadSurveyAnalyticsV119;
+if(typeof loadSurveyAnalyticsBaseV1494==='function')window.loadSurveyAnalyticsV119=async function(){const previous=window.surveyChartSurveyIdV1494,result=await loadSurveyAnalyticsBaseV1494.apply(this,arguments),current=surveyChartSnapshotV1494()?.survey_id||null;if(current&&previous!==current)window.surveyChartSelectionV1494=[];window.surveyChartSurveyIdV1494=current;renderSurveyChartSelectorV1494();return result;};
+const resetSurveyAnalyticsBaseV1494=window.resetSurveyAnalyticsV119;
+if(typeof resetSurveyAnalyticsBaseV1494==='function')window.resetSurveyAnalyticsV119=function(){const result=resetSurveyAnalyticsBaseV1494.apply(this,arguments);window.surveyChartSelectionV1494=[];window.surveyChartSurveyIdV1494=null;renderSurveyChartSelectorV1494();return result;};
+const getResultDataBaseV1494=getResultData;
+getResultData=function(){const data=getResultDataBaseV1494();data.surveyChartSelectionV1494=[...(window.surveyChartSelectionV1494||[])];data.surveyChartSurveyIdV1494=window.surveyChartSurveyIdV1494;return data;};
+const fillResultBaseV1494=fillResult;
+fillResult=function(data){fillResultBaseV1494(data);window.surveyChartSelectionV1494=Array.isArray(data?.surveyChartSelectionV1494)?data.surveyChartSelectionV1494.map(Number):[];window.surveyChartSurveyIdV1494=data?.surveyChartSurveyIdV1494||data?.surveySnapshot?.survey_id||null;renderSurveyChartSelectorV1494();renderSelectedSurveyChartsV1494();};
+document.addEventListener('DOMContentLoaded',()=>{const style=document.createElement('style');style.textContent='.sv1494-print-chart{border:1px solid #cbd5e1;border-radius:7px;padding:12px;margin:10px 0;break-inside:avoid;page-break-inside:avoid;font-family:Batang,serif}.sv1494-chart-title{font-size:13px;font-weight:bold;margin-bottom:9px}.sv1494-chart-row{display:grid;grid-template-columns:minmax(80px,1fr) 3fr 95px;gap:7px;align-items:center;margin:6px 0;font-size:11px}.sv1494-chart-label{text-align:right}.sv1494-chart-track{height:14px;background:#e2e8f0;border-radius:3px;overflow:hidden}.sv1494-chart-track span{display:block;height:100%;background:#10b981}.sv1494-chart-value{white-space:nowrap}.sv1494-chart-note{font-size:10px;color:#64748b;margin-top:6px;text-align:right}@media(max-width:600px){.sv1494-chart-row{grid-template-columns:80px 1fr 82px}}';document.head.appendChild(style);renderSurveyChartSelectorV1494();});
+
+// ===== v15.0.0: 사업 진행단계·담당자·기한 관리 =====
+const WORKFLOW_STEPS_V150=[['concept','사업 구상'],['plan','계획서 작성'],['approval','내부결재'],['promotion','홍보·모집'],['participants','참여자 확정'],['execution','사업 진행'],['expense','지출·증빙 확인'],['survey','설문·평가'],['report','결과보고서 작성'],['complete','사업 완료']];
+let workflowProjectIdV150=null,workflowRowsDataV150=[],workflowProfilesV150=[];
+function workflowEscapeV150(value){return typeof budgetEscapeV1471==='function'?budgetEscapeV1471(value):String(value??'').replace(/[&<>"']/g,'');}
+function workflowTodayV150(){return new Date().toISOString().slice(0,10);}
+function workflowSummaryV150(rows){const total=WORKFLOW_STEPS_V150.length,list=Array.isArray(rows)?rows:[],done=list.filter(row=>row.status==='completed'||row.status==='skipped').length,today=workflowTodayV150(),overdue=list.filter(row=>row.due_date&&row.due_date<today&&!['completed','skipped'].includes(row.status)).length,next=[...list].sort((a,b)=>(a.step_order||0)-(b.step_order||0)).find(row=>!['completed','skipped'].includes(row.status));return {total,done,progress:Math.round(done/total*100),overdue,next:next?.step_name||'전체 완료',configured:list.length>0};}
+function workflowDashboardCellV150(projectId,summary){summary=summary||workflowSummaryV150([]);const color=summary.overdue?'#b91c1c':summary.progress===100?'#047857':'#1d4ed8';return '<button type="button" onclick="openProjectWorkflowV150(\''+projectId+'\')" style="border:0;background:transparent;width:100%;cursor:pointer;color:'+color+'"><strong>'+summary.progress+'%</strong>'+(summary.overdue?'<div style="font-size:10px">지연 '+summary.overdue+'건</div>':'<div style="height:5px;background:#e2e8f0;border-radius:4px;margin-top:4px;overflow:hidden"><span style="display:block;width:'+summary.progress+'%;height:100%;background:'+color+'"></span></div>')+'</button>';}
+function workflowMessageV150(text,error){const box=document.getElementById('workflowMessageV150');if(box){box.textContent=text||'';box.style.color=error?'#b91c1c':'#64748b';}}
+function closeProjectWorkflowV150(){document.getElementById('projectWorkflowModalV150').style.display='none';workflowProjectIdV150=null;}
+function workflowDetectedStatusV150(key,project,docs){if(key==='plan'&&docs.some(doc=>doc.doc_type==='PLAN'))return 'completed';if(key==='approval'&&['reviewed','completed'].includes(project.status))return 'completed';if(key==='report'&&docs.some(doc=>doc.doc_type==='RESULT'))return 'completed';if(key==='complete'&&project.status==='completed')return 'completed';return key==='concept'?'completed':'not_started';}
+async function ensureProjectWorkflowV150(project,docs){
+  const existing=await sb.from('project_workflow_steps').select('*').eq('project_id',project.id).order('step_order',{ascending:true});if(existing.error)throw existing.error;const map=new Map((existing.data||[]).map(row=>[row.step_key,row])),userId=v81Profile?.id||(await sb.auth.getUser()).data.user?.id,missing=[];
+  WORKFLOW_STEPS_V150.forEach(([key,name],index)=>{if(!map.has(key)){const status=workflowDetectedStatusV150(key,project,docs),matched=key==='plan'?docs.find(doc=>doc.doc_type==='PLAN'):key==='report'?docs.find(doc=>doc.doc_type==='RESULT'):null;missing.push({project_id:project.id,step_key:key,step_name:name,step_order:index+1,status,completed_date:status==='completed'?(matched?.updated_at||project.updated_at||new Date().toISOString()).slice(0,10):null,created_by:userId,updated_by:userId});}});
+  if(missing.length){const added=await sb.from('project_workflow_steps').insert(missing);if(added.error)throw added.error;const refreshed=await sb.from('project_workflow_steps').select('*').eq('project_id',project.id).order('step_order',{ascending:true});if(refreshed.error)throw refreshed.error;return refreshed.data||[];}return existing.data||[];
+}
+function workflowStatusOptionsV150(selected){return [['not_started','미착수'],['in_progress','진행중'],['completed','완료'],['skipped','해당없음']].map(([value,label])=>'<option value="'+value+'" '+(selected===value?'selected':'')+'>'+label+'</option>').join('');}
+function workflowAssigneeOptionsV150(selected){return '<option value="">미지정</option>'+workflowProfilesV150.map(profile=>'<option value="'+profile.id+'" '+(selected===profile.id?'selected':'')+'>'+workflowEscapeV150(profile.name||profile.email||'직원')+(profile.position?' ('+workflowEscapeV150(profile.position)+')':'')+'</option>').join('');}
+function renderWorkflowRowsV150(){
+  const body=document.getElementById('workflowRowsV150'),today=workflowTodayV150();if(!body)return;body.innerHTML=workflowRowsDataV150.map((row,index)=>{const delayed=row.due_date&&row.due_date<today&&!['completed','skipped'].includes(row.status);return '<tr data-index="'+index+'" style="background:'+(delayed?'#fef2f2':'#fff')+'"><td style="border:1px solid #e2e8f0;padding:7px;text-align:center">'+row.step_order+'</td><td style="border:1px solid #e2e8f0;padding:7px;font-weight:bold">'+workflowEscapeV150(row.step_name)+(delayed?'<div style="font-size:10px;color:#b91c1c">기한 경과</div>':'')+'</td><td style="border:1px solid #e2e8f0;padding:6px"><select class="wf-status-v150" onchange="changeWorkflowStatusV150('+index+',this.value)" style="width:100%;padding:7px">'+workflowStatusOptionsV150(row.status)+'</select></td><td style="border:1px solid #e2e8f0;padding:6px"><select class="wf-assignee-v150" style="width:100%;padding:7px">'+workflowAssigneeOptionsV150(row.assignee_id||'')+'</select></td><td style="border:1px solid #e2e8f0;padding:6px"><input type="date" class="wf-due-v150" value="'+(row.due_date||'')+'" style="width:100%;padding:7px"></td><td style="border:1px solid #e2e8f0;padding:6px"><input type="date" class="wf-completed-v150" value="'+(row.completed_date||'')+'" style="width:100%;padding:7px"></td><td style="border:1px solid #e2e8f0;padding:6px"><input type="text" class="wf-note-v150" value="'+workflowEscapeV150(row.note||'')+'" placeholder="확인사항·다음 할 일" style="width:100%;padding:7px"></td></tr>';}).join('');renderWorkflowSummaryV150();
+}
+function changeWorkflowStatusV150(index,status){workflowRowsDataV150[index].status=status;const row=document.querySelector('#workflowRowsV150 tr[data-index="'+index+'"]'),date=row?.querySelector('.wf-completed-v150');if(date&&status==='completed'&&!date.value)date.value=workflowTodayV150();if(date&&!['completed','skipped'].includes(status))date.value='';collectWorkflowRowsV150();renderWorkflowSummaryV150();}
+function collectWorkflowRowsV150(){document.querySelectorAll('#workflowRowsV150 tr').forEach(tr=>{const index=Number(tr.dataset.index),row=workflowRowsDataV150[index];if(!row)return;row.status=tr.querySelector('.wf-status-v150').value;row.assignee_id=tr.querySelector('.wf-assignee-v150').value||null;row.due_date=tr.querySelector('.wf-due-v150').value||null;row.completed_date=tr.querySelector('.wf-completed-v150').value||null;row.note=tr.querySelector('.wf-note-v150').value.trim()||null;});return workflowRowsDataV150;}
+function renderWorkflowSummaryV150(){const summary=workflowSummaryV150(workflowRowsDataV150),box=document.getElementById('workflowSummaryV150');if(box)box.innerHTML=annualBudgetCardV1471('전체 단계',summary.total+'개')+annualBudgetCardV1471('완료',summary.done+'개','#047857')+annualBudgetCardV1471('진행률',summary.progress+'%','#1d4ed8')+annualBudgetCardV1471('기한 경과',summary.overdue+'개',summary.overdue?'#b91c1c':'#475569')+annualBudgetCardV1471('다음 단계',workflowEscapeV150(summary.next),'#7c3aed');}
+async function openProjectWorkflowV150(projectId){
+  if(!projectId)return alert('사업을 먼저 선택해 주세요.');workflowProjectIdV150=projectId;const modal=document.getElementById('projectWorkflowModalV150');modal.style.display='flex';workflowMessageV150('진행단계를 불러오는 중...');
+  try{const [projectQuery,docsQuery,profilesQuery]=await Promise.all([sb.from('projects').select('*').eq('id',projectId).single(),sb.from('project_documents').select('doc_type,updated_at').eq('project_id',projectId),sb.from('profiles').select('id,name,email,position').order('name',{ascending:true})]);if(projectQuery.error)throw projectQuery.error;if(docsQuery.error)throw docsQuery.error;if(profilesQuery.error)throw profilesQuery.error;workflowProfilesV150=profilesQuery.data||[];document.getElementById('workflowProjectNameV150').textContent=projectQuery.data.project_name||'사업';workflowRowsDataV150=await ensureProjectWorkflowV150(projectQuery.data,docsQuery.data||[]);renderWorkflowRowsV150();workflowMessageV150('단계별 상태·담당자·예정일·완료일을 확인해 주세요.');}catch(error){workflowRowsDataV150=[];document.getElementById('workflowRowsV150').innerHTML='';workflowMessageV150('진행단계 조회 오류: '+(error.message||error)+' · v15.0.0 SQL 실행 여부를 확인해 주세요.',true);}
+}
+async function saveProjectWorkflowV150(){
+  if(!workflowProjectIdV150)return;const rows=collectWorkflowRowsV150(),button=document.getElementById('workflowSaveV150');button.disabled=true;workflowMessageV150('진행단계를 저장하는 중...');
+  try{const userId=v81Profile?.id||(await sb.auth.getUser()).data.user?.id,savedRows=[];for(const row of rows){const payload={status:row.status,assignee_id:row.assignee_id||null,due_date:row.due_date||null,completed_date:(row.status==='completed'||row.status==='skipped')?(row.completed_date||workflowTodayV150()):null,note:row.note||null,updated_by:userId,updated_at:new Date().toISOString()},saved=await sb.from('project_workflow_steps').update(payload).eq('id',row.id).eq('project_id',workflowProjectIdV150).select('*').single();if(saved.error)throw saved.error;savedRows.push(saved.data);}workflowRowsDataV150=savedRows.sort((a,b)=>a.step_order-b.step_order);await sb.from('project_history').insert({project_id:workflowProjectIdV150,action:'WORKFLOW_UPDATED',snapshot:workflowSummaryV150(workflowRowsDataV150),changed_by:userId});renderWorkflowRowsV150();workflowMessageV150('진행단계를 저장했습니다.');if(typeof renderDashboardV831==='function')await renderDashboardV831();if(detailProjectIdV85===workflowProjectIdV150)renderWorkflowDetailSummaryV150(workflowRowsDataV150);}catch(error){workflowMessageV150('진행단계 저장 오류: '+(error.message||error),true);}finally{button.disabled=false;}
+}
+function renderWorkflowDetailSummaryV150(rows){const box=document.getElementById('v150WorkflowDetailSummary');if(!box)return;const summary=workflowSummaryV150(rows);box.innerHTML='<div style="padding:12px;border:1px solid '+(summary.overdue?'#fca5a5':'#bfdbfe')+';background:'+(summary.overdue?'#fef2f2':'#eff6ff')+';border-radius:8px"><strong>진행률 '+summary.progress+'%</strong> · 완료 '+summary.done+'/'+summary.total+'단계'+(summary.overdue?' · <span style="color:#b91c1c">기한 경과 '+summary.overdue+'건</span>':'')+'<div style="font-size:12px;color:#475569;margin-top:5px">다음 단계: '+workflowEscapeV150(summary.next)+'</div></div>';}
+const renderProjectDetailBaseV150=renderProjectDetailV85;
+renderProjectDetailV85=async function(){const result=await renderProjectDetailBaseV150.apply(this,arguments);if(detailProjectIdV85){const query=await sb.from('project_workflow_steps').select('*').eq('project_id',detailProjectIdV85).order('step_order',{ascending:true});if(!query.error)renderWorkflowDetailSummaryV150(query.data||[]);else document.getElementById('v150WorkflowDetailSummary').textContent='진행단계 DB 설정 후 사용할 수 있습니다.';}return result;};
 </script>
 </body>
 </html>
