@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.2.1 AI 혼잡 자동 재시도)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.0 계획서·편성예산 기준 통합)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -384,7 +384,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.2.1 AI 혼잡 자동 재시도)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.0 계획서·편성예산 기준 통합)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -630,6 +630,10 @@
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <h2 class="section-plan-head" style="margin:0;">2. 소요 예산 산출</h2>
         <button class="btn btn-add" onclick="addPlanBudgetRow()">+ 예산 추가</button>
+      </div>
+      <div id="planBudgetOriginV154" class="no-print" style="margin-top:8px;padding:10px 12px;border:1px solid #f59e0b;border-radius:7px;background:#fffbeb;font-size:12px;color:#92400e">
+        <div id="planBudgetOriginTextV154"><strong>임시예산</strong> · 계획서 작성 단계에서 직접 입력할 수 있습니다. 정식 예산은 예산·지출 관리에서 편성해 주세요.</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn btn-save" onclick="importAllocatedBudgetToPlanV154()">📥 최신 편성예산 불러오기</button><button type="button" class="btn btn-plan" onclick="openPlanBudgetManagerV154()">예산관리에서 편성·수정</button><button type="button" class="btn btn-add" onclick="setTemporaryPlanBudgetV154()">임시예산 직접입력</button></div>
       </div>
       <table class="form-table" style="margin-top: 8px;">
         <thead><tr><th>세목</th><th>산출 근거</th><th>금액(원)</th><th>비고</th><th>삭제</th></tr></thead>
@@ -3258,7 +3262,14 @@
       }else{
         const up=await sb.from('projects').update({project_name:name,updated_by:v8User.id}).eq('id',projectId); if(up.error) throw up.error;
       }
-      const total=await syncPlanBudgetRowsV1031(projectId,data,v8User.id);
+      const official=await sb.from('project_budget_items').select('*').eq('project_id',projectId).order('sort_order',{ascending:true});if(official.error)throw official.error;
+      let total=0;
+      if((official.data||[]).length){
+        data.budget=(official.data||[]).map(row=>({'p-bg-item':row.item_name||'','p-bg-calc':row.calculation_basis||'','p-bg-amount':Number(row.planned_amount||0),'p-bg-note':row.note||''}));
+        total=(official.data||[]).reduce((sum,row)=>sum+Number(row.planned_amount||0),0);data.budgetOrigin='allocation';data.budgetLinkedAt=new Date().toISOString();
+        if(typeof applyAllocatedBudgetRowsV154==='function'){applyAllocatedBudgetRowsV154(official.data);window.planHasAllocatedBudgetV154=true;setPlanBudgetInputsLockedV154(true);planBudgetNoticeV154('<strong>확정 편성예산 '+budgetMoneyV1471(total)+'</strong> · 저장 시 예산관리의 최신 금액을 적용했습니다.','allocation');}
+      }else{const normalized=normalizePlanBudgetV1031(data);total=normalized.total;data.budgetOrigin='temporary';}
+      data.budgetTotal=total;data.totalBudget=total;
       const ex=await sb.from('project_documents').select('id').eq('project_id',projectId).eq('doc_type','PLAN').maybeSingle(); if(ex.error) throw ex.error;
       let doc;
       if(ex.data){
@@ -3268,7 +3279,7 @@
       }
       await sb.from('project_history').insert({project_id:projectId,document_id:doc.id,action:ex.data?'UPDATE_PLAN':'CREATE_PLAN',snapshot:{...data,budgetTotal:total},changed_by:v8User.id});
       window.currentCloudPlanProjectId=projectId;
-      alert('공동 DB에 저장되었습니다. 계획서 예산도 계획예산으로 연동했습니다.');
+      alert('공동 DB에 저장되었습니다. '+(data.budgetOrigin==='allocation'?'예산관리의 확정 편성예산을 기준으로 저장했습니다.':'계획서 예산은 임시예산으로 저장했습니다. 예산 확정 시 예산관리에서 편성해 주세요.'));
       await renderCloudDB();
       return {ok:true,projectId,documentId:doc.id,type};
     }catch(e){ console.error(e); alert('공동 DB 저장 오류: '+e.message); return {ok:false,error:e,type}; }
@@ -3933,6 +3944,14 @@ ${centerMissionV1493}
         <button type="button" class="btn btn-plan" id="aiGenerateV110" onclick="generatePlanAIV110()">✨ AI 초안 작성</button>
         <button type="button" class="btn btn-save" id="aiApplyV110" onclick="applyPlanAIV110()" disabled>✅ 표준폼에 적용</button>
       </div>
+      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:9px;padding:9px;background:#eef2ff;border-radius:6px">
+        <label for="aiRewriteSectionV153" style="font-size:12px;font-weight:bold">선택 항목 재작성</label>
+        <select id="aiRewriteSectionV153" style="width:auto;min-width:180px;padding:7px">
+          <option value="project_name">사업명</option><option value="background">추진배경 및 필요성</option><option value="purpose">사업목적</option><option value="overview">사업개요</option><option value="direction">추진방향</option><option value="details">세부 추진내용</option><option value="procedure">추진절차</option><option value="schedule">추진일정</option><option value="budget_plan">소요예산</option><option value="expected_effect">기대효과</option><option value="method">운영방법</option><option value="evaluation_plan">평가·환류 계획</option><option value="administrative">행정사항</option>
+        </select>
+        <button type="button" class="btn btn-plan" id="aiRewriteV153" onclick="rewritePlanSectionV153()" disabled>🔄 선택 항목 다시 작성</button>
+        <span style="font-size:11px;color:#64748b">다른 항목은 변경되지 않습니다.</span>
+      </div>
       <div id="aiMsgV110" role="status" aria-live="polite" style="margin-top:8px;font-size:12px"></div>
       <div id="aiPreviewV110" style="margin-top:10px"></div>`;
     std.insertAdjacentElement('beforebegin',box);
@@ -3948,6 +3967,23 @@ ${centerMissionV1493}
     if(/timeout|timed out|deadline/i.test(value))return 'AI 응답시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.';
     return value;
   }
+  const PLAN_DRAFT_LABELS_V153={project_name:'사업명',background:'추진배경 및 필요성',purpose:'사업목적',overview:'사업개요',direction:'추진방향',details:'세부 추진내용',procedure:'추진절차',schedule:'추진일정',budget_plan:'소요예산',expected_effect:'기대효과',method:'운영방법',evaluation_plan:'평가·환류 계획',administrative:'행정사항'};
+  function planDraftValueV153(draft,key){if(key==='project_name')return draft?.project_name||draft?.title||'';if(key==='budget_plan')return draft?.budget_plan||draft?.budget||'';return draft?.[key]||'';}
+  function renderPlanAIPreviewV153(){
+    const preview=document.getElementById('aiPreviewV110');if(!preview||!planAIDraftV113)return;
+    preview.innerHTML=Object.entries(PLAN_DRAFT_LABELS_V153).map(([key,label])=>[key,label,planDraftValueV153(planAIDraftV113,key)]).filter(([, ,value])=>String(value||'').trim()).map(([key,label,value])=>`<div id="aiDraftRowV153_${key}" style="border:1px solid #dbe3ea;border-radius:6px;padding:9px;margin:6px 0;background:#fff"><b>${esc(label)}</b><div style="white-space:pre-wrap;margin-top:5px">${esc(value)}</div></div>`).join('');
+  }
+  async function rewritePlanSectionV153(){
+    if(!planAIDraftV113)return alert('먼저 AI 전체 초안을 작성해 주세요.');
+    const key=document.getElementById('aiRewriteSectionV153')?.value||'background',label=PLAN_DRAFT_LABELS_V153[key],button=document.getElementById('aiRewriteV153'),msg=document.getElementById('aiMsgV110'),current=planDraftValueV153(planAIDraftV113,key),input=collectPlanAIInputV113();
+    const focus=`\n\n[선택 항목 재작성 요청]\n재작성 항목: ${label}\n현재 내용: ${current||'미작성'}\n위 항목만 기존보다 구체적이고 실행 가능하게 다시 작성한다. 다른 항목과 중복하지 말고 확인되지 않은 사실이나 수치는 만들지 않는다. JSON 응답의 ${key} 필드에 재작성 결과를 반드시 포함한다.`;
+    input.main_content+=focus;input.writing_instructions+=focus;input.focus_section=key;input.current_section_content=current;button.disabled=true;msg.style.color='#1d4ed8';msg.textContent=label+' 항목을 다시 작성하고 있습니다...';
+    try{
+      const legacy={project_name:input.project_name,target:input.target,planned_participants:input.planned_participants,main_content:input.main_content,operation_date:input.operation_date,location:input.location,method:input.method,background:input.background,purpose:input.purpose,expected_effect:input.expected_effect,evaluation_plan:input.evaluation_plan,institution_context:input.institution_context,strategic_alignment:input.strategic_alignment,writing_instructions:input.writing_instructions};let res=null,error=null,lastDetail='';
+      for(let attempt=1;attempt<=3;attempt++){if(attempt>1){const seconds=attempt===2?3:6;msg.textContent=label+' 재작성 요청을 '+seconds+'초 후 다시 시도합니다. ('+attempt+'/3)';await new Promise(resolve=>setTimeout(resolve,seconds*1000));}const response=await sb.functions.invoke('ai-plan-draft-v11',{body:attempt===1?input:legacy});res=response.data;error=response.error;if(!error&&res?.draft)break;lastDetail=error?await aiErrorDetailV1521(error):String(res?.error||'AI 응답 형식이 올바르지 않습니다.');}
+      if(error||!res?.draft)throw new Error(aiKoreanErrorV1521(lastDetail));let rewritten=planDraftValueV153(res.draft,key);if(!rewritten&&['overview','direction','details','procedure','schedule','budget_plan','administrative'].includes(key))rewritten=res.draft.method||'';if(!rewritten&&key==='project_name')rewritten=input.suggested_project_name;if(!String(rewritten||'').trim())throw new Error(label+' 재작성 결과가 반환되지 않았습니다. 다시 시도해 주세요.');if(key==='project_name')planAIDraftV113.project_name=rewritten;else planAIDraftV113[key]=rewritten;renderPlanAIPreviewV153();msg.style.color='#166534';msg.textContent=label+' 항목만 다시 작성했습니다. 내용을 확인한 후 표준폼에 적용하세요.';
+    }catch(e){console.error('AI 항목별 재작성 오류:',e);msg.style.color='#b91c1c';msg.textContent='AI 재작성 오류: '+(e.message||e);}finally{button.disabled=false;}
+  }
   async function generatePlanAIV110(){
     const msg=document.getElementById('aiMsgV110');
     const preview=document.getElementById('aiPreviewV110');
@@ -3959,6 +3995,7 @@ ${centerMissionV1493}
       if(!input.project_name_input&&!input.business_idea&&!input.target&&!getStandardPlanV106().content)throw new Error('사업명 또는 사업 아이디어를 입력하세요.');
       planAIDraftV113=null;
       applyBtn.disabled=true;
+      const rewriteBtn=document.getElementById('aiRewriteV153');if(rewriteBtn)rewriteBtn.disabled=true;
       generateBtn.disabled=true;
       msg.style.color='#1d4ed8';
       msg.textContent='AI 초안을 작성하고 있습니다...';
@@ -3975,23 +4012,9 @@ ${centerMissionV1493}
       if(!res?.draft)throw new Error(res?.error||'AI 응답 형식이 올바르지 않습니다.');
       planAIDraftV113=res.draft;
       if(!planAIDraftV113.project_name&&!planAIDraftV113.title)planAIDraftV113.project_name=input.suggested_project_name;
-      const rows=[
-        ['사업명',planAIDraftV113.project_name||planAIDraftV113.title],
-        ['추진배경 및 필요성',planAIDraftV113.background],
-        ['사업목적',planAIDraftV113.purpose],
-        ['사업개요',planAIDraftV113.overview],
-        ['추진방향',planAIDraftV113.direction],
-        ['세부 추진내용',planAIDraftV113.details],
-        ['추진절차',planAIDraftV113.procedure],
-        ['추진일정',planAIDraftV113.schedule],
-        ['소요예산',planAIDraftV113.budget_plan||planAIDraftV113.budget],
-        ['기대효과',planAIDraftV113.expected_effect],
-        ['운영방법',planAIDraftV113.method],
-        ['평가·환류 계획',planAIDraftV113.evaluation_plan],
-        ['행정사항',planAIDraftV113.administrative]
-      ].filter(([,value])=>String(value||'').trim());
-      preview.innerHTML=rows.map(([label,value])=>`<div style="border:1px solid #dbe3ea;border-radius:6px;padding:9px;margin:6px 0;background:#fff"><b>${esc(label)}</b><div style="white-space:pre-wrap;margin-top:5px">${esc(value||'')}</div></div>`).join('');
+      renderPlanAIPreviewV153();
       applyBtn.disabled=false;
+      if(rewriteBtn)rewriteBtn.disabled=false;
       msg.style.color='#166534';
       msg.textContent='AI 초안이 생성되었습니다. 내용을 확인한 후 표준폼에 적용하세요.';
     }catch(e){
@@ -6474,6 +6497,7 @@ async function saveBudgetPlanV1472(){
     budgetPlanLoadedIdsV1472=rows.map(row=>row.id).filter(Boolean);
     const history=await sb.from('project_history').insert({project_id:budgetPlanProjectIdV1472,action:'PLAN_BUDGET_UPDATED',snapshot:{planned_total:rows.reduce((sum,row)=>sum+budgetNumberV1471(row.planned),0),budget_items:rows.map(row=>({item:row.item,basis:row.basis,planned:row.planned,note:row.note}))},changed_by:userId});
     if(history.error)console.warn('계획예산 이력 저장 경고:',history.error.message);
+    await syncBudgetPlanDocumentsV154(budgetPlanProjectIdV1472);
     budgetPlanStatusV1472('계획예산을 저장했습니다. 연간 예산현황을 갱신합니다.');
     await renderAnnualBudgetV1471();
   }catch(error){budgetPlanStatusV1472('계획예산 저장 오류: '+(error.message||error),true);}
@@ -6700,6 +6724,32 @@ async function saveProjectWorkflowV150(){
 function renderWorkflowDetailSummaryV150(rows){const box=document.getElementById('v150WorkflowDetailSummary');if(!box)return;const summary=workflowSummaryV150(rows);box.innerHTML='<div style="padding:12px;border:1px solid '+(summary.overdue?'#fca5a5':'#bfdbfe')+';background:'+(summary.overdue?'#fef2f2':'#eff6ff')+';border-radius:8px"><strong>진행률 '+summary.progress+'%</strong> · 완료 '+summary.done+'/'+summary.total+'단계'+(summary.overdue?' · <span style="color:#b91c1c">기한 경과 '+summary.overdue+'건</span>':'')+'<div style="font-size:12px;color:#475569;margin-top:5px">다음 단계: '+workflowEscapeV150(summary.next)+'</div></div>';}
 const renderProjectDetailBaseV150=renderProjectDetailV85;
 renderProjectDetailV85=async function(){const result=await renderProjectDetailBaseV150.apply(this,arguments);if(detailProjectIdV85){const query=await sb.from('project_workflow_steps').select('*').eq('project_id',detailProjectIdV85).order('step_order',{ascending:true});if(!query.error)renderWorkflowDetailSummaryV150(query.data||[]);else document.getElementById('v150WorkflowDetailSummary').textContent='진행단계 DB 설정 후 사용할 수 있습니다.';}return result;};
+
+// ===== v15.4.0: 계획서 임시예산·예산관리 확정예산 기준 통합 =====
+window.planHasAllocatedBudgetV154=false;
+function planBudgetProjectIdV154(){return window.currentCloudPlanProjectId||((typeof currentProjectId!=='undefined'&&currentProjectId)||null);}
+function setPlanBudgetInputsLockedV154(locked){
+  document.querySelectorAll('#p_budgetTbody input,#p_budgetTbody button').forEach(el=>el.disabled=!!locked);
+  const add=[...document.querySelectorAll('#p-sub-section-3 button')].find(el=>el.textContent.includes('예산 추가'));if(add)add.disabled=!!locked;
+}
+function planBudgetNoticeV154(html,mode){const box=document.getElementById('planBudgetOriginV154'),text=document.getElementById('planBudgetOriginTextV154');if(!box||!text)return;text.innerHTML=html;const official=mode==='allocation';box.style.background=official?'#ecfdf5':mode==='warning'?'#fef2f2':'#fffbeb';box.style.borderColor=official?'#6ee7b7':mode==='warning'?'#fca5a5':'#f59e0b';box.style.color=official?'#065f46':mode==='warning'?'#991b1b':'#92400e';}
+async function allocatedBudgetRowsV154(projectId){const query=await sb.from('project_budget_items').select('*').eq('project_id',projectId).order('sort_order',{ascending:true});if(query.error)throw query.error;return query.data||[];}
+async function refreshPlanBudgetOriginV154(projectId,autoImport){
+  projectId=projectId||planBudgetProjectIdV154();if(!projectId){window.planHasAllocatedBudgetV154=false;setPlanBudgetInputsLockedV154(false);return planBudgetNoticeV154('<strong>임시예산</strong> · 계획서 작성 단계에서 직접 입력할 수 있습니다. 정식 예산은 사업 저장 후 예산·지출 관리에서 편성해 주세요.','temporary');}
+  try{const rows=await allocatedBudgetRowsV154(projectId);window.planHasAllocatedBudgetV154=rows.length>0;if(!rows.length){setPlanBudgetInputsLockedV154(false);return planBudgetNoticeV154('<strong>임시예산</strong> · 아직 정식 편성예산이 없습니다. 현재 입력값은 계획서 초안에만 저장됩니다.','temporary');}const officialTotal=rows.reduce((sum,row)=>sum+budgetNumberV1471(row.planned_amount),0),formTotal=calcPlanBudget();if(autoImport||Math.abs(Number(formTotal||0)-officialTotal)>0)applyAllocatedBudgetRowsV154(rows);const different=Math.abs(Number(formTotal||0)-officialTotal)>0;setPlanBudgetInputsLockedV154(true);planBudgetNoticeV154('<strong>확정 편성예산 '+budgetMoneyV1471(officialTotal)+'</strong> · 예산관리 기준으로 연결되었습니다.'+(different?' <span style="color:#b91c1c">기존 계획서 금액과 차이가 있어 최신 편성예산을 적용했습니다.</span>':''),'allocation');}catch(error){planBudgetNoticeV154('<strong>예산 연결 확인 오류</strong> · '+budgetEscapeV1471(error.message||error),'warning');}
+}
+function applyAllocatedBudgetRowsV154(rows){setRows('p_budgetTbody',rows.map(row=>({'p-bg-item':row.item_name||'','p-bg-calc':row.calculation_basis||'','p-bg-amount':budgetNumberV1471(row.planned_amount),'p-bg-note':row.note||''})),['p-bg-item','p-bg-calc','p-bg-amount','p-bg-note'],'addPlanBudgetRow');calcPlanBudget();}
+async function importAllocatedBudgetToPlanV154(){const projectId=planBudgetProjectIdV154();if(!projectId)return alert('계획서를 공동 DB에 먼저 저장한 후 편성예산을 불러올 수 있습니다.');try{const rows=await allocatedBudgetRowsV154(projectId);if(!rows.length)return alert('저장된 편성예산이 없습니다. 「예산관리에서 편성·수정」을 먼저 이용해 주세요.');applyAllocatedBudgetRowsV154(rows);window.planHasAllocatedBudgetV154=true;setPlanBudgetInputsLockedV154(true);const total=rows.reduce((sum,row)=>sum+budgetNumberV1471(row.planned_amount),0);planBudgetNoticeV154('<strong>확정 편성예산 '+budgetMoneyV1471(total)+'</strong> · 최신 예산을 계획서에 불러왔습니다.','allocation');}catch(error){alert('편성예산 불러오기 오류: '+(error.message||error));}}
+async function openPlanBudgetManagerV154(){const projectId=planBudgetProjectIdV154();if(!projectId)return alert('계획서를 공동 DB에 먼저 저장한 후 예산을 편성할 수 있습니다.');await openBudgetPlanV1472(projectId);}
+function setTemporaryPlanBudgetV154(){if(window.planHasAllocatedBudgetV154)return alert('이미 확정 편성예산이 존재합니다. 금액 변경은 「예산관리에서 편성·수정」을 이용해 주세요.\n계획서에는 확정 편성예산이 우선 적용됩니다.');setPlanBudgetInputsLockedV154(false);planBudgetNoticeV154('<strong>임시예산 직접입력</strong> · 계획서 초안용이며 정식 편성예산이 아닙니다.','temporary');}
+async function syncBudgetPlanDocumentsV154(projectId){
+  const items=await allocatedBudgetRowsV154(projectId),planned=items.reduce((sum,row)=>sum+budgetNumberV1471(row.planned_amount),0),actual=items.reduce((sum,row)=>sum+budgetNumberV1471(row.actual_amount),0),canonical=items.map((row,index)=>({item:row.item_name||'예산항목',basis:row.calculation_basis||'',planned:budgetNumberV1471(row.planned_amount),actual:budgetNumberV1471(row.actual_amount),balance:budgetNumberV1471(row.planned_amount)-budgetNumberV1471(row.actual_amount),note:row.note||'',sort_order:index})),resultRows=await resultLedgerRowsV1479(projectId,items),docs=await sb.from('project_documents').select('id,doc_type,data').eq('project_id',projectId);if(docs.error)throw docs.error;const userId=v81Profile?.id||(await sb.auth.getUser()).data.user?.id;
+  for(const doc of docs.data||[]){const data={...(doc.data||{}),budgetItems:canonical,budgetOrigin:'allocation',budgetLinkedAt:new Date().toISOString()};if(doc.doc_type==='PLAN'){data.budgetTotal=planned;data.totalBudget=planned;data.budget=canonical.map(row=>({'p-bg-item':row.item,'p-bg-calc':row.basis,'p-bg-amount':row.planned,'p-bg-note':row.note}));}else if(doc.doc_type==='RESULT'){data.plannedBudget=planned;data.actualBudget=actual;data.settlementTotal=actual;data.budget=resultRows;data.noBudget=false;data.officialDocument={...(data.officialDocument||{}),approved_budget:planned};}else continue;const update=await sb.from('project_documents').update({data,updated_by:userId}).eq('id',doc.id);if(update.error)throw update.error;}
+  if(planBudgetProjectIdV154()===projectId)await refreshPlanBudgetOriginV154(projectId,true);
+}
+const loadCloudDocumentBaseV154=loadCloudDocument;
+loadCloudDocument=async function(docId){const result=await loadCloudDocumentBaseV154.apply(this,arguments);const query=await sb.from('project_documents').select('doc_type,project_id').eq('id',docId).maybeSingle();if(!query.error&&query.data?.doc_type==='PLAN')await refreshPlanBudgetOriginV154(query.data.project_id,true);return result;};
+document.addEventListener('DOMContentLoaded',()=>refreshPlanBudgetOriginV154(null,false));
 </script>
 </body>
 </html>
