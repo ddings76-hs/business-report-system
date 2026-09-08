@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.0 계획서·편성예산 기준 통합)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.1 편성예산 자동계산)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -384,7 +384,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.0 계획서·편성예산 기준 통합)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.1 편성예산 자동계산)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -1163,7 +1163,7 @@
   <div id="budget-plan-modal-v1472" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100020;align-items:center;justify-content:center;">
     <div style="width:min(1080px,97vw);max-height:92vh;overflow:auto;background:#fff;border-radius:12px;padding:22px;box-sizing:border-box;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-        <div><h2 style="margin:0;color:#0f766e;">사업별 계획예산 편성</h2><div style="font-size:12px;color:#64748b;margin-top:5px;">기존 사업을 선택하고 예산항목·산출근거·계획예산을 입력합니다.</div></div>
+        <div><h2 style="margin:0;color:#0f766e;">사업별 계획예산 편성</h2><div style="font-size:12px;color:#64748b;margin-top:5px;">산출근거에 <strong>40명 × 15,000원</strong>처럼 입력하면 계획예산과 총액이 자동 계산됩니다.</div></div>
         <button class="btn btn-del" onclick="closeBudgetPlanV1472()">닫기</button>
       </div>
       <div style="display:grid;grid-template-columns:minmax(240px,2fr) minmax(110px,1fr);gap:10px;margin:16px 0 10px;">
@@ -6434,6 +6434,11 @@ function renderBudgetPlanRowsV1472(){
 function updateBudgetPlanCellV1472(index,key,value){
   const row=budgetPlanRowsDataV1472[index];if(!row)return;
   row[key]=key==='planned'?Math.max(0,budgetNumberV1471(value)):value;
+  if(key==='basis'){
+    const calculated=evalBudgetBasisV1031(value);
+    if(calculated!==null){row.planned=calculated;const tr=document.querySelectorAll('#budgetPlanRowsV1472 tr')[index],amount=tr?.querySelector('input[type="number"]');if(amount){amount.value=calculated;amount.style.background='#ecfdf5';amount.title='산출근거에서 자동 계산된 금액입니다.';}}
+  }
+  if(key==='planned'){const tr=document.querySelectorAll('#budgetPlanRowsV1472 tr')[index],amount=tr?.querySelector('input[type="number"]');if(amount){amount.style.background='#fff';amount.title='직접 입력한 금액입니다.';}}
   const total=budgetPlanRowsDataV1472.reduce((sum,item)=>sum+budgetNumberV1471(item.planned),0),box=document.getElementById('budgetPlanTotalV1472');if(box)box.textContent='총 계획예산 '+budgetMoneyV1471(total);
 }
 function addBudgetPlanRowV1472(){budgetPlanRowsDataV1472.push({id:null,item:'',basis:'',planned:0,actual:0,note:''});renderBudgetPlanRowsV1472();}
