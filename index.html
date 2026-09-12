@@ -169,7 +169,27 @@
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>if(new URLSearchParams(location.search).get('survey'))document.documentElement.classList.add('public-survey-mode-v118');</script>
-  <style>html.public-survey-mode-v118 body> *{display:none!important}</style>
+  <style>html.public-survey-mode-v118 body> *{display:none!important}/* v15.5 기안문 본문 세부 서식 */
+#output-plan-container .doc-body-text > #out_p_basis_text,
+#output-plan-container .doc-body-text > #out_p_request_text{
+  margin:5px 0 !important;padding-left:22px;text-indent:-22px;text-align:justify;
+}
+#output-plan-container #out_p_request_text{margin-bottom:0 !important;}
+#output-plan-container .doc-divider{
+  margin:27px 0 22px !important;padding:0 !important;text-indent:0 !important;
+  text-align:center !important;font-weight:bold;letter-spacing:0 !important;white-space:pre;
+}
+#output-plan-container #out_p_overview_summary .doc-list-item{
+  margin:5px 0 5px 36px !important;padding-left:31px !important;text-indent:-31px !important;
+  line-height:1.8;text-align:left;
+}
+#output-plan-container #out_p_overview_summary .doc-list-multiline{
+  margin-left:36px !important;padding-left:0 !important;text-indent:0 !important;
+}
+#output-plan-container .doc-list-title{display:block;}
+#output-plan-container .doc-list-content{display:block;margin-left:32px;text-indent:0;}
+#output-plan-container .doc-list-content-line{display:block;min-height:1.8em;}
+</style>
 </head>
 
 <body>
@@ -537,6 +557,7 @@
         <label style="font-size:12px">시행번호<div class="doc-number-input"><span>화성시장기요양-</span><input type="text" id="p_docNumber" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')" placeholder="번호만 입력"></div></label>
         <label style="font-size:12px">시행일<input type="date" id="p_docDate"></label>
         <label style="font-size:12px">기안문 제목 <span style="color:#64748b">(비워두면 자동 작성)</span><input type="text" id="p_officialTitle" placeholder="예: 2026 장기요양종사자 건강증진 사업 운영 계획"></label>
+        <label style="font-size:12px">기안문 운영주제<input type="text" id="p_coverTheme" placeholder="비워두면 사업목적의 첫 항목 적용"></label>
         <label style="font-size:12px">붙임 문서<input type="text" id="p_attachment" value="사업계획서(안) 1부."></label>
         <label style="font-size:12px">공개 구분<input type="text" id="p_disclosure" value="공개"></label>
         <label style="font-size:12px">전화<input type="text" id="p_phone" value="(031) 294-1630"></label>
@@ -552,7 +573,7 @@
     <div id="p-sub-section-1" class="sub-section active">
       <div id="standardPlanV106" style="border:2px solid #1f4e8c;border-radius:10px;padding:16px;margin-bottom:18px;background:#fff">
         <h2 style="margin:0 0 8px;color:#173f78">Ⅰ. 사업 개요</h2>
-        <div style="font-size:12px;color:#666;margin-bottom:12px">입력한 내용은 내부기안문과 사업계획서에 동일하게 반영됩니다.</div>
+        <div style="font-size:12px;color:#666;margin-bottom:12px">항목명과 내용을 수정할 수 있습니다. 삭제한 항목은 입력값을 보존한 채 기안문·계획서 출력에서 제외되며 다시 복원할 수 있습니다.</div>
         <table style="width:100%;border-collapse:collapse">
           <tbody id="standardPlanBodyV106">
             <tr><th style="border:1px solid #bbb;padding:8px;width:180px">사업명</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_project_name" style="width:100%" placeholder="사업명을 입력하세요"></td></tr>
@@ -568,6 +589,7 @@
             <tr><th style="border:1px solid #bbb;padding:8px">평가·환류 계획</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_evaluation_plan" style="width:100%;min-height:55px"></textarea></td></tr>
           </tbody>
         </table>
+        <div id="standardPlanRestoreV154" style="display:none;margin-top:9px;padding:9px;border:1px dashed #94a3b8;border-radius:6px;background:#f8fafc"></div>
         <div style="margin-top:9px"><button type="button" class="btn btn-add" onclick="addCustomPlanFieldV106()">＋ 추가항목</button></div>
         <div id="customPlanFieldsV106" style="margin-top:8px"></div>
       </div>
@@ -690,7 +712,7 @@
         <div class="doc-body-text">
           <p id="out_p_basis_text">1. 관련 근거 : 당해연도 화성시장기요양지원센터 사업계획서</p>
           <p id="out_p_request_text">2. 위 관련 근거에 따라 해당 사업을 추진하고자 하오니 결재하여 주시기 바랍니다.</p>
-          <p class="doc-divider">- 아 래 -</p>
+          <p class="doc-divider">-   아       래   -</p>
           <div id="out_p_overview_summary"></div>
           <div style="margin-top:36px" id="out_p_coverAttachmentListV137">붙임&nbsp;&nbsp;1. 사업계획서(안) 1부.&nbsp;&nbsp;끝.</div>
           <span id="out_p_attachment" style="display:none">사업계획서(안) 1부.</span>
@@ -1401,6 +1423,25 @@
   }
 
   // 사업계획서 생성 함수
+  function requestPhraseV154(value,max=60){
+    let text=normalizePlanParagraphs(value).split('\n').map(x=>x.replace(/^[○◯□●\-]\s*/,'').trim()).filter(Boolean)[0]||'';
+    text=text.replace(/[.。]+$/,'').replace(/(?:필요함|필요하다)$/,'필요성을 반영').replace(/(?:하고자 함|하고자 한다)$/,'').replace(/(?:함|한다)$/,'');
+    return text.length>max?text.slice(0,max).replace(/\s+\S*$/,'')+'…':text;
+  }
+  function buildPlanRequestSummaryV154(projectName,purpose,expectedEffect){
+    const p=requestPhraseV154(purpose),e=requestPhraseV154(expectedEffect),name=String(projectName||'해당 사업').trim();
+    const effect=e?(/^참여자/.test(e)?e:'참여자의 '+e):'';
+    const aim=p&&effect?`${p}하고, ${effect}에 기여하기 위해`:p?`${p}하기 위해`:effect?`${effect}에 기여하기 위해`:'';
+    return `위 관련 근거에 따라 ${aim?aim+' ':''}「${name}」 사업을 추진하고자 하오니 결재하여 주시기 바랍니다.`;
+  }
+
+  function renderPlanDraftItemV155(letter,label,value){
+    const cleaned=normalizePlanParagraphs(value),lines=cleaned.split('\n').map(x=>x.trim()).filter(Boolean);
+    const title=`${letter}. ${esc(label).replaceAll(' ','&nbsp;')} :`;
+    if(lines.length<=1)return `<div class="doc-list-item">${title} ${esc(lines[0]||'-')}</div>`;
+    return `<div class="doc-list-item doc-list-multiline"><div class="doc-list-title">${title}</div><div class="doc-list-content">${lines.map(line=>`<span class="doc-list-content-line">${esc(line)}</span>`).join('')}</div></div>`;
+  }
+
   function generatePlanDocs() {
     const stdCheck=(typeof getStandardPlanV106==='function'?getStandardPlanV106():{})||{};
     const requiredPlan=[
@@ -1438,18 +1479,11 @@
     const value=(id,text)=>{const el=document.getElementById(id);if(el)el.innerText=text||'';};
 
     const standardOverviewRows = [
-      ['사업명', stdPlan.project_name],
-      ['추진배경 및 필요성', stdPlan.background],
-      ['사업목적', stdPlan.purpose],
-      ['기대효과', stdPlan.expected_effect],
-      ['운영일시', stdPlan.operation_date],
-      ['참여대상', stdPlan.target_group],
-      ['계획인원', (stdPlan.planned_participants === '' || stdPlan.planned_participants == null) ? '' : Number(stdPlan.planned_participants || 0) + '명'],
-      ['주요내용', stdPlan.content],
-      ['운영장소', stdPlan.location],
-      ['운영방법', stdPlan.operation_method],
-      ['평가·환류 계획', stdPlan.evaluation_plan]
-    ];
+      ['project_name', stdPlan.project_name],['background', stdPlan.background],['purpose', stdPlan.purpose],
+      ['expected_effect', stdPlan.expected_effect],['operation_date', stdPlan.operation_date],['target_group', stdPlan.target_group],
+      ['planned_participants', (stdPlan.planned_participants === '' || stdPlan.planned_participants == null) ? '' : Number(stdPlan.planned_participants || 0) + '명'],
+      ['content', stdPlan.content],['location', stdPlan.location],['operation_method', stdPlan.operation_method],['evaluation_plan', stdPlan.evaluation_plan]
+    ].filter(([key])=>planFieldVisibleV154(key)).map(([key,value])=>[planFieldLabelV154(key,key),value]);
     const customOverviewRows=(stdPlan.custom_fields||[]).map(x=>[x.label||'',x.value||'']).filter(x=>x[0]&&String(x[1]??'').trim());
     const overviewRows=standardOverviewRows.concat(customOverviewRows);
 
@@ -1458,29 +1492,29 @@
     ).join('')+'</tbody>';
 
     const targetText=[stdPlan.target_group,Number(stdPlan.planned_participants||0)>0?Number(stdPlan.planned_participants)+'명':''].filter(Boolean).join(' ');
-    const customDraftRows=(stdPlan.custom_fields||[]).map(x=>[x.label||'',x.value||'']).filter(x=>x[0]&&String(x[1]??'').trim());
+    const coverBudget=Number(calcPlanBudget())||0;
+    const coverTheme=normalizePlanParagraphs(official.cover_theme||stdPlan.purpose||'').split('\n')[0].replace(/^[○◯□●]\s*/, '');
     let draftItems = [
-      ['사업명', stdPlan.project_name || ''],
-      ['운영주제', stdPlan.purpose || ''],
-      ['운영일시', stdPlan.operation_date || ''],
-      ['대상', targetText],
-      ['장소', stdPlan.location || ''],
-      ['운영방법', stdPlan.operation_method || ''],
-      ['주요내용', stdPlan.content || ''],
-      ...customDraftRows,
-      ['소요예산', koreanMoneyV134(calcPlanBudget())],
-      ['재원', officialResourceV1484(document.getElementById('p_budgetSource').value,document.getElementById('p_budgetCategory').value)]
-    ];
+      ['project_name',planFieldLabelV154('project_name','사업명'),stdPlan.project_name || '-'],
+      ['purpose','운영주제',coverTheme || '-'],
+      ['operation_date',planFieldLabelV154('operation_date','교육일시'),stdPlan.operation_date || '-'],
+      ['target_group',planFieldLabelV154('target_group','교육대상'),targetText || '-'],
+      ['location',planFieldLabelV154('location','장    소'),stdPlan.location || '-'],
+      ['operation_method',planFieldLabelV154('operation_method','교육운영'),normalizePlanParagraphs(stdPlan.operation_method) || '-'],
+      ['content',planFieldLabelV154('content','주요내용'),stdPlan.content || '-'],
+      ['budget','소요예산',coverBudget>0?koreanMoneyV134(coverBudget):'없음'],
+      ['resource','재원',coverBudget>0?(officialResourceV1484(document.getElementById('p_budgetSource').value,document.getElementById('p_budgetCategory').value)||'-'):'없음']
+    ].filter(([key])=>['budget','resource'].includes(key)||planFieldVisibleV154(key));
     const ga = ['가','나','다','라','마','바','사','아','자','차','카','타','파','하'];
-    draftItems.filter(x=>x[1]).forEach((x,i)=>{
-      summary += `<div class="doc-list-item">${ga[i]||String(i+1)}. ${esc(x[0])} : ${esc(x[1]).replaceAll('\n','<br>')}</div>`;
+    draftItems.filter(x=>x[2]).forEach((x,i)=>{
+      summary += renderPlanDraftItemV155(ga[i]||String(i+1),x[1],x[2]);
     });
     const yearMatch=String(stdPlan.operation_date||'').match(/(?:19|20)\d{2}/),planYear=yearMatch?yearMatch[0]:String(new Date().getFullYear());
     const titledName=/^(?:19|20)\d{2}/.test(firstProjName)?firstProjName:planYear+' '+firstProjName;
     value('out_p_recipient',official.recipient||'내부결재');
     value('out_p_docTitle',official.official_title||titledName+' 운영 계획');
     value('out_p_basis_text','1. 관련 근거 : '+(official.reference||planYear+'년 '+(org||'기관')+' 사업계획서'));
-    value('out_p_request_text','2. '+(official.request_text||'위 관련 근거에 따라 「'+firstProjName+'」 사업을 추진하고자 하오니 결재하여 주시기 바랍니다.'));
+    value('out_p_request_text','2. '+(official.request_text||buildPlanRequestSummaryV154(firstProjName,planFieldVisibleV154('purpose')?stdPlan.purpose:'',planFieldVisibleV154('expected_effect')?stdPlan.expected_effect:'')));
     value('out_p_attachment',official.attachment||'사업계획서(안) 1부.');
     value('out_p_docNumber',fullDocumentNumberV146(official.document_number)||DOCUMENT_NUMBER_PREFIX_V146);value('out_p_docDate',officialDateTextV146(official.document_date)||planYear+'.    .    .');
     value('out_p_address',official.address||'우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층');
@@ -1657,11 +1691,12 @@
   }
   function planOfficialDataV134(){
     const value=id=>document.getElementById(id)?.value?.trim()||'';
-    return {recipient:value('p_recipient'),document_number:fullDocumentNumberV146(value('p_docNumber')),document_date:officialDateTextV146(value('p_docDate')),official_title:value('p_officialTitle'),attachment:value('p_attachment'),disclosure:value('p_disclosure'),phone:value('p_phone'),fax:value('p_fax'),email:value('p_email'),address:value('p_address'),reference:value('p_reference'),request_text:value('p_docRequest')};
+    return {recipient:value('p_recipient'),document_number:fullDocumentNumberV146(value('p_docNumber')),document_date:officialDateTextV146(value('p_docDate')),official_title:value('p_officialTitle'),cover_theme:value('p_coverTheme'),cover_operation_label:value('p_coverOperationLabel')||'교육운영',cover_operation_text:value('p_coverOperationText'),attachment:value('p_attachment'),disclosure:value('p_disclosure'),phone:value('p_phone'),fax:value('p_fax'),email:value('p_email'),address:value('p_address'),reference:value('p_reference'),request_text:value('p_docRequest')};
   }
   function applyPlanOfficialDataV134(data={}){
     const set=(id,value,fallback='')=>{const el=document.getElementById(id);if(el)el.value=value??fallback;};
     set('p_recipient',data.recipient,'내부결재');set('p_docNumber',documentNumberSuffixV146(data.document_number),'');set('p_docDate',dateInputValueV146(data.document_date),'');set('p_officialTitle',data.official_title,'');
+    set('p_coverTheme',data.cover_theme,'');set('p_coverOperationLabel',data.cover_operation_label,'교육운영');set('p_coverOperationText',data.cover_operation_text,'');
     set('p_attachment',data.attachment,'사업계획서(안) 1부.');set('p_disclosure',data.disclosure,'공개');set('p_phone',data.phone,'(031) 294-1630');set('p_fax',data.fax,'(031) 294-1633');
     set('p_email',data.email,'hsgoodcare@daum.net');set('p_address',data.address,'우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층');set('p_reference',data.reference,'');set('p_docRequest',data.request_text,'');
   }
@@ -3545,6 +3580,38 @@
     try{await renderIntegratedProjectV105(projectId);}catch(e){console.error('v10.5 canonical render',e);}
   };
 
+  const STANDARD_PLAN_FIELDS_V154=[
+    ['project_name','sp_project_name','사업명'],['background','sp_background','추진배경 및 필요성'],
+    ['purpose','sp_purpose','사업목적'],['expected_effect','sp_expected_effect','기대효과'],
+    ['operation_date','sp_operation_date','교육일시'],['target_group','sp_target_group','교육대상'],
+    ['planned_participants','sp_planned_participants','계획인원'],['content','sp_content','주요내용'],
+    ['location','sp_location','장    소'],['operation_method','sp_operation_method','교육운영'],
+    ['evaluation_plan','sp_evaluation_plan','평가·환류 계획']
+  ];
+  let standardPlanSettingsV154={};
+  function standardPlanSettingV154(key){
+    const base=STANDARD_PLAN_FIELDS_V154.find(x=>x[0]===key);
+    return {label:String(standardPlanSettingsV154[key]?.label||base?.[2]||key),visible:standardPlanSettingsV154[key]?.visible!==false};
+  }
+  function mountStandardPlanEditorV154(){
+    STANDARD_PLAN_FIELDS_V154.forEach(([key,id,defaultLabel])=>{
+      const input=document.getElementById(id),row=input?.closest('tr'),th=row?.querySelector('th');if(!input||!row||!th)return;
+      row.dataset.standardKey=key;
+      if(!th.querySelector('.sp-label-v154'))th.innerHTML=`<div style="display:flex;gap:5px;align-items:center"><input class="sp-label-v154" aria-label="항목명" value="${esc(standardPlanSettingV154(key).label)}" style="min-width:0;flex:1;font-weight:bold;text-align:center" oninput="updateStandardPlanLabelV154('${key}',this.value)"><button type="button" class="btn btn-del" style="padding:4px 7px" onclick="hideStandardPlanFieldV154('${key}')">삭제</button></div>`;
+      const labelInput=th.querySelector('.sp-label-v154');if(labelInput&&labelInput!==document.activeElement)labelInput.value=standardPlanSettingV154(key).label;
+    });
+    renderStandardPlanSettingsV154();
+  }
+  function updateStandardPlanLabelV154(key,label){standardPlanSettingsV154[key]={...standardPlanSettingV154(key),label:String(label||'').trim()||STANDARD_PLAN_FIELDS_V154.find(x=>x[0]===key)?.[2]||key};}
+  function hideStandardPlanFieldV154(key){standardPlanSettingsV154[key]={...standardPlanSettingV154(key),visible:false};renderStandardPlanSettingsV154();}
+  function restoreStandardPlanFieldV154(key){standardPlanSettingsV154[key]={...standardPlanSettingV154(key),visible:true};renderStandardPlanSettingsV154();}
+  function renderStandardPlanSettingsV154(){
+    STANDARD_PLAN_FIELDS_V154.forEach(([key,id])=>{const row=document.getElementById(id)?.closest('tr');if(row)row.style.display=standardPlanSettingV154(key).visible?'table-row':'none';});
+    const hidden=STANDARD_PLAN_FIELDS_V154.filter(([key])=>!standardPlanSettingV154(key).visible),box=document.getElementById('standardPlanRestoreV154');if(!box)return;
+    box.style.display=hidden.length?'block':'none';box.innerHTML=hidden.length?'<b style="font-size:12px">출력 제외 항목</b> '+hidden.map(([key])=>`<button type="button" class="btn" style="margin:3px;padding:4px 8px" onclick="restoreStandardPlanFieldV154('${key}')">↩ ${esc(standardPlanSettingV154(key).label)} 복원</button>`).join(''):'';
+  }
+  function planFieldVisibleV154(key){return standardPlanSettingV154(key).visible;}
+  function planFieldLabelV154(key,fallback){return standardPlanSettingV154(key).label||fallback;}
   let customPlanFieldsV106=[];
   function v106Val(id){return document.getElementById(id)?.value?.trim()||'';}
   function addCustomPlanFieldV106(label='',value=''){
@@ -3558,28 +3625,42 @@
    <input value="${esc(x.value||'')}" placeholder="내용" oninput="customPlanFieldsV106[${i}].value=this.value">
    <button type="button" class="btn btn-del" onclick="customPlanFieldsV106.splice(${i},1);renderCustomPlanFieldsV106()">삭제</button></div>`).join('');
   }
+  // Normalize escaped AI paragraph separators in plan prose.
+  function normalizePlanParagraphs(value){
+    return String(value??'')
+      .replace(/\\+r\\+n|\\+n|\\+r/g,'\n')
+      .replace(/\r\n?/g,'\n')
+      .replace(/([^\n])[ \t]*([○◯□●])[ \t]*/g,'$1\n$2 ')
+      .replace(/[ \t]+\n/g,'\n')
+      .trim();
+  }
+  function planProseField(id){
+    return ['sp_background','sp_purpose','sp_expected_effect','sp_content','sp_operation_method','sp_evaluation_plan'].includes(id);
+  }
   function getStandardPlanV106(){
    return {
     project_name:v106Val('sp_project_name'),
-    background:v106Val('sp_background'),
-    purpose:v106Val('sp_purpose'),
-    expected_effect:v106Val('sp_expected_effect'),
+    background:normalizePlanParagraphs(v106Val('sp_background')),
+    purpose:normalizePlanParagraphs(v106Val('sp_purpose')),
+    expected_effect:normalizePlanParagraphs(v106Val('sp_expected_effect')),
     operation_date:v106Val('sp_operation_date'),
     target_group:v106Val('sp_target_group'),
     planned_participants:Number(v106Val('sp_planned_participants')||0),
-    content:v106Val('sp_content'),
+    content:normalizePlanParagraphs(v106Val('sp_content')),
     location:v106Val('sp_location'),
-    operation_method:v106Val('sp_operation_method'),
-    evaluation_plan:v106Val('sp_evaluation_plan'),
+    operation_method:normalizePlanParagraphs(v106Val('sp_operation_method')),
+    evaluation_plan:normalizePlanParagraphs(v106Val('sp_evaluation_plan')),
+    field_settings:Object.fromEntries(STANDARD_PLAN_FIELDS_V154.map(([key])=>[key,standardPlanSettingV154(key)])),
     custom_fields:customPlanFieldsV106.map(x=>({label:x.label||'',value:x.value||''})).filter(x=>x.label||x.value)
    };
   }
   function applyStandardPlanV106(std={}){
-   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??''};
+   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=planProseField(id)?normalizePlanParagraphs(v):(v??'')};
    set('sp_project_name',std.project_name); set('sp_background',std.background); set('sp_purpose',std.purpose);
    set('sp_expected_effect',std.expected_effect); set('sp_operation_date',std.operation_date); set('sp_target_group',std.target_group);
    set('sp_planned_participants',std.planned_participants||0); set('sp_content',std.content); set('sp_location',std.location);
    set('sp_operation_method',std.operation_method); set('sp_evaluation_plan',std.evaluation_plan);
+   standardPlanSettingsV154=std.field_settings&&typeof std.field_settings==='object'?JSON.parse(JSON.stringify(std.field_settings)):{};mountStandardPlanEditorV154();
    customPlanFieldsV106=Array.isArray(std.custom_fields)?std.custom_fields.map(x=>({id:'cpf_'+Math.random().toString(36).slice(2),label:x.label||'',value:x.value||''})):[];
    renderCustomPlanFieldsV106();
   }
@@ -3745,6 +3826,7 @@
   };
   document.addEventListener('DOMContentLoaded',()=>{
     hideDuplicateLegacyOverviewV1061();
+    mountStandardPlanEditorV154();
     const p=document.getElementById('standardPlanV106');
     if(p)p.addEventListener('input',syncStandardToLegacyV1061,true);
   });
@@ -3968,7 +4050,7 @@ ${centerMissionV1493}
     return value;
   }
   const PLAN_DRAFT_LABELS_V153={project_name:'사업명',background:'추진배경 및 필요성',purpose:'사업목적',overview:'사업개요',direction:'추진방향',details:'세부 추진내용',procedure:'추진절차',schedule:'추진일정',budget_plan:'소요예산',expected_effect:'기대효과',method:'운영방법',evaluation_plan:'평가·환류 계획',administrative:'행정사항'};
-  function planDraftValueV153(draft,key){if(key==='project_name')return draft?.project_name||draft?.title||'';if(key==='budget_plan')return draft?.budget_plan||draft?.budget||'';return draft?.[key]||'';}
+  function planDraftValueV153(draft,key){const value=key==='project_name'?(draft?.project_name||draft?.title||''):key==='budget_plan'?(draft?.budget_plan||draft?.budget||''):(draft?.[key]||'');return normalizePlanParagraphs(value);}
   function renderPlanAIPreviewV153(){
     const preview=document.getElementById('aiPreviewV110');if(!preview||!planAIDraftV113)return;
     preview.innerHTML=Object.entries(PLAN_DRAFT_LABELS_V153).map(([key,label])=>[key,label,planDraftValueV153(planAIDraftV113,key)]).filter(([, ,value])=>String(value||'').trim()).map(([key,label,value])=>`<div id="aiDraftRowV153_${key}" style="border:1px solid #dbe3ea;border-radius:6px;padding:9px;margin:6px 0;background:#fff"><b>${esc(label)}</b><div style="white-space:pre-wrap;margin-top:5px">${esc(value)}</div></div>`).join('');
@@ -4030,7 +4112,7 @@ ${centerMissionV1493}
     const set=(id,value)=>{
       const el=document.getElementById(id);
       if(!el)return;
-      el.value=value||'';
+      el.value=planProseField(id)?normalizePlanParagraphs(value):(value||'');
       el.dispatchEvent(new Event('input',{bubbles:true}));
       el.dispatchEvent(new Event('change',{bubbles:true}));
     };
