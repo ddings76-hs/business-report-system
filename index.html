@@ -1,9 +1,95 @@
+오늘 오후 5:19
+사업계획서 내용 중 표준입력폼에 작성한 내용이 자동완성 계획서에 연계오류 확인 후 수정
+주요프로그램 및 세부인정 (안) 표준폼 작성시 '1. 주요 프로그램' 항목 삭제 시 세부인정(안)을 번호 1번으로 자동수정하고 대제목도 '세부일정(안)'으로 자동 수정
+총 예산 작성 시 세부사업비 하위에 사업분야(영역) 및 사업비 작성할 수 있도록 
+확인완료 
+우리가 사업분야별 예산을 저장과 연동하여 사업비 지출을 할때 사업구분을 넣어서 분야별 예산관리기능을 넣는것은 어떨까?
+사업별 지출원장을 보면 사업분야 미지정으로 되어있는데. 사업계획서 작성시 사업개요에 이미 사업분야를 선택하여 작성중이야 저 부분을 연계하는것이 가능한가?
+오늘 오후 8:44
+세부일정안의 내용이 하루에 진행ㄷ될때는 시간별이지만 기간 사업일경우 일자가 들어가야함 위 제목 부분을 수정가능하도록 수정
+index(1).ts
+TypeScript
+초안작성 정상작동
+
+이번 429 오류는 코드 문제가 아니라 Gemini 이미지 모델 할당량 문제입니다.
+
+오류의 핵심은 다음 두 항목입니다.
+
+free_tier_requests, limit: 0
+free_tier_input_token_count, limit: 0
+
+즉, 현재 API 키가 연결된 프로젝트에서는 gemini-3.1-flash-image 이미지 생성 모델의 무료 사용량이 0회입니다. 기존 400 요청 형식 오류는 해결됐으며, 현재는 Gemini 모델까지 정상 요청된 뒤 할당량 단계에서 차단된 상태입니다.
+
+해결 방법은 다음과 같습니다.
+
+Google AI Studio 프로젝트에서 현재 API 키가 속한 프로젝트를 확인합니다.
+해당 프로젝트의 Billing Tier에서 Set up billing을 선택합니다.
+결제 계정을 연결하고, 선불 방식이면 최소 크레딧을 충전합니다.
+AI Studio Rate Limits에서 gemini-3.1-flash-image의 한도가 0보다 큰지 확인합니다.
+같은 프로젝트의 기존 API 키를 사용한다면 코드 수정 없이 다시 생성하면 됩니다.
+결제를 다른 프로젝트에 연결했다면 그 프로젝트에서 새 API 키를 발급하고 Supabase의 GEMINI_API_KEY 비밀값을 교체해야 합니다.
+
+Gemini 할당량은 API 키별이 아니라 프로젝트별로 적용되며, 무료 등급에서 유료 Tier 1로 전환하려면 활성 결제 계정 연결이 필요합니다. 선불 계정은 잔액이 있어야 요청이 처리됩니다. Gemini API 할당량 안내, 결제 설정 안내
+
+결제 설정 전에도 포스터 편집기의 직접 이미지 추가 기능과 AI 문구 생성은 계속 사용할 수 있습니다. 모델 변경만으로는 현재의 limit: 0 문제가 해결되지 않습니다.
+
+tier 1으로 전환 완료 다음 단계 알려줘
+
+Tier 1 전환이 완료되었다면 기존 API 키가 같은 프로젝트에 연결된 경우 코드 수정 없이 재시험하면 됩니다.
+
+다음 단계
+Google AI Studio의 Projects 화면에서 아래 상태를 확인합니다.
+Billing Tier: Tier 1
+상태: Active
+No credits, Set up Prepay 표시가 없어야 함
+선불 결제 방식이라면 잔액이 있어야 함
+전환 정보 반영을 위해 최대 10분 정도 기다립니다. 공식 안내상 등급 변경은 일반적으로 10분 이내 반영됩니다.
+사업관리 시스템을 새로고침합니다.
+포스터 생성 화면에서 먼저 다음 조건으로 시험합니다.
+이미지 품질: 2K
+포스터 문구: 기존 자동생성 문구 사용
+버튼: AI 이미지 생성
+정상 생성되면 최종 출력할 때만 4K를 사용합니다. 4K는 비용과 처리시간이 더 들 수 있으므로 초안은 2K 사용을 권장합니다.
+API 키 확인 기준
+상황	조치
+기존 API 키 프로젝트를 Tier 1로 전환	API 키 교체 불필요
+다른 프로젝트를 Tier 1로 전환	Tier 1 프로젝트에서 새 API 키 발급 필요
+새 API 키를 발급한 경우	Supabase의 GEMINI_API_KEY 값을 새 키로 교체
+선불 결제 잔액이 0원	크레딧 충전 후 재시험
+
+API 키는 별도의 결제 등급을 갖는 것이 아니라 생성된 프로젝트의 등급을 따릅니다. Gemini 결제 및 API 키 안내
+
+비용 안전을 위해 초기에는 자동 충전을 끄고 프로젝트 월 지출 한도를 낮게 설정하는 것을 권장합니다. 다시 생성했을 때 오류가 발생하면 새 오류 문구를 보내주시면 모델명·권한·서버 응답을 이어서 점검하겠습니다.
+
+좋아 테스트 완료 생성확인 포스터 폼이 너무 딱딱함 기존 포스터를 함고하여 표준 폼 수정 미리캔버스 참고
+
+포스터 기능을 v15.7 템플릿 디자인 스튜디오 형태로 고도화했습니다.
+
+주요 변경사항:
+
+에디토리얼, 포토 임팩트, 내추럴, 볼드 캠페인, 모던 미니멀, 따뜻한 돌봄 등 6종 템플릿
+템플릿 미리보기 카드 방식 적용
+일정·장소·대상 등을 딱딱한 표가 아닌 정보 카드로 구성
+이미지 중심의 유연한 포스터 배치
+포인트 색상 자유 변경
+문구·정보·이미지 편집 영역을 단계별로 정리
+AI 문구 및 이미지 생성 기능 유지
+A4·SNS 정사각형·모바일 규격 지원
+기존 저장 포스터 자동 호환
+18개 템플릿·규격 조합 렌더링 검증 완료
+
+수정 파일:
+
+business-report-system-v15.4.1-fix7.html
+
+새 파일을 실행한 뒤 홍보 포스터 만들기에서 템플릿을 선택하면 즉시 미리보기에 반영됩니다. 기존 화면이 남아 있으면 Ctrl+F5로 새로고침해 주세요.
+
 <!DOCTYPE html>
 <html lang="ko" data-build="v14.6.4-20260906">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.6 AI 고화질 포스터)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.7 템플릿 포스터 스튜디오)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -391,7 +477,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.6 AI 고화질 포스터)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.7 템플릿 포스터 스튜디오)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -7067,43 +7153,71 @@ document.addEventListener('DOMContentLoaded',()=>applyScheduleTitlesV15410({}));
 </script>
 
 <style>
-#posterModalV155{position:fixed;inset:0;z-index:100050;background:#edf1f5;overflow:auto;color:#18283c;font-family:'Malgun Gothic',sans-serif}
-#posterModalV155 *{box-sizing:border-box}#posterModalV155 .ps-top{position:sticky;top:0;background:#fff;z-index:2;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #d6dfe7;gap:12px}
-#posterModalV155 .ps-grid{max-width:1440px;margin:24px auto;padding:0 20px;display:grid;grid-template-columns:400px minmax(0,1fr);gap:28px}
-#posterModalV155 .ps-card{background:#fff;border:1px solid #dbe2e9;border-radius:14px;padding:20px;margin-bottom:16px}
-#posterModalV155 h3{margin:0 0 16px;font-size:17px}#posterModalV155 label{display:block;font-size:13px;margin:12px 0 5px;font-weight:600}
-#posterModalV155 input:not([type=file]),#posterModalV155 select,#posterModalV155 textarea{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#17263b;font:inherit;margin-top:5px}
-#posterModalV155 textarea{resize:vertical}#posterModalV155 .ps-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}#posterModalV155 .ps-note{font-size:12px;color:#54657a;line-height:1.7}
-#posterModalV155 .ps-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}#posterModalV155 button:disabled{opacity:.5;cursor:wait}#posterModalV155 .ps-preview{position:sticky;top:96px;align-self:start;text-align:center}
-#posterCanvasV155{width:100%;max-width:670px;height:auto;box-shadow:0 16px 40px #102a4425;background:white}
-#posterProposalV156{white-space:pre-wrap;line-height:1.8;background:#f0f7ff;padding:12px;border-radius:8px;margin-top:12px;font-size:13px}
-@media(max-width:880px){#posterModalV155 .ps-grid{grid-template-columns:1fr}#posterModalV155 .ps-preview{position:static}#posterModalV155 .ps-top{position:static}}
+#posterModalV155{position:fixed;inset:0;z-index:100050;background:#f3f5f8;overflow:auto;color:#172033;font-family:'Malgun Gothic',sans-serif}
+#posterModalV155 *{box-sizing:border-box}
+#posterModalV155 .ps-top{position:sticky;top:0;background:#ffffffeb;backdrop-filter:blur(14px);z-index:5;min-height:68px;padding:11px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2e7ef;gap:12px;box-shadow:0 2px 12px #1720330a}
+#posterModalV155 .ps-brand{display:flex;align-items:center;gap:12px}.ps-brand-mark{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,#6657f8,#4f8eff);color:#fff;font-size:20px;box-shadow:0 7px 18px #5c65e733}
+#posterModalV155 .ps-grid{max-width:1510px;margin:18px auto;padding:0 18px 32px;display:grid;grid-template-columns:438px minmax(0,1fr);gap:22px;align-items:start}
+#posterModalV155 .ps-card{background:#fff;border:1px solid #e1e6ee;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 7px 22px #2436500a}
+#posterModalV155 .ps-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}#posterModalV155 h3{margin:0;font-size:16px;letter-spacing:-.25px}.ps-step{display:inline-grid;place-items:center;width:25px;height:25px;margin-right:7px;border-radius:9px;background:#eef0ff;color:#5148d8;font-size:12px}
+#posterModalV155 label{display:block;font-size:12px;margin:10px 0 4px;font-weight:700;color:#39475b}
+#posterModalV155 input:not([type=file]),#posterModalV155 select,#posterModalV155 textarea{width:100%;padding:10px 11px;border:1px solid #d4dce7;border-radius:10px;background:#fbfcfe;color:#17263b;font:inherit;margin-top:5px;transition:.16s border-color,.16s box-shadow,.16s background}
+#posterModalV155 input:focus,#posterModalV155 select:focus,#posterModalV155 textarea:focus{outline:0;border-color:#7067eb;background:#fff;box-shadow:0 0 0 3px #7067eb18}
+#posterModalV155 textarea{resize:vertical}#posterModalV155 .ps-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}#posterModalV155 .ps-note{font-size:11.5px;color:#68758a;line-height:1.65}
+#posterModalV155 .ps-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}#posterModalV155 button:disabled{opacity:.5;cursor:wait}
+#posterModalV155 .ps-template-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.ps-template{appearance:none;border:1px solid #dce2eb;background:#fff;border-radius:12px;padding:7px;cursor:pointer;text-align:left;color:#27344a;transition:.16s transform,.16s border-color,.16s box-shadow}.ps-template:hover{transform:translateY(-2px);border-color:#9f9aec;box-shadow:0 6px 16px #5258aa18}.ps-template.is-active{border-color:#655be7;box-shadow:0 0 0 2px #655be726}.ps-template>span:last-child{display:block;font-size:11px;font-weight:700;margin:6px 2px 1px;white-space:nowrap}
+.ps-template-thumb{position:relative;display:block;aspect-ratio:4/5;border-radius:8px;overflow:hidden;background:#eef3ff}.ps-template-thumb i,.ps-template-thumb b,.ps-template-thumb em{position:absolute;display:block}.ps-template-thumb i{left:9%;right:9%;top:11%;height:11%;background:#183d87;border-radius:3px}.ps-template-thumb b{left:9%;right:42%;top:28%;height:7%;background:#315bb1;border-radius:3px}.ps-template-thumb em{left:9%;right:9%;bottom:10%;height:43%;background:#9ab5e7;border-radius:7px}
+.ps-template-thumb.photo{background:#17263d}.ps-template-thumb.photo i{background:#fff}.ps-template-thumb.photo b{background:#a9d2ff}.ps-template-thumb.photo em{inset:0;opacity:.35;background:linear-gradient(140deg,#3f77b9,#d5e9ff);border-radius:0}
+.ps-template-thumb.organic{background:#f4efe2}.ps-template-thumb.organic i{background:#315d4a}.ps-template-thumb.organic b{background:#d28c5b}.ps-template-thumb.organic em{left:44%;right:-9%;top:30%;bottom:8%;height:auto;border-radius:50%;background:#9bbca9}
+.ps-template-thumb.bold{background:#ff7855}.ps-template-thumb.bold i{background:#15243a;height:14%}.ps-template-thumb.bold b{background:#fff}.ps-template-thumb.bold em{left:45%;right:6%;bottom:7%;height:47%;background:#ffe7a9;transform:rotate(5deg)}
+.ps-template-thumb.minimal{background:#fff}.ps-template-thumb.minimal i{right:35%;background:#171e2b}.ps-template-thumb.minimal b{right:58%;background:#ed6d52}.ps-template-thumb.minimal em{left:9%;right:9%;height:30%;background:#e8edf3;border-radius:0}
+.ps-template-thumb.warm{background:#fff2e6}.ps-template-thumb.warm i{background:#8c3d48}.ps-template-thumb.warm b{background:#d88964}.ps-template-thumb.warm em{top:39%;bottom:8%;height:auto;background:#edbd9f;border-radius:42% 42% 11px 11px}
+#posterModalV155 .ps-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.ps-field.ps-field-title,.ps-field.ps-field-subtitle,.ps-field.ps-field-details{grid-column:1/-1}.ps-field textarea{min-height:42px}.ps-field.ps-field-details textarea{min-height:78px}
+#posterModalV155 details.ps-card{padding:0;overflow:hidden}#posterModalV155 details.ps-card>summary{list-style:none;cursor:pointer;padding:17px 18px;font-size:16px;font-weight:700;display:flex;align-items:center}#posterModalV155 details.ps-card>summary::-webkit-details-marker{display:none}#posterModalV155 details.ps-card>summary:after{content:'＋';margin-left:auto;color:#68758a}#posterModalV155 details[open].ps-card>summary:after{content:'－'}#posterModalV155 details.ps-card>.ps-card-body{padding:0 18px 18px;border-top:1px solid #edf0f4}
+#posterModalV155 .ps-preview{position:sticky;top:86px;align-self:start;text-align:center;background:#e7ebf1;border:1px solid #dce2ea;border-radius:22px;padding:22px;min-height:720px}.ps-canvas-stage{min-height:590px;display:flex;align-items:flex-start;justify-content:center;padding:6px 8px 18px;background-image:radial-gradient(#9aa7b6 1px,transparent 1px);background-size:18px 18px;border-radius:15px}
+#posterCanvasV155{width:auto;max-width:100%;max-height:69vh;height:auto;box-shadow:0 18px 45px #182a4430;background:white;border-radius:2px}
+#posterModalV155 .ps-output{margin:0;text-align:left;border:0;box-shadow:0 10px 24px #2436500f}.ps-output .ps-actions button{flex:1;min-width:145px}
+#posterProposalV156{white-space:pre-wrap;line-height:1.75;background:#f2f3ff;border:1px solid #e1e0ff;padding:12px;border-radius:11px;margin-top:12px;font-size:12px}.ps-mini-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:999px;background:#f0f2f6;color:#596579;font-size:10.5px;font-weight:700}
+@media(max-width:980px){#posterModalV155 .ps-grid{grid-template-columns:1fr}#posterModalV155 .ps-preview{position:static}#posterModalV155 .ps-top{position:static}#posterCanvasV155{max-height:none;width:100%}}
+@media(max-width:520px){#posterModalV155 .ps-grid{padding:0 9px}.ps-template-grid{grid-template-columns:repeat(2,1fr)!important}#posterModalV155 .ps-row,#posterModalV155 .ps-field-grid{grid-template-columns:1fr}.ps-field{grid-column:1/-1!important}}
 </style>
 <div id="posterModalV155" class="no-print" style="display:none" role="dialog" aria-modal="true" aria-label="홍보 포스터 스튜디오">
- <div class="ps-top"><div><strong style="font-size:21px">홍보 포스터 스튜디오</strong><div class="ps-note">계획서에서 시작하는 우리 센터의 홍보 디자인</div></div><button class="btn btn-add" onclick="document.getElementById('posterModalV155').style.display='none'">닫기</button></div>
+ <div class="ps-top"><div class="ps-brand"><span class="ps-brand-mark">✦</span><div><strong style="font-size:19px">홍보 포스터 디자인 스튜디오</strong><div class="ps-note">템플릿을 고르고 문구와 이미지를 자유롭게 바꿔보세요</div></div></div><button class="btn btn-add" onclick="document.getElementById('posterModalV155').style.display='none'">편집 종료</button></div>
  <div class="ps-grid"><div>
- <div class="ps-card"><h3>01　디자인과 출력</h3><div class="ps-row"><label>디자인<select id="posterThemeV155"><option value="education">교육 · 블루 에디토리얼</option><option value="healing">힐링 · 내추럴 그린</option><option value="recruit">모집 · 볼드 캠페인</option></select></label><label>규격<select id="posterSizeV155"><option value="a4">A4 · 2480 × 3508</option><option value="square">SNS · 2160 × 2160</option><option value="mobile">모바일 · 2160 × 2880</option></select></label></div><label>포인트 색상<input id="posterColorV155" type="color" value="#1e40af" style="height:42px"></label><button class="btn btn-add" onclick="refreshPosterPlanV156()">계획서 정보 다시 불러오기</button><p class="ps-note">신청기간·참가비·연락처는 직접 확인해 입력합니다. 빈 항목은 출력되지 않습니다.</p></div>
- <div class="ps-card"><h3>02　AI 홍보 문구</h3><label>문구 분위기<select id="posterToneV156"><option>친근하고 정중한 안내형</option><option>간결한 공공기관 안내형</option><option>참여를 권하는 모집형</option></select></label><button id="posterCopyBtnV156" class="btn btn-plan" onclick="generatePosterCopyV156()">✨ 홍보 문구 자동생성</button><div id="posterProposalV156" hidden></div><button id="posterApplyCopyV156" hidden class="btn btn-result" onclick="applyPosterCopyV156()">확인한 문구 적용</button><div id="posterFieldsV155"></div></div>
- <div class="ps-card"><h3>03　이미지 만들기</h3><label>이미지 설명<textarea id="posterPromptV156" rows="4" placeholder="예: 편안한 영화관에서 함께 웃는 장기요양종사자들의 따뜻한 일러스트"></textarea></label><div class="ps-row"><label>표현 방식<select id="posterStyleV156"><option>따뜻한 에디토리얼 일러스트</option><option>자연스러운 고급 사진</option><option>정갈한 수채화</option><option>입체적인 종이 공예</option></select></label><label>생성 해상도<select id="posterQualityV156"><option value="2K">2K · 기본</option><option value="4K">4K · 고해상도</option></select></label></div><button id="posterImageBtnV156" class="btn btn-plan" onclick="generatePosterImageV156()">✨ 이미지 생성 / 다시 생성</button><p class="ps-note">기존 Gemini 연결로 요청합니다. 이미지 모델 사용 권한과 할당량이 필요하며 API 비용이 발생할 수 있습니다. 생성 후 확인하여 적용합니다.</p><div id="posterImageProposalV156" hidden><img id="posterCandidateV156" alt="생성 이미지 미리보기" style="width:100%;border-radius:8px"><button class="btn btn-result" onclick="applyPosterImageV156()">이 이미지 적용</button></div>
+ <div class="ps-card"><div class="ps-section-title"><h3><span class="ps-step">1</span>디자인 템플릿</h3><span class="ps-mini-badge">6가지 스타일</span></div><div id="posterTemplateGridV157" class="ps-template-grid">
+  <button type="button" class="ps-template" data-template="editorial" onclick="selectPosterTemplateV157('editorial')"><span class="ps-template-thumb editorial"><i></i><b></b><em></em></span><span>에디토리얼</span></button>
+  <button type="button" class="ps-template" data-template="photo" onclick="selectPosterTemplateV157('photo')"><span class="ps-template-thumb photo"><i></i><b></b><em></em></span><span>포토 임팩트</span></button>
+  <button type="button" class="ps-template" data-template="organic" onclick="selectPosterTemplateV157('organic')"><span class="ps-template-thumb organic"><i></i><b></b><em></em></span><span>내추럴</span></button>
+  <button type="button" class="ps-template" data-template="bold" onclick="selectPosterTemplateV157('bold')"><span class="ps-template-thumb bold"><i></i><b></b><em></em></span><span>볼드 캠페인</span></button>
+  <button type="button" class="ps-template" data-template="minimal" onclick="selectPosterTemplateV157('minimal')"><span class="ps-template-thumb minimal"><i></i><b></b><em></em></span><span>모던 미니멀</span></button>
+  <button type="button" class="ps-template" data-template="warm" onclick="selectPosterTemplateV157('warm')"><span class="ps-template-thumb warm"><i></i><b></b><em></em></span><span>따뜻한 돌봄</span></button>
+ </div><div class="ps-row"><label>출력 규격<select id="posterSizeV155"><option value="a4">A4 · 2480 × 3508</option><option value="square">SNS · 2160 × 2160</option><option value="mobile">모바일 · 2160 × 2880</option></select></label><label>포인트 색상<input id="posterColorV155" type="color" value="#315bb1" style="height:42px;padding:4px"></label></div><div class="ps-actions"><button class="btn btn-add" onclick="refreshPosterPlanV156()">↻ 계획서 정보 다시 불러오기</button></div><p class="ps-note">템플릿을 바꾸면 배치와 기본 색상만 변경되며 작성한 문구와 이미지는 유지됩니다.</p></div>
+ <details class="ps-card" open><summary><span class="ps-step">2</span>문구 및 정보 편집</summary><div class="ps-card-body"><label>문구 분위기<select id="posterToneV156"><option>친근하고 정중한 안내형</option><option>간결한 공공기관 안내형</option><option>참여를 권하는 모집형</option></select></label><button id="posterCopyBtnV156" class="btn btn-plan" onclick="generatePosterCopyV156()">✨ 홍보 문구 자동생성</button><div id="posterProposalV156" hidden></div><button id="posterApplyCopyV156" hidden class="btn btn-result" onclick="applyPosterCopyV156()">확인한 문구 적용</button><div id="posterFieldsV155" class="ps-field-grid"></div><p class="ps-note">빈 항목은 포스터에 표시되지 않습니다. 신청기간·참가비·연락처는 최종 확인해 주세요.</p></div></details>
+ <details class="ps-card" open><summary><span class="ps-step">3</span>이미지 만들기</summary><div class="ps-card-body"><label>이미지 설명<textarea id="posterPromptV156" rows="4" placeholder="예: 편안한 영화관에서 함께 웃는 장기요양종사자들의 따뜻한 일러스트"></textarea></label><div class="ps-row"><label>표현 방식<select id="posterStyleV156"><option>따뜻한 에디토리얼 일러스트</option><option>자연스러운 고급 사진</option><option>정갈한 수채화</option><option>입체적인 종이 공예</option></select></label><label>생성 해상도<select id="posterQualityV156"><option value="2K">2K · 기본</option><option value="4K">4K · 고해상도</option></select></label></div><button id="posterImageBtnV156" class="btn btn-plan" onclick="generatePosterImageV156()">✨ 이미지 생성 / 다시 생성</button><p class="ps-note">Gemini 이미지 생성 비용이 발생할 수 있습니다. 초안은 2K, 최종 출력은 4K를 권장합니다.</p><div id="posterImageProposalV156" hidden><img id="posterCandidateV156" alt="생성 이미지 미리보기" style="width:100%;border-radius:12px"><button class="btn btn-result" onclick="applyPosterImageV156()">이 이미지 적용</button></div>
  <label>내 사진·삽화 업로드<input type="file" accept="image/png,image/jpeg,image/webp" id="posterImageV155"></label><label>기관 로고 업로드<input type="file" accept="image/png,image/jpeg,image/webp" id="posterLogoV156"></label><div class="ps-row"><label>이미지 배치<select id="posterFitV156"><option value="cover">영역 채우기</option><option value="contain">전체 이미지 표시</option></select></label><label>상하 중심<input id="posterPositionV156" type="range" min="0" max="100" value="50"></label></div><div class="ps-actions"><button class="btn btn-add" onclick="removePosterAssetV156('image')">이미지 제거</button><button class="btn btn-add" onclick="removePosterAssetV156('logo')">로고 제거</button><button class="btn btn-add" onclick="downloadPosterImageV156()">이미지 원본 저장</button></div></div>
- </div><div class="ps-preview"><canvas id="posterCanvasV155" aria-label="포스터 미리보기"></canvas><div class="ps-card" style="margin-top:18px;text-align:left"><div id="posterMsgV155" role="status" class="ps-note"></div><div id="posterAiMsgV156" role="status" style="font-size:13px;margin-top:8px"></div><div class="ps-actions"><button class="btn btn-save" onclick="downloadPosterV155()">고화질 PNG 저장</button><button class="btn btn-plan" onclick="printPosterV155()">인쇄 / PDF 저장</button><button class="btn btn-result" onclick="savePosterPlanV156()">계획서와 함께 DB 저장</button></div><p class="ps-note">A4는 300dpi 인쇄 크기입니다. PDF는 인쇄창에서 ‘PDF로 저장’을 선택하세요. 텍스트와 이미지의 편집 내용은 계획서에 함께 저장됩니다.</p></div></div></div>
+ </details>
+ </div><div class="ps-preview"><div class="ps-canvas-stage"><canvas id="posterCanvasV155" aria-label="포스터 미리보기"></canvas></div><div class="ps-card ps-output"><div id="posterMsgV155" role="status" class="ps-note"></div><div id="posterAiMsgV156" role="status" style="font-size:13px;margin-top:8px"></div><div class="ps-actions"><button class="btn btn-save" onclick="downloadPosterV155()">고화질 PNG 저장</button><button class="btn btn-plan" onclick="printPosterV155()">인쇄 / PDF 저장</button><button class="btn btn-result" onclick="savePosterPlanV156()">계획서와 함께 DB 저장</button></div><p class="ps-note">A4는 300dpi 인쇄 크기입니다. PDF는 인쇄창에서 ‘PDF로 저장’을 선택하세요. 편집 내용은 계획서와 함께 저장됩니다.</p></div></div></div>
 </div>
 <script>
-// v15.6: poster typography and imagery are independent editable layers.
+// v15.7: template-first poster studio with flexible visual layouts.
 const posterFieldsV155=[['title','홍보 제목'],['subtitle','부제'],['details','핵심 홍보문구'],['date','운영일시'],['place','장소'],['target','참여대상'],['capacity','모집인원'],['application','신청기간'],['fee','참가비'],['link','신청방법·링크'],['contact','문의처'],['org','주최·주관']];
 let posterStateV155=null,posterImageCacheV155=null,posterLogoCacheV156=null,posterRenderValidV155=true;
 let posterBusyV156=false,posterLoadingV156=false,posterCandidateCopyV156=null,posterCandidateImageV156=null,posterEpochV156=0,posterFrameV156=0;
-const posterDefaultsV156={theme:'education',size:'a4',color:'#2457b7',image:'',logo:'',tone:'친근하고 정중한 안내형',image_prompt:'',visual_style:'따뜻한 에디토리얼 일러스트',image_size:'2K',fit:'cover',position:50};
-function normalizePosterV156(data){const s={...posterDefaultsV156,...data};for(const [key] of posterFieldsV155)s[key]=String(s[key]||'');if(!['education','healing','recruit'].includes(s.theme))s.theme='education';if(!['a4','square','mobile'].includes(s.size))s.size='a4';if(!/^#[0-9a-f]{6}$/i.test(s.color))s.color='#2457b7';for(const key of ['image','logo'])if(!/^data:image\/(png|jpeg|webp);base64,/.test(s[key]||''))s[key]='';return s;}
+const posterTemplateV157={editorial:{color:'#315bb1',label:'에디토리얼'},photo:{color:'#3b67a2',label:'포토 임팩트'},organic:{color:'#3d7158',label:'내추럴'},bold:{color:'#ee6848',label:'볼드 캠페인'},minimal:{color:'#e6604b',label:'모던 미니멀'},warm:{color:'#a84d5b',label:'따뜻한 돌봄'}};
+const posterDefaultsV156={theme:'editorial',size:'a4',color:'#315bb1',image:'',logo:'',tone:'친근하고 정중한 안내형',image_prompt:'',visual_style:'따뜻한 에디토리얼 일러스트',image_size:'2K',fit:'cover',position:50};
+function normalizePosterV156(data){const legacy={education:'editorial',healing:'organic',recruit:'bold'},s={...posterDefaultsV156,...data};s.theme=legacy[s.theme]||s.theme;if(!posterTemplateV157[s.theme])s.theme='editorial';for(const [key] of posterFieldsV155)s[key]=String(s[key]||'');if(!['a4','square','mobile'].includes(s.size))s.size='a4';if(!/^#[0-9a-f]{6}$/i.test(s.color))s.color=posterTemplateV157[s.theme].color;for(const key of ['image','logo'])if(!/^data:image\/(png|jpeg|webp);base64,/.test(s[key]||''))s[key]='';return s;}
 function applyPosterV155(data){posterEpochV156++;posterStateV155=data?normalizePosterV156(data):null;posterImageCacheV155=null;posterLogoCacheV156=null;posterCandidateCopyV156=null;posterCandidateImageV156=null;}
 function posterFromPlanV155(){const d=getStandardPlanV106();applyPosterV155({...posterDefaultsV156,title:d.project_name||'',subtitle:'',details:d.content||'',date:d.operation_date||'',place:d.location||'',target:d.target_group||'',capacity:d.planned_participants?d.planned_participants+'명':'',application:'',fee:'',link:'',contact:'',org:document.getElementById('p_orgName')?.value||'화성시장기요양지원센터',image_prompt:[d.project_name,d.content].filter(Boolean).join('\n')});}
 function refreshPosterPlanV156(){if(posterBusyV156)return alert('생성이 끝난 후 다시 불러와 주세요.');if(!confirm('문구와 신청정보를 현재 계획서 기준으로 초기화할까요? 이미지와 디자인은 유지됩니다.'))return;const old=posterStateV155;posterFromPlanV155();for(const k of ['image','logo','theme','size','color','fit','position'])posterStateV155[k]=old[k];fillPosterV155();}
 function openPosterV155(){if(!posterStateV155)posterFromPlanV155();document.getElementById('posterModalV155').style.display='block';fillPosterV155();}
 function posterMessageV156(message,error=false){const e=document.getElementById('posterAiMsgV156');e.textContent=message;e.style.color=error?'#b91c1c':'#166534';}
 function queuePosterV156(){cancelAnimationFrame(posterFrameV156);posterFrameV156=requestAnimationFrame(drawPosterV155);}
-async function fillPosterV155(){const panel=document.getElementById('posterFieldsV155');panel.replaceChildren();for(const [key,label] of posterFieldsV155){const wrap=document.createElement('label');wrap.textContent=label;const input=document.createElement('textarea');input.rows=key==='details'?3:2;input.id='posterField_'+key;input.value=posterStateV155[key];input.oninput=()=>{posterStateV155[key]=input.value;queuePosterV156();};wrap.append(input);panel.append(wrap);}
- const mapping={posterThemeV155:'theme',posterSizeV155:'size',posterColorV155:'color',posterToneV156:'tone',posterPromptV156:'image_prompt',posterStyleV156:'visual_style',posterQualityV156:'image_size',posterFitV156:'fit',posterPositionV156:'position'};
- for(const [id,key] of Object.entries(mapping)){const e=document.getElementById(id);e.value=posterStateV155[key];e.oninput=()=>{posterStateV155[key]=e.value;if(key==='theme'){posterStateV155.color={education:'#2457b7',healing:'#36634e',recruit:'#cd532e'}[e.value];document.getElementById('posterColorV155').value=posterStateV155.color;}queuePosterV156();};}
+function selectPosterTemplateV157(theme){if(!posterTemplateV157[theme]||!posterStateV155)return;posterStateV155.theme=theme;posterStateV155.color=posterTemplateV157[theme].color;const color=document.getElementById('posterColorV155');if(color)color.value=posterStateV155.color;syncPosterTemplateV157();queuePosterV156();posterMessageV156(`${posterTemplateV157[theme].label} 템플릿을 적용했습니다.`);}
+function syncPosterTemplateV157(){document.querySelectorAll('#posterTemplateGridV157 .ps-template').forEach(button=>{const active=button.dataset.template===posterStateV155?.theme;button.classList.toggle('is-active',active);button.setAttribute('aria-pressed',active?'true':'false');});}
+async function fillPosterV155(){const panel=document.getElementById('posterFieldsV155');panel.replaceChildren();for(const [key,label] of posterFieldsV155){const wrap=document.createElement('label');wrap.className='ps-field ps-field-'+key;wrap.textContent=label;const input=document.createElement('textarea');input.rows=key==='details'?3:1;input.id='posterField_'+key;input.value=posterStateV155[key];input.oninput=()=>{posterStateV155[key]=input.value;queuePosterV156();};wrap.append(input);panel.append(wrap);}
+ const mapping={posterSizeV155:'size',posterColorV155:'color',posterToneV156:'tone',posterPromptV156:'image_prompt',posterStyleV156:'visual_style',posterQualityV156:'image_size',posterFitV156:'fit',posterPositionV156:'position'};
+ for(const [id,key] of Object.entries(mapping)){const e=document.getElementById(id);if(!e)continue;e.value=posterStateV155[key];e.oninput=()=>{posterStateV155[key]=e.value;queuePosterV156();};}
+ syncPosterTemplateV157();
  document.getElementById('posterProposalV156').hidden=!posterCandidateCopyV156;document.getElementById('posterApplyCopyV156').hidden=!posterCandidateCopyV156;document.getElementById('posterImageProposalV156').hidden=!posterCandidateImageV156;
  const state=posterStateV155;posterLoadingV156=true;drawPosterV155();try{const [image,logo]=await Promise.all([decodePosterImageV156(state.image),decodePosterImageV156(state.logo)]);if(posterStateV155!==state)return;posterImageCacheV155=image;posterLogoCacheV156=logo;}catch(error){posterMessageV156('저장된 이미지를 읽을 수 없습니다. 이미지 파일을 다시 선택해 주세요.',true);}finally{if(posterStateV155===state){posterLoadingV156=false;drawPosterV155();}}}
 function decodePosterImageV156(src){return new Promise((resolve,reject)=>{if(!src)return resolve(null);const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(new Error('이미지 읽기 실패'));im.src=src;});}
@@ -7118,21 +7232,52 @@ function removePosterAssetV156(key){posterStateV155[key]='';if(key==='image')pos
 async function uploadPosterAssetV156(file,key){if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>20*1024*1024)return alert('20MB 이하 PNG/JPG/WebP 파일을 선택해 주세요.');const epoch=posterEpochV156;posterLoadingV156=true;try{const src=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});const im=await decodePosterImageV156(src);if(epoch!==posterEpochV156)return;posterStateV155[key]=src;if(key==='image')posterImageCacheV155=im;else posterLogoCacheV156=im;posterMessageV156('이미지를 불러왔습니다.');}catch(_){posterMessageV156('이미지를 불러오지 못했습니다.',true);}finally{posterLoadingV156=false;drawPosterV155();}}
 document.getElementById('posterImageV155').onchange=function(){uploadPosterAssetV156(this.files[0],'image');this.value='';};document.getElementById('posterLogoV156').onchange=function(){uploadPosterAssetV156(this.files[0],'logo');this.value='';};
 function posterDimensionsV156(){return posterStateV155.size==='square'?[2160,2160]:posterStateV155.size==='mobile'?[2160,2880]:[2480,3508];}
-function paintPosterV156(canvas,width,height){const s=posterStateV155;canvas.width=width;canvas.height=height;const x=canvas.getContext('2d');const W=1000,H=height/width*1000;x.scale(width/1000,width/1000);const font='"Malgun Gothic", "Noto Sans CJK KR", sans-serif';
- const wrap=(value,size,max,bold=false)=>{x.font=`${bold?'700':'400'} ${size}px ${font}`;const result=[];for(const para of String(value||'').split('\n')){let row='';for(const ch of Array.from(para)){if(row&&x.measureText(row+ch).width>max){result.push(row);row=ch;}else row+=ch;}result.push(row);}return value?result:[];};
- const infoKeys=posterFieldsV155.filter(([k])=>!['title','subtitle','details','org'].includes(k)&&s[k].trim());
- const compact=s.size==='square',imageHeight=posterImageCacheV155?(compact?180:285):0;
- let layout;for(let step=0;step<=12;step++){const f=1-step*.025,title=wrap(s.title||'홍보 제목',64*f,864,true),sub=wrap(s.subtitle,25*f,864),details=wrap(s.details,24*f,816),rows=infoKeys.map(([k,l])=>({label:l,text:wrap(s[k],23*f,655)})),footer=wrap(s.org,20,posterLogoCacheV156?690:864,true);const header=102+title.length*77*f+(sub.length?18+sub.length*36*f:0)+32;const detailH=details.length?32+details.length*34*f:0;const rowH=rows.reduce((n,r)=>n+Math.max(1,r.text.length)*32*f+15*f,0);const total=header+(imageHeight?imageHeight+28:0)+detailH+(detailH?24:0)+rowH+footer.length*27+80;layout={f,title,sub,details,rows,footer,header,total};if(total<=H)break;}
- const L=layout,f=L.f,dark=s.theme==='recruit',healing=s.theme==='healing',accent=s.color,bg=healing?'#f6f4eb':'#ffffff',ink='#142e36';
- x.fillStyle=bg;x.fillRect(0,0,W,H);x.fillStyle=dark?'#132439':healing?'#e3ebde':'#edf3ff';x.fillRect(0,0,W,L.header);x.fillStyle=accent;x.fillRect(0,0,12,L.header);
- x.globalAlpha=.10;x.fillStyle=accent;x.beginPath();x.arc(940,70,190,0,Math.PI*2);x.fill();x.globalAlpha=1;
- const write=(arr,size,color,left,y,bold=false,line=1.4)=>{x.font=`${bold?'700':'400'} ${size}px ${font}`;x.fillStyle=color;x.textBaseline='top';for(const t of arr){x.fillText(t,left,y);y+=size*line;}return y;};
- write([{education:'함께 배우는 오늘',healing:'나를 위한 쉼, 함께하는 시간',recruit:'우리 센터 프로그램 안내'}[s.theme]],18,dark?'#c4d2e2':accent,68,43,true);let y=98;y=write(L.title,64*f,dark?'#ffffff':ink,68,y,true,77/64);if(L.sub.length){y+=18;y=write(L.sub,25*f,dark?'#d9e3ef':'#4b6369',68,y,false,36/25);}y=L.header;
- if(posterImageCacheV155){const im=posterImageCacheV155;x.save();x.beginPath();x.rect(68,y+2,864,imageHeight);x.clip();x.fillStyle=healing?'#e3ebde':'#edf1f7';x.fillRect(68,y+2,864,imageHeight);const ratio=s.fit==='contain'?Math.min(864/im.width,imageHeight/im.height):Math.max(864/im.width,imageHeight/im.height),dw=im.width*ratio,dh=im.height*ratio;const pos=Math.max(0,Math.min(1,Number(s.position)/100||0));x.drawImage(im,68+(864-dw)/2,y+2+(imageHeight-dh)*pos,dw,dh);x.restore();y+=imageHeight+28;}
- if(L.details.length){const dh=32+L.details.length*34*f;x.fillStyle=healing?'#e8eddf':'#eff4fa';x.fillRect(68,y,864,dh);write(L.details,24*f,ink,92,y+16,false,34/24);y+=dh+24;}
- for(const row of L.rows){write([row.label],19*f,accent,68,y,true,1.4);y=write(row.text,23*f,ink,270,y,false,32/23)+15*f;}
- const footerY=H-40-L.footer.length*27;x.fillStyle='#ccd6d9';x.fillRect(68,footerY-20,864,1);if(posterLogoCacheV156){const im=posterLogoCacheV156,r=Math.min(130/im.width,52/im.height);x.drawImage(im,68,footerY,im.width*r,im.height*r);}write(L.footer,20,ink,posterLogoCacheV156?230:68,footerY,true,27/20);
- return {valid:L.total<=H&&y<=footerY-28,bodyBottom:y,footerTop:footerY,minimumBodySize:23*f};}
+function paintPosterV156(canvas,width,height){
+ const s=posterStateV155;canvas.width=width;canvas.height=height;const x=canvas.getContext('2d'),W=1000,H=height/width*1000;x.scale(width/1000,width/1000);const font='"Malgun Gothic", "Noto Sans CJK KR", sans-serif',ink='#172033';
+ const rgb=hex=>{const n=parseInt(String(hex).replace('#',''),16);return[(n>>16)&255,(n>>8)&255,n&255];};
+ const blend=(a,b,t)=>{const A=rgb(a),B=rgb(b);return'#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');};
+ const accent=s.color,deep=blend(accent,'#101827',.62),soft=blend(accent,'#ffffff',.86),mist=blend(accent,'#ffffff',.94),paper=s.theme==='organic'?'#f8f5eb':s.theme==='warm'?'#fff7f0':'#ffffff';
+ const path=(left,top,w,h,r=0)=>{r=Math.max(0,Math.min(r,w/2,h/2));x.beginPath();x.moveTo(left+r,top);x.lineTo(left+w-r,top);x.quadraticCurveTo(left+w,top,left+w,top+r);x.lineTo(left+w,top+h-r);x.quadraticCurveTo(left+w,top+h,left+w-r,top+h);x.lineTo(left+r,top+h);x.quadraticCurveTo(left,top+h,left,top+h-r);x.lineTo(left,top+r);x.quadraticCurveTo(left,top,left+r,top);x.closePath();};
+ const box=(left,top,w,h,r,fill,stroke='')=>{path(left,top,w,h,r);if(fill){x.fillStyle=fill;x.fill();}if(stroke){x.strokeStyle=stroke;x.lineWidth=1.2;x.stroke();}};
+ const wrap=(value,size,max,bold=false)=>{x.font=`${bold?'700':'400'} ${size}px ${font}`;const result=[];for(const para of String(value||'').split('\n')){let row='';for(const ch of Array.from(para)){if(row&&x.measureText(row+ch).width>max){result.push(row);row=ch;}else row+=ch;}if(row||!result.length)result.push(row);}return value?result:[];};
+ const write=(arr,size,color,left,top,bold=false,line=1.35,align='left')=>{x.font=`${bold?'700':'400'} ${size}px ${font}`;x.fillStyle=color;x.textBaseline='top';x.textAlign=align;for(const text of arr){x.fillText(text,left,top);top+=size*line;}x.textAlign='left';return top;};
+ const media=(im,left,top,w,h,r=0)=>{if(!im)return;path(left,top,w,h,r);x.save();x.clip();x.fillStyle=soft;x.fillRect(left,top,w,h);const ratio=s.fit==='contain'?Math.min(w/im.width,h/im.height):Math.max(w/im.width,h/im.height),dw=im.width*ratio,dh=im.height*ratio,pos=Math.max(0,Math.min(1,Number(s.position)/100||0));x.drawImage(im,left+(w-dw)/2,top+(h-dh)*pos,dw,dh);x.restore();};
+ const info=posterFieldsV155.filter(([key])=>!['title','subtitle','details','org'].includes(key)&&s[key].trim());
+ const compact=s.size==='square',mobile=s.size==='mobile',sideImage=posterImageCacheV155&&['editorial','organic','bold','minimal','warm'].includes(s.theme);
+ let L;for(let step=0;step<=18;step++){
+  const f=1-step*.022,titleSize=(compact?58:66)*f,titleMax=sideImage?500:850,title=wrap(s.title||'홍보 제목',titleSize,titleMax,true),sub=wrap(s.subtitle,24*f,titleMax),details=wrap(s.details,23*f,810),facts=info.map(([key,label])=>({key,label,text:wrap(s[key],21*f,340)})),footer=wrap(s.org,18*f,posterLogoCacheV156?650:850,true);
+  const heroBase=compact?(posterImageCacheV155?380:320):(mobile?(posterImageCacheV155?510:405):(posterImageCacheV155?610:445)),titleH=title.length*titleSize*1.15+(sub.length?15+sub.length*30*f:0),hero=Math.max(heroBase,88+titleH+56),detailH=details.length?32+details.length*30*f:0;
+  const factRows=[];for(let i=0;i<facts.length;i+=2){const pair=facts.slice(i,i+2),rh=Math.max(...pair.map(v=>47+Math.max(1,v.text.length)*27*f));factRows.push({pair,height:Math.max(70*f,rh)});}
+  const factsH=factRows.reduce((sum,row)=>sum+row.height,0)+Math.max(0,factRows.length-1)*12,bodyTop=hero+24,total=bodyTop+(detailH?detailH+18:0)+factsH+footer.length*24*f+92;
+  L={f,titleSize,title,sub,details,facts,factRows,footer,hero,detailH,total};if(total<=H)break;
+ }
+ const f=L.f,hero=L.hero,titleColor=s.theme==='photo'||s.theme==='bold'?'#ffffff':ink,eyebrow={editorial:'PROGRAM · EDUCATION',photo:'SPECIAL PROGRAM',organic:'TOGETHER & CARE',bold:'NOW RECRUITING',minimal:'PROGRAM GUIDE',warm:'CARE FOR YOUR DAY'}[s.theme]||'PROGRAM GUIDE';
+ x.fillStyle=paper;x.fillRect(0,0,W,H);
+ // Header artwork: each template has its own hierarchy while sharing editable content.
+ if(s.theme==='photo'){
+  if(posterImageCacheV155)media(posterImageCacheV155,0,0,W,hero,0);else{x.fillStyle=deep;x.fillRect(0,0,W,hero);}
+  const g=x.createLinearGradient(0,0,0,hero);g.addColorStop(0,'rgba(8,18,34,.10)');g.addColorStop(1,'rgba(8,18,34,.88)');x.fillStyle=g;x.fillRect(0,0,W,hero);box(66,54,196,39,20,'rgba(255,255,255,.17)','rgba(255,255,255,.35)');write([eyebrow],15,'#ffffff',164,65,true,1,'center');
+ }else if(s.theme==='bold'){
+  x.fillStyle=accent;x.fillRect(0,0,W,hero);x.fillStyle=deep;x.beginPath();x.moveTo(0,0);x.lineTo(350,0);x.lineTo(120,hero);x.lineTo(0,hero);x.closePath();x.fill();x.globalAlpha=.12;x.fillStyle='#fff';x.beginPath();x.arc(445,30,230,0,Math.PI*2);x.fill();x.globalAlpha=1;if(posterImageCacheV155){x.save();x.translate(758,hero/2+20);x.rotate(.035);x.shadowColor='rgba(13,24,39,.28)';x.shadowBlur=28;media(posterImageCacheV155,-174,-hero*.34,348,hero*.68,22);x.restore();}write([eyebrow],15,'#ffffff',68,58,true);
+ }else if(s.theme==='organic'){
+  x.fillStyle='#f6f1e4';x.fillRect(0,0,W,hero);x.globalAlpha=.22;x.fillStyle=accent;x.beginPath();x.arc(930,60,220,0,Math.PI*2);x.fill();x.fillStyle='#d88b5c';x.beginPath();x.arc(50,hero-15,115,0,Math.PI*2);x.fill();x.globalAlpha=1;if(posterImageCacheV155){box(595,56,337,hero-102,160,'#ffffff');media(posterImageCacheV155,607,68,313,hero-126,150);}write([eyebrow],15,accent,68,58,true);
+ }else if(s.theme==='minimal'){
+  x.fillStyle='#ffffff';x.fillRect(0,0,W,hero);x.fillStyle=accent;x.fillRect(68,52,54,7);x.fillStyle='#e8ebef';x.fillRect(136,52,118,7);if(posterImageCacheV155)media(posterImageCacheV155,606,48,326,hero-90,0);write([eyebrow],14,accent,68,78,true);
+ }else if(s.theme==='warm'){
+  x.fillStyle='#fff1e6';x.fillRect(0,0,W,hero);x.globalAlpha=.14;x.fillStyle=accent;x.beginPath();x.arc(165,35,210,0,Math.PI*2);x.fill();x.fillStyle='#ef9a6a';x.beginPath();x.arc(910,hero,175,0,Math.PI*2);x.fill();x.globalAlpha=1;if(posterImageCacheV155){box(600,54,332,hero-100,120,'#ffffff');media(posterImageCacheV155,610,64,312,hero-120,110);}box(68,50,198,38,19,'#ffffff');write([eyebrow],14,accent,167,61,true,1,'center');
+ }else{
+  x.fillStyle=mist;x.fillRect(0,0,W,hero);x.fillStyle=accent;x.fillRect(0,0,18,hero);x.globalAlpha=.10;x.fillStyle=accent;x.beginPath();x.arc(900,40,230,0,Math.PI*2);x.fill();x.globalAlpha=1;if(posterImageCacheV155){x.shadowColor='rgba(25,43,70,.18)';x.shadowBlur=24;media(posterImageCacheV155,585,58,347,hero-116,28);x.shadowBlur=0;}box(68,49,220,38,19,'#ffffff');write([eyebrow],14,accent,178,60,true,1,'center');
+ }
+ const titleLeft=68,titleTop=s.theme==='photo'?Math.max(114,hero-(L.title.length*L.titleSize*1.15+(L.sub.length?L.sub.length*30*f:0)+96)):110;
+ let ty=write(L.title,L.titleSize,titleColor,titleLeft,titleTop,true,1.15);if(L.sub.length){ty+=13;write(L.sub,24*f,s.theme==='photo'||s.theme==='bold'?'rgba(255,255,255,.86)':'#536174',titleLeft,ty,false,1.28);}
+ if(s.theme==='minimal'){x.fillStyle=accent;x.fillRect(68,hero-4,864,4);}else if(s.theme!=='photo'&&s.theme!=='bold'){x.fillStyle=blend(accent,'#ffffff',.65);x.fillRect(68,hero-2,864,2);}
+ let y=hero+24;
+ if(L.details.length){const fill=s.theme==='minimal'?'#ffffff':s.theme==='organic'?'#eef1e5':s.theme==='warm'?'#fff0e9':soft;box(68,y,864,L.detailH,18,fill,s.theme==='minimal'?'#dde3ea':'');x.fillStyle=accent;x.fillRect(68,y+16,5,L.detailH-32);write(L.details,23*f,ink,94,y+16,false,30/23);y+=L.detailH+18;}
+ const gap=12,cardW=(864-gap)/2;
+ for(const row of L.factRows){row.pair.forEach((fact,index)=>{const left=68+index*(cardW+gap),fill=s.theme==='minimal'?'#ffffff':s.theme==='organic'?'#faf8f1':s.theme==='warm'?'#fffaf6':mist;box(left,y,cardW,row.height,15,fill,s.theme==='minimal'?'#dfe4ea':'');box(left+15,y+15,8,8,4,accent);write([fact.label],14*f,accent,left+32,y+11,true,1.2);write(fact.text,21*f,ink,left+18,y+35,false,27/21);});y+=row.height+12;}
+ const footerY=H-45-L.footer.length*24*f;x.fillStyle=blend(accent,'#ffffff',.72);x.fillRect(68,footerY-18,864,1);if(posterLogoCacheV156){const im=posterLogoCacheV156,r=Math.min(132/im.width,48/im.height);x.drawImage(im,68,footerY,im.width*r,im.height*r);}write(L.footer,18*f,ink,posterLogoCacheV156?230:68,footerY,true,24/18);write(['화성시장기요양지원센터'],12,blend(ink,'#ffffff',.42),932,H-31,true,1,'right');
+ return {valid:L.total<=H&&y<=footerY-25,bodyBottom:y,footerTop:footerY,minimumBodySize:21*f};
+}
 function drawPosterV155(){if(!posterStateV155)return;const [w,h]=posterDimensionsV156(),canvas=document.getElementById('posterCanvasV155');const layout=paintPosterV156(canvas,1000,Math.round(h/w*1000));posterRenderValidV155=layout.valid;const warnings=[];if(!layout.valid)warnings.push('문구가 한 장을 넘습니다. 핵심 홍보문구를 줄이거나 A4 규격을 선택해 주세요.');if(posterLoadingV156)warnings.push('이미지를 불러오는 중입니다.');if(posterStateV155.image&&!posterImageCacheV155&&!posterLoadingV156)warnings.push('이미지를 읽지 못했습니다. 다시 업로드하거나 제거해 주세요.');if(!warnings.length)warnings.push(`출력 ${w.toLocaleString()} × ${h.toLocaleString()} px${posterStateV155.size==='a4'?' · A4 300dpi':''} · 입력 내용이 그대로 출력됩니다.`);document.getElementById('posterMsgV155').textContent=warnings.join(' ');}
 async function posterExportCanvasV156(){if(posterLoadingV156)throw new Error('이미지를 불러온 후 저장해 주세요.');if((posterStateV155.image&&!posterImageCacheV155)||(posterStateV155.logo&&!posterLogoCacheV156))throw new Error('이미지를 다시 업로드하거나 제거해 주세요.');if(document.fonts?.ready)await document.fonts.ready;const [w,h]=posterDimensionsV156(),c=document.createElement('canvas'),result=paintPosterV156(c,w,h);if(!result.valid)throw new Error('문구가 한 장을 넘습니다. 내용을 줄인 후 저장해 주세요.');return c;}
 function posterDownloadBlobV156(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);}
@@ -7146,3 +7291,11 @@ const posterPlanBaseV155=getPlanData;getPlanData=function(){const d=posterPlanBa
 
 </body>
 </html>
+business-report-system-v15.4.1-fix7.html
+HTML
+현재 Work 사용량이 소진되었습니다
+Work를 지금 계속 사용하려면 업그레이드하거나 크레딧을 추가하세요. 또는 사용량이 내일 AM 1:55에 재설정될 때까지 기다리세요
+크레딧 추가
+업그레이드
+
+c
