@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.4 공문정보·편성예산 연계)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.8 사업분야별 예산 집행관리)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -391,7 +391,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.4 공문정보·편성예산 연계)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.8 사업분야별 예산 집행관리)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -544,7 +544,7 @@
         <label style="font-size:12px">시행번호<div class="doc-number-input"><span>화성시장기요양-</span><input type="text" id="p_docNumber" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')" placeholder="번호만 입력"></div></label>
         <label style="font-size:12px">시행일<input type="date" id="p_docDate"></label>
         <label style="font-size:12px">기안문 제목 <span style="color:#64748b">(비워두면 자동 작성)</span><input type="text" id="p_officialTitle" placeholder="예: 2026 장기요양종사자 건강증진 사업 운영 계획"></label>
-        <label style="font-size:12px">붙임 문서<input type="text" id="p_attachment" value="사업계획서(안) 1부."></label>
+        <label style="font-size:12px">기안문 붙임 문서 <span style="color:#64748b">(고정)</span><input type="text" id="p_attachment" value="사업계획서(안) 1부." readonly></label>
         <label style="font-size:12px">공개 구분<input type="text" id="p_disclosure" value="공개"></label>
         <label style="font-size:12px">전화<input type="text" id="p_phone" value="(031) 294-1630"></label>
         <label style="font-size:12px">팩스<input type="text" id="p_fax" value="(031) 294-1633"></label>
@@ -563,6 +563,7 @@
         <table style="width:100%;border-collapse:collapse">
           <tbody id="standardPlanBodyV106">
             <tr><th style="border:1px solid #bbb;padding:8px;width:180px">사업명</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_project_name" style="width:100%" placeholder="사업명을 입력하세요"></td></tr>
+            <tr><th style="border:1px solid #bbb;padding:8px">사업분야(영역)</th><td style="border:1px solid #bbb;padding:6px"><select id="sp_business_area" style="width:100%;padding:8px"><option value="">사업분야를 선택하세요</option><option>교육(역량강화)</option><option>인식개선</option><option>권익증진</option><option>건강증진</option><option>네트워크</option><option>협력</option><option>기타</option></select><div style="font-size:11px;color:#64748b;margin-top:5px">연간 총예산의 사업분야별 배분 및 지출원장과 자동 연동됩니다.</div></td></tr>
             <tr><th style="border:1px solid #bbb;padding:8px">추진배경 및 필요성</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_background" style="width:100%;min-height:65px"></textarea></td></tr>
             <tr><th style="border:1px solid #bbb;padding:8px">사업목적</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_purpose" style="width:100%;min-height:55px"></textarea></td></tr>
             <tr><th style="border:1px solid #bbb;padding:8px">기대효과</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_expected_effect" style="width:100%;min-height:55px"></textarea></td></tr>
@@ -597,7 +598,7 @@
       </div>
       <div id="p-program-block">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h2 class="section-plan-head" style="margin:0;">1. 주요 프로그램</h2>
+          <h2 id="p-program-heading-v1546" class="section-plan-head" style="margin:0;">1. 주요 프로그램</h2>
           <div style="display:flex;gap:6px;">
             <button class="btn btn-add" onclick="addProgRow()">+ 프로그램 추가</button>
             <button class="btn btn-del" onclick="setPlanSectionVisible('program', false)">항목 삭제</button>
@@ -612,7 +613,7 @@
       </div>
       <div id="p-schedule-block">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-          <h2 class="section-plan-head" style="margin:0;">2. 세부 일정(안)</h2>
+          <h2 id="p-schedule-heading-v1546" class="section-plan-head" style="margin:0;">2. 세부 일정(안)</h2>
           <div style="display:flex;gap:6px;">
             <button class="btn btn-add" onclick="addScheduleRow()">+ 일정 추가</button>
             <button class="btn btn-del" onclick="setPlanSectionVisible('schedule', false)">항목 삭제</button>
@@ -650,12 +651,12 @@
         <tfoot><tr><td colspan="2" class="td-center">합계</td><td class="td-right" style="font-weight:bold; color:#2563eb;" id="p_totalBudgetDisplay">0 원</td><td colspan="2"></td></tr></tfoot>
       </table>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:22px">
-        <div><h2 class="section-plan-head" style="margin:0">3. 붙임 서류 목록</h2><div style="font-size:11px;color:#64748b;margin-top:4px">공문 발행정보의 기본 붙임 문서 다음 번호부터 기안문에 함께 출력됩니다.</div></div>
+        <div><h2 class="section-plan-head" style="margin:0">3. 계획서 붙임 서류 목록</h2><div style="font-size:11px;color:#64748b;margin-top:4px">기안문에는 사업계획서(안)만 표시되며, 아래 자료는 사업계획서 Ⅳ. 붙임 서류에 붙임 1부터 출력됩니다.</div></div>
         <button type="button" class="btn btn-add" onclick="addPlanAttachRowV137()">+ 붙임 서류 추가</button>
       </div>
       <table class="form-table" style="margin-top:8px">
         <colgroup><col style="width:15%"><col style="width:77%"><col style="width:8%"></colgroup>
-        <tbody id="p_attachTbodyV137"><tr><td class="td-center p-attach-no-v137">붙임 2.</td><td><input type="text" class="p-attach-val-v137" placeholder="예: 홍보물(안) 1부." onblur="normalizePlanAttachmentInputV138(this)"></td><td class="td-center"><button type="button" class="btn-del" onclick="delPlanAttachRowV137(this)">삭제</button></td></tr></tbody>
+        <tbody id="p_attachTbodyV137"><tr><td class="td-center p-attach-no-v137">붙임 1.</td><td><input type="text" class="p-attach-val-v137" placeholder="예: 홍보물(안) 1부." onblur="normalizePlanAttachmentInputV138(this)"></td><td class="td-center"><button type="button" class="btn-del" onclick="delPlanAttachRowV137(this)">삭제</button></td></tr></tbody>
       </table>
       <div class="file-manager-v142 no-print">
         <div><strong>4. 실제 붙임파일 업로드</strong><div style="font-size:11px;color:#64748b;margin-top:4px">공동 DB에 계획서를 먼저 저장한 후 파일을 업로드하세요. PDF·한글·Word·Excel·이미지, 파일당 최대 20MB</div></div>
@@ -729,9 +730,9 @@
         <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px;">Ⅰ. 사업 개요</h3>
         <table class="out-table" id="out_p_overview_table"></table>
         <div id="out_p_program_schedule_section">
-          <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅱ. 주요 프로그램 및 세부일정(안)</h3>
-          <div id="out_p_program_block"><h4 class="doc-subsection-title">1. 주요 프로그램</h4><table class="out-table" id="out_p_prog_table"></table></div>
-          <div id="out_p_schedule_block"><h4 class="doc-subsection-title">2. 세부 일정</h4><table class="out-table" id="out_p_sched_table"></table></div>
+          <h3 id="out_p_program_schedule_title_v1546" style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅱ. 주요 프로그램 및 세부일정(안)</h3>
+          <div id="out_p_program_block"><h4 id="out_p_program_heading_v1546" class="doc-subsection-title">1. 주요 프로그램</h4><table class="out-table" id="out_p_prog_table"></table></div>
+          <div id="out_p_schedule_block"><h4 id="out_p_schedule_heading_v1546" class="doc-subsection-title">2. 세부 일정</h4><table class="out-table" id="out_p_sched_table"></table></div>
         </div>
         <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅲ. 소요 예산(안) 및 재원</h3>
         <p style="font-size:13px; font-family:'Batang', serif;" id="out_p_budget_meta"></p>
@@ -1169,6 +1170,13 @@
         <label style="font-size:12px;font-weight:bold;">인건비<input type="number" min="0" id="annualMasterPersonnelV1490" oninput="calculateAnnualBudgetMasterV1473()" style="width:100%;padding:9px;margin-top:5px;box-sizing:border-box;text-align:right;"></label>
         <label style="font-size:12px;font-weight:bold;">운영비<input type="number" min="0" id="annualMasterOperatingV1490" oninput="calculateAnnualBudgetMasterV1473()" style="width:100%;padding:9px;margin-top:5px;box-sizing:border-box;text-align:right;"></label>
         <label style="font-size:12px;font-weight:bold;grid-column:1/-1;">세부사업비<input type="number" min="0" id="annualMasterProgramV1490" oninput="calculateAnnualBudgetMasterV1473()" style="width:100%;padding:9px;margin-top:5px;box-sizing:border-box;text-align:right;"></label>
+        <div style="grid-column:1/-1;border:1px solid #bbf7d0;border-radius:8px;background:#f0fdf4;padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;"><div><strong style="font-size:13px;color:#166534;">세부사업비 사업분야별 배분</strong><div style="font-size:11px;color:#64748b;margin-top:3px;">사업분야별 사업비 합계가 세부사업비와 일치하도록 입력합니다.</div></div><button type="button" class="btn btn-add" onclick="addAnnualProgramAreaV1547()">＋ 사업분야 추가</button></div>
+          <datalist id="annualProgramAreaOptionsV1547"><option value="교육(역량강화)"><option value="인식개선"><option value="권익증진"><option value="건강증진"><option value="네트워크"><option value="협력"></datalist>
+          <div style="display:grid;grid-template-columns:54px minmax(180px,1fr) minmax(140px,180px) 58px;gap:6px;padding:0 4px 5px;font-size:11px;font-weight:bold;color:#475569;"><div style="text-align:center;">번호</div><div>사업분야(영역)</div><div style="text-align:right;">사업비(원)</div><div></div></div>
+          <div id="annualProgramAreaRowsV1547"></div>
+          <div id="annualProgramAreaSummaryV1547" style="margin-top:8px;padding-top:8px;border-top:1px solid #bbf7d0;font-size:12px;color:#166534;text-align:right;"></div>
+        </div>
         <label style="font-size:12px;font-weight:bold;grid-column:1/-1;">비고<textarea id="annualMasterNoteV1473" rows="3" placeholder="교부결정일, 관련 공문 등" style="width:100%;padding:9px;margin-top:5px;box-sizing:border-box;"></textarea></label>
       </div>
       <div id="annualMasterCheckV1473" style="margin-top:12px;padding:11px;border-radius:8px;background:#f8fafc;font-size:13px;"></div>
@@ -1207,11 +1215,13 @@
       <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><h2 style="margin:0;color:#047857">사업별 지출원장</h2><div style="font-size:12px;color:#64748b;margin-top:5px">지출 건별로 등록하면 집행액·지출예정액·가용잔액이 자동 계산됩니다.</div></div><button class="btn btn-del" onclick="closeExpenseLedgerV1474()">닫기</button></div>
       <label style="display:block;font-size:12px;font-weight:bold;margin:14px 0 10px">사업 선택<select id="expenseProjectV1474" onchange="loadExpenseLedgerV1474(this.value)" style="width:100%;padding:9px;margin-top:5px"><option value="">사업을 선택하세요</option></select></label>
       <div id="expenseSummaryV1474" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px"></div>
+      <div id="expenseAreaSummaryV1548" style="margin-bottom:12px"></div>
       <div style="text-align:right;margin:-4px 0 10px"><button class="btn btn-result" onclick="syncExpenseDocumentsV1477(false)">↔ 계획서·결과보고서 반영</button></div>
       <div style="border:1px solid #d1fae5;background:#f0fdf4;border-radius:9px;padding:12px">
         <div style="display:grid;grid-template-columns:repeat(4,minmax(145px,1fr));gap:9px">
           <label style="font-size:11px;font-weight:bold">지출일자<input type="date" id="expenseDateV1474" style="width:100%;padding:8px;box-sizing:border-box"></label>
           <label style="font-size:11px;font-weight:bold">예산항목<select id="expenseItemV1474" style="width:100%;padding:8px"><option value="">선택</option></select></label>
+          <label style="font-size:11px;font-weight:bold">사업분야(자동 적용)<select id="expenseAreaV1548" style="width:100%;padding:8px"><option value="">사업분야 선택</option></select></label>
           <label style="font-size:11px;font-weight:bold">집행상태<select id="expenseStatusV1474" style="width:100%;padding:8px"><option value="pending">지급예정</option><option value="paid">지급완료</option><option value="refund">반납</option></select></label>
           <label style="font-size:11px;font-weight:bold">금액<input type="number" min="1" id="expenseAmountV1474" style="width:100%;padding:8px;box-sizing:border-box;text-align:right"></label>
           <label style="font-size:11px;font-weight:bold;grid-column:span 2">지출내용<input id="expenseDescriptionV1474" style="width:100%;padding:8px;box-sizing:border-box"></label>
@@ -1230,6 +1240,7 @@
         <input type="date" id="expenseFromV1476" onchange="filterExpenseLedgerV1476()" title="시작일" style="padding:8px">
         <input type="date" id="expenseToV1476" onchange="filterExpenseLedgerV1476()" title="종료일" style="padding:8px">
         <select id="expenseFilterStatusV1476" onchange="filterExpenseLedgerV1476()" style="padding:8px"><option value="">전체 상태</option><option value="pending">지급예정</option><option value="paid">지급완료</option><option value="refund">반납</option><option value="cancelled">취소</option></select>
+        <select id="expenseFilterAreaV1548" onchange="filterExpenseLedgerV1476()" style="padding:8px"><option value="">전체 사업분야</option></select>
         <button class="btn btn-add" onclick="resetExpenseFiltersV1476()">필터 초기화</button>
         <button class="btn btn-save" onclick="downloadExpenseCsvV1476()">📥 CSV</button>
       </div>
@@ -1509,6 +1520,24 @@
     finishPlanDraftEditV1543();generatePlanDocs();
   }
 
+  function readPlanTableRowsV1546(tbodyId,keyClass,valueClass){
+    const tbody=document.getElementById(tbodyId);if(!tbody)return [];
+    return [...tbody.querySelectorAll(':scope > tr')].map(row=>({
+      key:row.querySelector('.'+keyClass)?.value?.trim()||'',
+      value:row.querySelector('.'+valueClass)?.value?.trim()||''
+    })).filter(row=>row.key||row.value);
+  }
+  function updatePlanProgramScheduleHeadingsV1546(){
+    const programVisible=window.planProgramVisible!==false,scheduleVisible=window.planScheduleVisible!==false;
+    const set=(id,text)=>{const el=document.getElementById(id);if(el)el.textContent=text;};
+    set('p-program-heading-v1546','1. 주요 프로그램');
+    set('p-schedule-heading-v1546',(programVisible?'2':'1')+'. 세부 일정(안)');
+    set('out_p_program_heading_v1546','1. 주요 프로그램');
+    set('out_p_schedule_heading_v1546',(programVisible?'2':'1')+'. 세부 일정');
+    set('out_p_program_schedule_title_v1546',programVisible&&scheduleVisible?'Ⅱ. 주요 프로그램 및 세부일정(안)':programVisible?'Ⅱ. 주요 프로그램':'Ⅱ. 세부일정(안)');
+    set('subtab-2',programVisible&&scheduleVisible?'Ⅱ. 주요 프로그램 및 세부일정':programVisible?'Ⅱ. 주요 프로그램':'Ⅱ. 세부일정(안)');
+  }
+
   // 사업계획서 생성 함수
   function generatePlanDocs() {
     if(planDraftEditingV1543)finishPlanDraftEditV1543();
@@ -1549,6 +1578,7 @@
 
     const standardOverviewRows = [
       ['사업명', stdPlan.project_name],
+      ['사업분야', stdPlan.business_area],
       ['추진배경 및 필요성', stdPlan.background],
       ['사업목적', stdPlan.purpose],
       ['기대효과', stdPlan.expected_effect],
@@ -1601,22 +1631,21 @@
     document.getElementById('out_p_overview_table').innerHTML = tbl;
 
     // 2. 주요 프로그램
-    let pKeys = document.querySelectorAll('.p-prog-key'), pVals = document.querySelectorAll('.p-prog-val');
-    let pRows='';
-    for(let i=0; i<pKeys.length; i++) if(pKeys[i].value.trim()) pRows += `<tr><th class="td-center">${esc(pKeys[i].value)}</th><td>${esc(pVals[i].value.trim()||'-').replaceAll('\n','<br>')}</td></tr>`;
+    const programRowsV1546=readPlanTableRowsV1546('p_progTbody','p-prog-key','p-prog-val');
+    let pRows=programRowsV1546.map(row=>`<tr><th class="td-center">${esc(row.key||'-')}</th><td>${esc(row.value||'-').replaceAll('\n','<br>')}</td></tr>`).join('');
     let pTbl='<thead><tr><th style="width:25%;">구분</th><th>내용</th></tr></thead><tbody>'+(pRows||'<tr><td colspan="2" class="td-center">작성된 주요 프로그램이 없습니다.</td></tr>')+'</tbody>';
     document.getElementById('out_p_prog_table').innerHTML = pTbl;
     document.getElementById('out_p_program_block').style.display = window.planProgramVisible === false ? 'none' : 'block';
 
     // 3. 세부 일정
-    let sTimes = document.querySelectorAll('.p-sch-time'), sVals = document.querySelectorAll('.p-sch-val');
-    let sRows='';
-    for(let i=0; i<sTimes.length; i++) if(sTimes[i].value.trim()) sRows += `<tr><td class="td-center">${esc(sTimes[i].value)}</td><td>${esc(sVals[i].value.trim()||'-')}</td></tr>`;
+    const scheduleRowsV1546=readPlanTableRowsV1546('p_schedTbody','p-sch-time','p-sch-val');
+    let sRows=scheduleRowsV1546.map(row=>`<tr><td class="td-center">${esc(row.key||'-')}</td><td>${esc(row.value||'-').replaceAll('\n','<br>')}</td></tr>`).join('');
     let sTbl='<thead><tr><th style="width:25%;">시간</th><th>내용</th></tr></thead><tbody>'+(sRows||'<tr><td colspan="2" class="td-center">작성된 세부 일정이 없습니다.</td></tr>')+'</tbody>';
     document.getElementById('out_p_sched_table').innerHTML = sTbl;
     document.getElementById('out_p_schedule_block').style.display = window.planScheduleVisible === false ? 'none' : 'block';
     document.getElementById('out_p_program_schedule_section').style.display =
       (window.planProgramVisible === false && window.planScheduleVisible === false) ? 'none' : 'block';
+    updatePlanProgramScheduleHeadingsV1546();
 
     // 4. 예산
     document.getElementById('out_p_budget_meta').innerText = `○ 재원 및 예산항목 : ${document.getElementById('p_budgetSource').value} / ${document.getElementById('p_budgetCategory').value}`;
@@ -1775,7 +1804,7 @@
   function applyPlanOfficialDataV134(data={}){
     const set=(id,value,fallback='')=>{const el=document.getElementById(id);if(el)el.value=value??fallback;};
     set('p_recipient',data.recipient,'내부결재');set('p_docNumber',documentNumberSuffixV146(data.document_number),'');set('p_docDate',dateInputValueV146(data.document_date),'');set('p_officialTitle',data.official_title,'');
-    set('p_attachment',data.attachment,'사업계획서(안) 1부.');set('p_disclosure',data.disclosure,'공개');set('p_phone',data.phone,'(031) 294-1630');set('p_fax',data.fax,'(031) 294-1633');
+    set('p_attachment','사업계획서(안) 1부.','사업계획서(안) 1부.');set('p_disclosure',data.disclosure,'공개');set('p_phone',data.phone,'(031) 294-1630');set('p_fax',data.fax,'(031) 294-1633');
     set('p_email',data.email,'hsgoodcare@daum.net');set('p_address',data.address,'우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층');set('p_reference',data.reference,'');set('p_docRequest',data.request_text,'');
   }
   function resultOfficialDataV135(){
@@ -1971,6 +2000,7 @@
       window.planScheduleVisible = visible;
       document.getElementById('p-schedule-block').style.display = visible ? 'block' : 'none';
     }
+    if(typeof updatePlanProgramScheduleHeadingsV1546==='function')updatePlanProgramScheduleHeadingsV1546();
   }
 
   function startNewDocument(type) {
@@ -2088,7 +2118,7 @@
     }
   }
 
-  window.onload = function() { window.planProgramVisible=true; window.planScheduleVisible=true; calcPlanBudget(); calcResultBudget(); };
+  window.onload = function() { window.planProgramVisible=true; window.planScheduleVisible=true; calcPlanBudget(); calcResultBudget(); if(typeof updatePlanProgramScheduleHeadingsV1546==='function')updatePlanProgramScheduleHeadingsV1546(); };
 
   // ===== v8.0 Supabase 협업 기능 =====
   const V8_SUPABASE_URL = 'https://quienpvidvkjvtiwyhoq.supabase.co';
@@ -3674,6 +3704,7 @@
   function getStandardPlanV106(){
    return {
     project_name:v106Val('sp_project_name'),
+    business_area:v106Val('sp_business_area'),
     background:v106Val('sp_background'),
     purpose:v106Val('sp_purpose'),
     expected_effect:v106Val('sp_expected_effect'),
@@ -3689,7 +3720,7 @@
   }
   function applyStandardPlanV106(std={}){
    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??''};
-   set('sp_project_name',std.project_name); set('sp_background',std.background); set('sp_purpose',std.purpose);
+   set('sp_project_name',std.project_name); set('sp_business_area',std.business_area); set('sp_background',std.background); set('sp_purpose',std.purpose);
    set('sp_expected_effect',std.expected_effect); set('sp_operation_date',std.operation_date); set('sp_target_group',std.target_group);
    set('sp_planned_participants',std.planned_participants||0); set('sp_content',std.content); set('sp_location',std.location);
    set('sp_operation_method',std.operation_method); set('sp_evaluation_plan',std.evaluation_plan);
@@ -3701,6 +3732,7 @@
    const gv=(ks)=>{for(const k of ks)if(m[k]!==undefined&&m[k]!=='')return m[k];return ''};
    return {
     project_name:projectNameFromPlan(d)||'',
+    business_area:gv(['사업분야','사업영역','사업유형'])||d.businessArea||'',
     background:gv(['추진배경 및 필요성','추진배경','필요성']),
     purpose:gv(['사업목적','목적','추진목적']),
     expected_effect:gv(['기대효과']),
@@ -5906,10 +5938,8 @@ ${centerMissionV1493}
   };
   window.normalizePlanAttachmentInputV138=function(input){if(input)input.value=normalizeAttachment(input.value);};
   const values=()=>Array.from(document.querySelectorAll('.p-attach-val-v137')).map(el=>normalizeAttachment(el.value)).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i);
-  const baseOffset=()=>document.getElementById('p_attachment')?.value?.trim()?1:0;
   function renumber(){
-    const offset=baseOffset();
-    document.querySelectorAll('#p_attachTbodyV137 tr').forEach((row,index)=>{const no=row.querySelector('.p-attach-no-v137');if(no)no.textContent='붙임 '+(offset+index+1)+'.';});
+    document.querySelectorAll('#p_attachTbodyV137 tr').forEach((row,index)=>{const no=row.querySelector('.p-attach-no-v137');if(no)no.textContent='붙임 '+(index+1)+'.';});
   }
   window.addPlanAttachRowV137=function(value=''){
     const tbody=document.getElementById('p_attachTbodyV137');if(!tbody)return;
@@ -5923,16 +5953,16 @@ ${centerMissionV1493}
     const items=Array.isArray(list)?list.filter(x=>String(x??'').trim()):[];(items.length?items:['']).forEach(x=>window.addPlanAttachRowV137(String(x||'')));renumber();
   };
   const getPlanDataBaseV137=getPlanData;
-  getPlanData=function(){const primary=document.getElementById('p_attachment');if(primary)primary.value=normalizeAttachment(primary.value);const data=getPlanDataBaseV137();data.attachmentsV137=values();data.plan_schema_version='14.1';return data;};
+  getPlanData=function(){const primary=document.getElementById('p_attachment');if(primary)primary.value='사업계획서(안) 1부.';const data=getPlanDataBaseV137();data.attachmentsV137=values();data.plan_schema_version='15.4.5';return data;};
   function renderAttachments(){
-    const primary=normalizeAttachment(document.getElementById('p_attachment')?.value),extras=values(),all=[primary,...extras].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i),cover=document.getElementById('out_p_coverAttachmentListV137');
-    if(cover)cover.innerHTML=all.length?all.map((item,index)=>'<div style="padding-left:60px;text-indent:-60px">'+(index===0?'붙임&nbsp;&nbsp;':'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;')+(index+1)+'. '+esc(item)+(index===all.length-1?'&nbsp;&nbsp;끝.':'')+'</div>').join(''):'<div>붙임&nbsp;&nbsp;없음</div>';
-    const section=document.getElementById('out_p_attachmentSectionV137'),list=document.getElementById('out_p_attachListV137'),offset=primary?1:0;
+    const primary='사업계획서(안) 1부.',extras=values(),cover=document.getElementById('out_p_coverAttachmentListV137');
+    if(cover)cover.innerHTML='<div style="padding-left:60px;text-indent:-60px">붙임&nbsp;&nbsp;1. '+esc(primary)+'&nbsp;&nbsp;끝.</div>';
+    const section=document.getElementById('out_p_attachmentSectionV137'),list=document.getElementById('out_p_attachListV137');
     if(section)section.style.display=extras.length?'block':'none';
-    if(list)list.innerHTML=extras.map((item,index)=>'<div style="margin:4px 0">붙임 '+(offset+index+1)+'. '+esc(item)+'</div>').join('');
+    if(list)list.innerHTML=extras.map((item,index)=>'<div style="margin:4px 0">붙임 '+(index+1)+'. '+esc(item)+'</div>').join('');
   }
   const generatePlanDocsBaseV137=generatePlanDocs;
-  generatePlanDocs=function(){const primary=document.getElementById('p_attachment');if(primary)primary.value=normalizeAttachment(primary.value);const result=generatePlanDocsBaseV137();if(document.getElementById('output-plan-container')?.style.display==='block')renderAttachments();return result;};
+  generatePlanDocs=function(){const primary=document.getElementById('p_attachment');if(primary)primary.value='사업계획서(안) 1부.';const result=generatePlanDocsBaseV137();if(document.getElementById('output-plan-container')?.style.display==='block')renderAttachments();return result;};
   document.addEventListener('DOMContentLoaded',()=>{renumber();const primary=document.getElementById('p_attachment');primary?.addEventListener('input',renumber);primary?.addEventListener('blur',()=>window.normalizePlanAttachmentInputV138(primary));});
 })();
 </script>
@@ -5962,7 +5992,7 @@ ${centerMissionV1493}
   const displayValues=type=>files[key(type)].map(x=>normalizeLabel(x.display_name||fileLabel(x.original_name))).filter(Boolean);
   const sizeText=n=>{const v=Number(n)||0;return v>=1048576?(v/1048576).toFixed(1)+' MB':Math.max(1,Math.round(v/1024))+' KB';};
   const status=(type,message,error=false)=>{const el=document.getElementById(prefix(type)+'_fileStatusV142');if(el){el.textContent=message||'';el.style.color=error?'#b91c1c':'#166534';}};
-  const attachmentNumber=type=>1+manualValues(type).length;
+  const attachmentNumber=type=>(key(type)==='PLAN'?0:1)+manualValues(type).length;
   function render(type){
     type=key(type);const box=document.getElementById(prefix(type)+'_uploadedFilesV142');if(!box)return;
     const start=attachmentNumber(type);
@@ -5972,8 +6002,8 @@ ${centerMissionV1493}
   function renderOutput(type){
     type=key(type);const primary=primaryValue(type),manual=manualValues(type),uploaded=displayValues(type),all=unique([primary,...manual,...uploaded]);
     if(type==='PLAN'){
-      const cover=document.getElementById('out_p_coverAttachmentListV137');if(cover)cover.innerHTML=all.length?all.map((item,i)=>'<div style="padding-left:60px;text-indent:-60px">'+(i===0?'붙임&nbsp;&nbsp;':'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;')+(i+1)+'. '+esc(item)+(i===all.length-1?'&nbsp;&nbsp;끝.':'')+'</div>').join(''):'<div>붙임&nbsp;&nbsp;없음</div>';
-      const section=document.getElementById('out_p_attachmentSectionV137'),list=document.getElementById('out_p_attachListV137'),extras=unique([...manual,...uploaded]),offset=primary?1:0;if(section)section.style.display=extras.length?'block':'none';if(list)list.innerHTML=extras.map((item,i)=>'<div style="margin:4px 0">붙임 '+(i+offset+1)+'. '+esc(item)+'</div>').join('');
+      const cover=document.getElementById('out_p_coverAttachmentListV137');if(cover)cover.innerHTML='<div style="padding-left:60px;text-indent:-60px">붙임&nbsp;&nbsp;1. 사업계획서(안) 1부.&nbsp;&nbsp;끝.</div>';
+      const section=document.getElementById('out_p_attachmentSectionV137'),list=document.getElementById('out_p_attachListV137'),extras=unique([...manual,...uploaded]);if(section)section.style.display=extras.length?'block':'none';if(list)list.innerHTML=extras.map((item,i)=>'<div style="margin:4px 0">붙임 '+(i+1)+'. '+esc(item)+'</div>').join('');
     }else{
       const cover=document.getElementById('out_r_coverAttachmentListV142');if(cover)cover.innerHTML=all.length?all.map((item,i)=>'<div style="padding-left:60px;text-indent:-60px">'+(i===0?'붙임&nbsp;&nbsp;':'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;')+(i+1)+'. '+esc(item)+(i===all.length-1?'&nbsp;&nbsp;끝.':'')+'</div>').join(''):'<div>붙임&nbsp;&nbsp;없음</div>';
       const list=document.getElementById('out_r_tbl_attachList'),extras=unique([...manual,...uploaded]),offset=primary?1:0;if(list)list.innerHTML=extras.map((item,i)=>'<div style="margin:3px 0">붙임 '+(i+offset+1)+'. '+esc(item)+'</div>').join('')||'<div>별도 붙임 없음</div>';
@@ -6479,14 +6509,50 @@ function downloadAnnualBudgetCsvV1471(){
 }
 
 // ===== v14.7.3: 연도별 총예산 관리 =====
+const ANNUAL_PROGRAM_AREA_MARKER_V1547='[사업분야배분]';
+let annualProgramAreasV1547=[];
+function annualProgramAreasFromNoteV1547(note){
+  const line=String(note||'').split(/\r?\n/).find(row=>row.startsWith(ANNUAL_PROGRAM_AREA_MARKER_V1547));
+  if(!line)return [];
+  try{return JSON.parse(line.slice(ANNUAL_PROGRAM_AREA_MARKER_V1547.length)).map(row=>({area:String(row.area||''),amount:budgetNumberV1471(row.amount)}));}catch(_e){return [];}
+}
+function annualPlainNoteV1547(note){return String(note||'').split(/\r?\n/).filter(row=>!row.startsWith(ANNUAL_PROGRAM_AREA_MARKER_V1547)).join('\n').trim();}
+function annualCombinedNoteV1547(note,rows){
+  const clean=(rows||[]).filter(row=>String(row.area||'').trim()||budgetNumberV1471(row.amount)).map(row=>({area:String(row.area||'').trim(),amount:budgetNumberV1471(row.amount)}));
+  return [clean.length?ANNUAL_PROGRAM_AREA_MARKER_V1547+JSON.stringify(clean):'',String(note||'').trim()].filter(Boolean).join('\n');
+}
+function renderAnnualProgramAreasV1547(){
+  const box=document.getElementById('annualProgramAreaRowsV1547');if(!box)return;
+  if(!annualProgramAreasV1547.length)annualProgramAreasV1547=[{area:'',amount:0}];
+  box.innerHTML=annualProgramAreasV1547.map((row,index)=>'<div style="display:grid;grid-template-columns:54px minmax(180px,1fr) minmax(140px,180px) 58px;gap:6px;align-items:center;margin:5px 0"><div style="text-align:center;font-size:12px;color:#64748b">'+(index+1)+'</div><input list="annualProgramAreaOptionsV1547" value="'+budgetEscapeV1471(row.area||'')+'" placeholder="예: 권익증진" oninput="updateAnnualProgramAreaV1547('+index+',\'area\',this.value)" style="width:100%;box-sizing:border-box"><input type="number" min="0" step="1" value="'+budgetNumberV1471(row.amount)+'" oninput="updateAnnualProgramAreaV1547('+index+',\'amount\',this.value)" style="width:100%;box-sizing:border-box;text-align:right"><button type="button" class="btn-del" onclick="removeAnnualProgramAreaV1547('+index+')">삭제</button></div>').join('');
+  updateAnnualProgramAreaSummaryV1547();
+}
+function addAnnualProgramAreaV1547(){annualProgramAreasV1547.push({area:'',amount:0});renderAnnualProgramAreasV1547();}
+function removeAnnualProgramAreaV1547(index){annualProgramAreasV1547.splice(index,1);renderAnnualProgramAreasV1547();calculateAnnualBudgetMasterV1473();}
+function updateAnnualProgramAreaV1547(index,key,value){
+  if(!annualProgramAreasV1547[index])return;
+  annualProgramAreasV1547[index][key]=key==='amount'?budgetNumberV1471(value):value;updateAnnualProgramAreaSummaryV1547();calculateAnnualBudgetMasterV1473();
+}
+function annualProgramAreaStateV1547(){
+  const rows=annualProgramAreasV1547.filter(row=>String(row.area||'').trim()||budgetNumberV1471(row.amount));
+  const sum=rows.reduce((total,row)=>total+budgetNumberV1471(row.amount),0),program=annualMasterValueV1473('annualMasterProgramV1490');
+  return {rows,sum,program,difference:program-sum,active:rows.length>0,missingName:rows.some(row=>!String(row.area||'').trim())};
+}
+function updateAnnualProgramAreaSummaryV1547(){
+  const box=document.getElementById('annualProgramAreaSummaryV1547');if(!box)return;
+  const state=annualProgramAreaStateV1547(),matched=!state.active||(!state.missingName&&state.difference===0);
+  box.style.color=matched?'#166534':'#b91c1c';
+  box.innerHTML='분야별 합계 <strong>'+budgetMoneyV1471(state.sum)+'</strong> / 세부사업비 <strong>'+budgetMoneyV1471(state.program)+'</strong>'+(state.active?(state.missingName?' / 사업분야명 확인':state.difference===0?' / 일치':' / 차이 '+budgetMoneyV1471(state.difference)):' / 분야별 배분 미작성');
+}
 function annualMasterMessageV1473(message,error){const box=document.getElementById('annualMasterMessageV1473');if(box){box.style.color=error?'#b91c1c':'#64748b';box.textContent=message||'';}}
 function annualMasterValueV1473(id){return budgetNumberV1471(document.getElementById(id)?.value);}
 function calculateAnnualBudgetMasterV1473(){
-  const total=annualMasterValueV1473('annualMasterTotalV1473'),subsidy=annualMasterValueV1473('annualMasterSubsidyV1473'),self=annualMasterValueV1473('annualMasterSelfV1473'),sum=subsidy+self,difference=total-sum,personnel=annualMasterValueV1473('annualMasterPersonnelV1490'),operating=annualMasterValueV1473('annualMasterOperatingV1490'),program=annualMasterValueV1473('annualMasterProgramV1490'),allocationSum=personnel+operating+program,allocationDifference=total-allocationSum,box=document.getElementById('annualMasterCheckV1473');
-  if(!box)return {total,subsidy,self,sum,difference,personnel,operating,program,allocationSum,allocationDifference};
-  const valid=difference===0&&allocationDifference===0;box.style.border='1px solid '+(valid?'#86efac':'#fca5a5');box.style.background=valid?'#f0fdf4':'#fef2f2';box.style.color=valid?'#166534':'#b91c1c';
-  box.innerHTML='<strong>'+(valid?'✅ 재원 및 예산영역 합계가 모두 일치합니다.':'⚠ 확인이 필요한 예산 차이가 있습니다.')+'</strong><div style="margin-top:6px">① 재원: 총예산 '+budgetMoneyV1471(total)+' / 보조금+자부담 '+budgetMoneyV1471(sum)+(difference!==0?' / 차이 '+budgetMoneyV1471(difference):' / 일치')+'</div><div style="margin-top:4px">② 영역: 인건비+운영비+세부사업비 '+budgetMoneyV1471(allocationSum)+(allocationDifference!==0?' / 차이 '+budgetMoneyV1471(allocationDifference):' / 일치')+'</div>';
-  return {total,subsidy,self,sum,difference,personnel,operating,program,allocationSum,allocationDifference};
+  const total=annualMasterValueV1473('annualMasterTotalV1473'),subsidy=annualMasterValueV1473('annualMasterSubsidyV1473'),self=annualMasterValueV1473('annualMasterSelfV1473'),sum=subsidy+self,difference=total-sum,personnel=annualMasterValueV1473('annualMasterPersonnelV1490'),operating=annualMasterValueV1473('annualMasterOperatingV1490'),program=annualMasterValueV1473('annualMasterProgramV1490'),allocationSum=personnel+operating+program,allocationDifference=total-allocationSum,areaState=annualProgramAreaStateV1547(),areaValid=!areaState.active||(!areaState.missingName&&areaState.difference===0),box=document.getElementById('annualMasterCheckV1473');
+  updateAnnualProgramAreaSummaryV1547();
+  if(!box)return {total,subsidy,self,sum,difference,personnel,operating,program,allocationSum,allocationDifference,areaState,areaValid};
+  const valid=difference===0&&allocationDifference===0&&areaValid;box.style.border='1px solid '+(valid?'#86efac':'#fca5a5');box.style.background=valid?'#f0fdf4':'#fef2f2';box.style.color=valid?'#166534':'#b91c1c';
+  box.innerHTML='<strong>'+(valid?'✅ 재원 및 예산영역 합계가 모두 일치합니다.':'⚠ 확인이 필요한 예산 차이가 있습니다.')+'</strong><div style="margin-top:6px">① 재원: 총예산 '+budgetMoneyV1471(total)+' / 보조금+자부담 '+budgetMoneyV1471(sum)+(difference!==0?' / 차이 '+budgetMoneyV1471(difference):' / 일치')+'</div><div style="margin-top:4px">② 영역: 인건비+운영비+세부사업비 '+budgetMoneyV1471(allocationSum)+(allocationDifference!==0?' / 차이 '+budgetMoneyV1471(allocationDifference):' / 일치')+'</div>'+(areaState.active?'<div style="margin-top:4px">③ 세부사업비 분야별 합계 '+budgetMoneyV1471(areaState.sum)+(areaState.missingName?' / 사업분야명 확인':areaState.difference!==0?' / 차이 '+budgetMoneyV1471(areaState.difference):' / 일치')+'</div>':'');
+  return {total,subsidy,self,sum,difference,personnel,operating,program,allocationSum,allocationDifference,areaState,areaValid};
 }
 async function renderAnnualBudgetMasterV1473(){
   const box=document.getElementById('annualBudgetMasterV1473');if(!box)return;
@@ -6496,8 +6562,8 @@ async function renderAnnualBudgetMasterV1473(){
   if(query.error){annualBudgetMasterDataV1473=null;box.innerHTML='<div style="padding:11px;border:1px solid #fcd34d;background:#fffbeb;border-radius:8px;color:#92400e"><strong>예산 저장공간 설정이 필요합니다.</strong><br>기본 DB 설정 후 v14.9.0 예산영역 배분 SQL을 실행해 주세요.</div>';return;}
   annualBudgetMasterDataV1473=query.data||null;
   if(!query.data){box.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc"><span><strong>'+budgetEscapeV1471(year)+'년 총예산이 등록되지 않았습니다.</strong></span><button class="btn btn-result" onclick="openAnnualBudgetMasterV1473()">총예산 등록</button></div>';return;}
-  const row=query.data,difference=budgetNumberV1471(row.total_budget)-budgetNumberV1471(row.subsidy_amount)-budgetNumberV1471(row.self_funding_amount),allocationDifference=budgetNumberV1471(row.total_budget)-budgetNumberV1471(row.personnel_budget)-budgetNumberV1471(row.operating_budget)-budgetNumberV1471(row.program_budget),status=row.budget_status==='confirmed'?'확정':'작성중';
-  box.innerHTML='<div style="border:1px solid #c4b5fd;background:#faf5ff;border-radius:9px;padding:13px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:12px;color:#6d28d9">'+budgetEscapeV1471(year)+'년 연간 예산 · '+status+'</div><strong style="font-size:17px">'+budgetEscapeV1471(row.budget_name||year+'년 운영예산')+'</strong></div><button class="btn btn-result" onclick="openAnnualBudgetMasterV1473()">수정</button></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-top:10px"><div>총예산<br><strong>'+budgetMoneyV1471(row.total_budget)+'</strong></div><div>보조금<br><strong>'+budgetMoneyV1471(row.subsidy_amount)+'</strong></div><div>자부담<br><strong>'+budgetMoneyV1471(row.self_funding_amount)+'</strong></div><div>재원 합계<br><strong style="color:'+(difference===0?'#047857':'#b91c1c')+'">'+(difference===0?'일치':'차이 '+budgetMoneyV1471(difference))+'</strong></div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px;margin-top:11px"><div style="padding:9px;background:#fff;border-radius:7px;color:#475569">인건비<br><strong style="color:#7c3aed">'+budgetMoneyV1471(row.personnel_budget)+'</strong></div><div style="padding:9px;background:#fff;border-radius:7px;color:#475569">운영비<br><strong style="color:#0369a1">'+budgetMoneyV1471(row.operating_budget)+'</strong></div><div style="padding:9px;background:#fff;border-radius:7px;color:#475569">세부사업비<br><strong style="color:#047857">'+budgetMoneyV1471(row.program_budget)+'</strong></div><div style="padding:9px;background:#fff;border-radius:7px;color:#475569">영역 합계<br><strong style="color:'+(allocationDifference===0?'#047857':'#b91c1c')+'">'+(allocationDifference===0?'일치':'차이 '+budgetMoneyV1471(allocationDifference))+'</strong></div></div></div>';
+  const row=query.data,difference=budgetNumberV1471(row.total_budget)-budgetNumberV1471(row.subsidy_amount)-budgetNumberV1471(row.self_funding_amount),allocationDifference=budgetNumberV1471(row.total_budget)-budgetNumberV1471(row.personnel_budget)-budgetNumberV1471(row.operating_budget)-budgetNumberV1471(row.program_budget),status=row.budget_status==='confirmed'?'확정':'작성중',areas=annualProgramAreasFromNoteV1547(row.note),areaTotal=areas.reduce((sum,item)=>sum+budgetNumberV1471(item.amount),0),areaHtml=areas.length?'<div style="margin-top:11px;padding:10px;background:#fff;border:1px solid #bbf7d0;border-radius:7px"><div style="font-size:12px;font-weight:bold;color:#166534;margin-bottom:6px">세부사업비 사업분야별 배분</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px">'+areas.map(item=>'<div style="padding:7px;background:#f0fdf4;border-radius:5px;font-size:12px">'+budgetEscapeV1471(item.area)+'<br><strong>'+budgetMoneyV1471(item.amount)+'</strong></div>').join('')+'</div><div style="margin-top:7px;text-align:right;font-size:11px;color:'+(areaTotal===budgetNumberV1471(row.program_budget)?'#047857':'#b91c1c')+'">분야별 합계 '+budgetMoneyV1471(areaTotal)+' / '+(areaTotal===budgetNumberV1471(row.program_budget)?'일치':'세부사업비와 차이')+'</div></div>':'';
+  box.innerHTML='<div style="border:1px solid #c4b5fd;background:#faf5ff;border-radius:9px;padding:13px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:12px;color:#6d28d9">'+budgetEscapeV1471(year)+'년 연간 예산 · '+status+'</div><strong style="font-size:17px">'+budgetEscapeV1471(row.budget_name||year+'년 운영예산')+'</strong></div><button class="btn btn-result" onclick="openAnnualBudgetMasterV1473()">수정</button></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-top:10px"><div>총예산<br><strong>'+budgetMoneyV1471(row.total_budget)+'</strong></div><div>보조금<br><strong>'+budgetMoneyV1471(row.subsidy_amount)+'</strong></div><div>자부담<br><strong>'+budgetMoneyV1471(row.self_funding_amount)+'</strong></div><div>재원 합계<br><strong style="color:'+(difference===0?'#047857':'#b91c1c')+'">'+(difference===0?'일치':'차이 '+budgetMoneyV1471(difference))+'</strong></div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px;margin-top:11px"><div style="padding:9px;background:#fff;border-radius:7px;color:#475569">인건비<br><strong style="color:#7c3aed">'+budgetMoneyV1471(row.personnel_budget)+'</strong></div><div style="padding:9px;background:#fff;border-radius:7px;color:#475569">운영비<br><strong style="color:#0369a1">'+budgetMoneyV1471(row.operating_budget)+'</strong></div><div style="padding:9px;background:#fff;border-radius:7px;color:#475569">세부사업비<br><strong style="color:#047857">'+budgetMoneyV1471(row.program_budget)+'</strong></div><div style="padding:9px;background:#fff;border-radius:7px;color:#475569">영역 합계<br><strong style="color:'+(allocationDifference===0?'#047857':'#b91c1c')+'">'+(allocationDifference===0?'일치':'차이 '+budgetMoneyV1471(allocationDifference))+'</strong></div></div>'+areaHtml+'</div>';
 }
 async function openAnnualBudgetMasterV1473(){
   if(typeof v8User==='undefined'||!v8User)return alert('로그인 후 총예산을 설정할 수 있습니다.');
@@ -6509,11 +6575,11 @@ async function loadAnnualBudgetMasterV1473(year){
   const number=Number(year)||2026;annualMasterMessageV1473('저장된 총예산을 불러오는 중...');
   const query=await sb.from('annual_budgets').select('*').eq('fiscal_year',number).maybeSingle();
   if(query.error){annualMasterMessageV1473('예산 저장공간 설정이 필요합니다. v14.9.0 예산영역 배분 SQL을 실행해 주세요.',true);return;}
-  const row=query.data||{};document.getElementById('annualMasterNameV1473').value=row.budget_name||number+'년 화성시장기요양지원센터 운영예산';document.getElementById('annualMasterTotalV1473').value=budgetNumberV1471(row.total_budget);document.getElementById('annualMasterSubsidyV1473').value=budgetNumberV1471(row.subsidy_amount);document.getElementById('annualMasterSelfV1473').value=budgetNumberV1471(row.self_funding_amount);document.getElementById('annualMasterPersonnelV1490').value=budgetNumberV1471(row.personnel_budget);document.getElementById('annualMasterOperatingV1490').value=budgetNumberV1471(row.operating_budget);document.getElementById('annualMasterProgramV1490').value=budgetNumberV1471(row.program_budget);document.getElementById('annualMasterStatusV1473').value=row.budget_status||'draft';document.getElementById('annualMasterNoteV1473').value=row.note||'';calculateAnnualBudgetMasterV1473();annualMasterMessageV1473(query.data?'저장된 총예산과 영역별 배분을 불러왔습니다.':'신규 총예산과 영역별 배분을 입력해 주세요.');
+  const row=query.data||{};document.getElementById('annualMasterNameV1473').value=row.budget_name||number+'년 화성시장기요양지원센터 운영예산';document.getElementById('annualMasterTotalV1473').value=budgetNumberV1471(row.total_budget);document.getElementById('annualMasterSubsidyV1473').value=budgetNumberV1471(row.subsidy_amount);document.getElementById('annualMasterSelfV1473').value=budgetNumberV1471(row.self_funding_amount);document.getElementById('annualMasterPersonnelV1490').value=budgetNumberV1471(row.personnel_budget);document.getElementById('annualMasterOperatingV1490').value=budgetNumberV1471(row.operating_budget);document.getElementById('annualMasterProgramV1490').value=budgetNumberV1471(row.program_budget);document.getElementById('annualMasterStatusV1473').value=row.budget_status||'draft';annualProgramAreasV1547=annualProgramAreasFromNoteV1547(row.note);document.getElementById('annualMasterNoteV1473').value=annualPlainNoteV1547(row.note);renderAnnualProgramAreasV1547();calculateAnnualBudgetMasterV1473();annualMasterMessageV1473(query.data?'저장된 총예산과 영역별 배분을 불러왔습니다.':'신규 총예산과 영역별 배분을 입력해 주세요.');
 }
 async function saveAnnualBudgetMasterV1473(){
-  const values=calculateAnnualBudgetMasterV1473(),year=Number(document.getElementById('annualMasterYearV1473').value),name=document.getElementById('annualMasterNameV1473').value.trim(),status=document.getElementById('annualMasterStatusV1473').value,note=document.getElementById('annualMasterNoteV1473').value.trim();
-  if(!year||year<2020||year>2100)return alert('회계연도를 확인해 주세요.');if(!name)return alert('예산명을 입력해 주세요.');if(values.total<=0)return alert('총예산을 입력해 주세요.');if(values.difference!==0)return alert('총예산과 보조금·자부담 합계가 일치해야 저장할 수 있습니다.');if(values.allocationDifference!==0)return alert('총예산과 인건비·운영비·세부사업비 합계가 일치해야 저장할 수 있습니다.');
+  const values=calculateAnnualBudgetMasterV1473(),year=Number(document.getElementById('annualMasterYearV1473').value),name=document.getElementById('annualMasterNameV1473').value.trim(),status=document.getElementById('annualMasterStatusV1473').value,note=annualCombinedNoteV1547(document.getElementById('annualMasterNoteV1473').value,annualProgramAreasV1547);
+  if(!year||year<2020||year>2100)return alert('회계연도를 확인해 주세요.');if(!name)return alert('예산명을 입력해 주세요.');if(values.total<=0)return alert('총예산을 입력해 주세요.');if(values.difference!==0)return alert('총예산과 보조금·자부담 합계가 일치해야 저장할 수 있습니다.');if(values.allocationDifference!==0)return alert('총예산과 인건비·운영비·세부사업비 합계가 일치해야 저장할 수 있습니다.');if(values.areaState.missingName)return alert('사업비가 입력된 사업분야의 영역명을 입력해 주세요.');if(values.areaState.active&&values.areaState.difference!==0)return alert('사업분야별 사업비 합계와 세부사업비가 일치해야 저장할 수 있습니다.');
   if(status==='confirmed'&&!confirm('입력한 예산을 확정 상태로 저장하시겠습니까?\n확정예산은 삭제기능을 제공하지 않습니다.'))return;
   const button=document.getElementById('annualMasterSaveV1473');button.disabled=true;annualMasterMessageV1473('총예산을 저장하는 중...');
   try{
@@ -6900,6 +6966,74 @@ document.addEventListener('input',event=>{
   if(document.getElementById('output-plan-container')?.style.display==='block')refreshGeneratedPlanBudgetV1544();
 });
 document.addEventListener('DOMContentLoaded',()=>{refreshPlanBudgetOriginV154(null,false);const panel=document.getElementById('planOfficialPanelV1544');if(panel)panel.style.display='block';});
+
+// ===== v15.4.8: 사업분야별 편성예산·지출 연동 =====
+const BUSINESS_AREAS_V1548=['교육(역량강화)','인식개선','권익증진','건강증진','네트워크','협력','기타'];
+let expenseBusinessAreaV1548='',expenseAreaBudgetsV1548=[];
+const getPlanDataBaseV1549=getPlanData;
+getPlanData=function(){const data=getPlanDataBaseV1549();const area=String(document.getElementById('sp_business_area')?.value||'').trim();data.standard={...(data.standard||{}),business_area:area};data.businessArea=area;return data;};
+function expenseAreaFromNoteV1548(note){const match=String(note||'').match(/^\[사업분야:([^\]]+)\]\s*(?:\n|$)/);return match?match[1].trim():'';}
+function expensePlainNoteV1548(note){return String(note||'').replace(/^\[사업분야:[^\]]+\]\s*(?:\n)?/,'').trim();}
+function expenseCombinedNoteV1548(note,area){return [`[사업분야:${area}]`,String(note||'').trim()].filter(Boolean).join('\n');}
+function expenseRowAreaV1548(row){return expenseAreaFromNoteV1548(row?.note)||expenseBusinessAreaV1548||'미지정';}
+function planBusinessAreaV1549(data){
+  const root=data||{},nested=root.data||{},standard=root.standard||nested.standard||{};
+  if(standard.business_area)return String(standard.business_area).trim();
+  if(root.businessArea||root.business_area||nested.businessArea||nested.business_area)return String(root.businessArea||root.business_area||nested.businessArea||nested.business_area).trim();
+  const rows=[...(Array.isArray(root.overview)?root.overview:[]),...(Array.isArray(nested.overview)?nested.overview:[])];
+  const found=rows.find(row=>['사업분야','사업분야(영역)','사업영역','사업유형'].includes(String(row?.['p-ov-key']||row?.key||'').trim()));
+  return String(found?.['p-ov-val']||found?.value||'').trim();
+}
+function setExpenseAreaOptionsV1548(selected){
+  const values=[...new Set([...BUSINESS_AREAS_V1548,...expenseAreaBudgetsV1548.map(x=>x.area),selected].filter(Boolean))],html='<option value="">사업분야 선택</option>'+values.map(area=>`<option value="${budgetEscapeV1471(area)}">${budgetEscapeV1471(area)}</option>`).join('');
+  const input=document.getElementById('expenseAreaV1548');if(input){input.innerHTML=html;input.value=selected||'';}
+  const filter=document.getElementById('expenseFilterAreaV1548');if(filter){const current=filter.value;filter.innerHTML='<option value="">전체 사업분야</option>'+values.map(area=>`<option value="${budgetEscapeV1471(area)}">${budgetEscapeV1471(area)}</option>`).join('')+'<option value="미지정">미지정</option>';filter.value=current;}
+}
+function expenseAreaTotalsV1548(area){return expenseRowsV1474.reduce((sum,row)=>{if(row.transaction_status==='cancelled'||expenseRowAreaV1548(row)!==area)return sum;const amount=budgetNumberV1471(row.amount);if(row.transaction_status==='paid')sum.paid+=amount;else if(row.transaction_status==='pending')sum.pending+=amount;else if(row.transaction_status==='refund')sum.paid-=amount;return sum;},{paid:0,pending:0});}
+function renderExpenseAreaSummaryV1548(){
+  const box=document.getElementById('expenseAreaSummaryV1548');if(!box)return;if(!expenseProjectIdV1474){box.innerHTML='';return;}
+  const area=document.getElementById('expenseAreaV1548')?.value||expenseBusinessAreaV1548||'미지정',allocation=budgetNumberV1471(expenseAreaBudgetsV1548.find(x=>x.area===area)?.amount),totals=expenseAreaTotalsV1548(area),available=allocation-totals.paid-totals.pending,rate=allocation?totals.paid/allocation*100:0;
+  box.innerHTML=`<div style="border:1px solid ${area==='미지정'?'#fca5a5':'#a7f3d0'};background:${area==='미지정'?'#fef2f2':'#ecfdf5'};border-radius:9px;padding:11px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><strong>사업분야: ${budgetEscapeV1471(area)}</strong><span style="font-size:12px;color:#475569">분야 편성 ${budgetMoneyV1471(allocation)} · 지급완료 ${budgetMoneyV1471(totals.paid)} · 지급예정 ${budgetMoneyV1471(totals.pending)} · 가용 ${budgetMoneyV1471(available)} · 집행률 ${rate.toFixed(1)}%</span></div>${!allocation?'<div style="font-size:11px;color:#b45309;margin-top:5px">⚠ 연간 총예산에 이 사업분야의 배분액이 없거나 아직 저장되지 않았습니다.</div>':available<0?'<div style="font-size:11px;color:#b91c1c;margin-top:5px">⚠ 분야별 편성예산을 초과했습니다.</div>':''}</div>`;
+}
+const loadExpenseLedgerBaseV1548=loadExpenseLedgerV1474;
+loadExpenseLedgerV1474=async function(projectId){
+  expenseBusinessAreaV1548='';expenseAreaBudgetsV1548=[];await loadExpenseLedgerBaseV1548(projectId);if(!projectId){setExpenseAreaOptionsV1548('');renderExpenseAreaSummaryV1548();return;}
+  try{
+    const liveArea=String(document.getElementById('sp_business_area')?.value||'').trim(),sameOpenPlan=String(window.currentCloudPlanProjectId||'')===String(projectId);
+    const planQuery=await sb.from('project_documents').select('data').eq('project_id',projectId).eq('doc_type','PLAN').limit(1).maybeSingle();
+    if(planQuery.error)console.warn('사업계획서 사업분야 조회 경고:',planQuery.error.message);
+    expenseBusinessAreaV1548=(sameOpenPlan&&liveArea)||planBusinessAreaV1549(planQuery.data?.data)||'';
+    const optionText=document.getElementById('expenseProjectV1474')?.selectedOptions?.[0]?.textContent||'',yearMatch=optionText.match(/20\d{2}/),year=yearMatch?Number(yearMatch[0]):Number(document.getElementById('annualBudgetYearV1471')?.value||0);
+    if(year){const annual=await sb.from('annual_budgets').select('note').eq('fiscal_year',year).maybeSingle();if(!annual.error&&annual.data&&typeof annualProgramAreasFromNoteV1547==='function')expenseAreaBudgetsV1548=annualProgramAreasFromNoteV1547(annual.data.note);}
+  }catch(error){console.warn('사업분야 연동 경고:',error);}
+  setExpenseAreaOptionsV1548(expenseBusinessAreaV1548);renderExpenseAreaSummaryV1548();
+  if(!expenseBusinessAreaV1548)expenseMessageV1474('이 사업의 사업분야가 미지정입니다. 사업계획서 「Ⅰ. 사업 개요」에서 사업분야를 저장해 주세요.',true);
+};
+const drawExpenseLedgerBaseV1548=drawExpenseLedgerV1474;
+drawExpenseLedgerV1474=function(){drawExpenseLedgerBaseV1548();renderExpenseAreaSummaryV1548();};
+document.addEventListener('change',event=>{if(event.target?.id==='expenseAreaV1548')renderExpenseAreaSummaryV1548();});
+document.addEventListener('change',event=>{if(event.target?.id!=='sp_business_area')return;if(String(window.currentCloudPlanProjectId||'')!==String(expenseProjectIdV1474||''))return;expenseBusinessAreaV1548=String(event.target.value||'').trim();setExpenseAreaOptionsV1548(expenseBusinessAreaV1548);renderExpenseAreaSummaryV1548();});
+const filterExpenseLedgerBaseV1548=filterExpenseLedgerV1476;
+filterExpenseLedgerV1476=function(){filterExpenseLedgerBaseV1548();const area=document.getElementById('expenseFilterAreaV1548')?.value;if(area){expenseFilteredRowsV1476=expenseFilteredRowsV1476.filter(row=>expenseRowAreaV1548(row)===area);drawExpenseLedgerV1474();}};
+const resetExpenseFiltersBaseV1548=resetExpenseFiltersV1476;
+resetExpenseFiltersV1476=function(){const area=document.getElementById('expenseFilterAreaV1548');if(area)area.value='';resetExpenseFiltersBaseV1548();};
+const resetExpenseFormBaseV1548=resetExpenseFormV1476;
+resetExpenseFormV1476=function(){resetExpenseFormBaseV1548();setExpenseAreaOptionsV1548(expenseBusinessAreaV1548);renderExpenseAreaSummaryV1548();};
+const editExpenseBaseV1548=editExpenseV1476;
+editExpenseV1476=function(id){editExpenseBaseV1548(id);const row=expenseRowsV1474.find(item=>item.id===id);if(!row)return;setExpenseAreaOptionsV1548(expenseRowAreaV1548(row)==='미지정'?'':expenseRowAreaV1548(row));const note=document.getElementById('expenseNoteV1474');if(note)note.value=expensePlainNoteV1548(row.note);renderExpenseAreaSummaryV1548();};
+const saveExpenseBaseV1548=saveExpenseV1474;
+saveExpenseV1474=async function(){
+  const area=document.getElementById('expenseAreaV1548')?.value;if(!area)return alert('사업분야를 선택해 주세요. 사업계획서에 저장된 분야가 자동 적용됩니다.');
+  const amount=annualMasterValueV1473('expenseAmountV1474'),status=document.getElementById('expenseStatusV1474')?.value,editing=expenseRowsV1474.find(row=>row.id===expenseEditingIdV1476),allocation=budgetNumberV1471(expenseAreaBudgetsV1548.find(x=>x.area===area)?.amount),totals=expenseAreaTotalsV1548(area),oldArea=editing?expenseRowAreaV1548(editing):'',oldEffect=editing&&oldArea===area?(editing.transaction_status==='paid'||editing.transaction_status==='pending'?budgetNumberV1471(editing.amount):editing.transaction_status==='refund'?-budgetNumberV1471(editing.amount):0):0,newEffect=status==='paid'||status==='pending'?amount:status==='refund'?-amount:0,areaAvailable=allocation-totals.paid-totals.pending+oldEffect-newEffect;
+  if(allocation>0&&areaAvailable<0&&!confirm(`「${area}」 분야 편성예산을 ${budgetMoneyV1471(Math.abs(areaAvailable))} 초과합니다. 계속 저장하시겠습니까?`))return;
+  if(!allocation&&!confirm(`「${area}」 분야에 저장된 편성예산이 없습니다. 지출내역을 계속 저장하시겠습니까?`))return;
+  const note=document.getElementById('expenseNoteV1474'),plain=expensePlainNoteV1548(note?.value);if(note)note.value=expenseCombinedNoteV1548(plain,area);await saveExpenseBaseV1548();
+};
+downloadExpenseCsvV1476=function(){
+  if(!expenseFilteredRowsV1476.length)return alert('다운로드할 지출내역이 없습니다.');const itemMap=Object.fromEntries(expenseItemsV1474.map(item=>[item.id,item.item_name])),quote=value=>'"'+String(value??'').replace(/"/g,'""')+'"',lines=[['일자','사업분야','예산항목','지출내용','거래처','금액','상태','지급수단','증빙유형','증빙번호','비고'],...expenseFilteredRowsV1476.map(row=>[row.transaction_date,expenseRowAreaV1548(row),itemMap[row.budget_item_id]||'미연결',row.description,row.vendor||'',Math.round(budgetNumberV1471(row.amount)),expenseStatusLabelV1474(row.transaction_status),row.payment_method||'',row.evidence_type||'',row.evidence_number||'',expensePlainNoteV1548(row.note)])];const blob=new Blob(['\ufeff'+lines.map(line=>line.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='사업분야별_지출원장_'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+};
+const resultLedgerRowsBaseV1548=resultLedgerRowsV1479;
+resultLedgerRowsV1479=async function(projectId,items){const rows=await resultLedgerRowsBaseV1548(projectId,items);return rows.map(row=>({...row,'r-bg-note':String(row['r-bg-note']||'').replace(/\[사업분야:[^\]]+\]\s*\/?\s*/g,'').trim()}));};
 </script>
 </body>
 </html>
