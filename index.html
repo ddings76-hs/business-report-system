@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.8 사업분야별 예산 집행관리)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.6 AI 고화질 포스터)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -391,7 +391,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.8 사업분야별 예산 집행관리)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.6 AI 고화질 포스터)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -619,8 +619,13 @@
             <button class="btn btn-del" onclick="setPlanSectionVisible('schedule', false)">항목 삭제</button>
           </div>
         </div>
+        <div class="no-print" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:8px;padding:9px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px">
+          <label style="font-size:11px;font-weight:bold">세부일정 제목<input id="p_schedule_section_title_v15410" value="세부 일정(안)" placeholder="예: 세부 일정(안)" oninput="updatePlanProgramScheduleHeadingsV1546()" style="width:100%;padding:7px;box-sizing:border-box;margin-top:4px"></label>
+          <label style="font-size:11px;font-weight:bold">첫 번째 열 제목<input id="p_schedule_key_title_v15410" value="시간" list="p_schedule_key_titles_v15410" placeholder="시간 또는 일자" oninput="updatePlanProgramScheduleHeadingsV1546()" style="width:100%;padding:7px;box-sizing:border-box;margin-top:4px"><datalist id="p_schedule_key_titles_v15410"><option value="시간"><option value="일자"><option value="기간"><option value="구분"></datalist></label>
+        </div>
         <table class="form-table" style="margin-top: 8px;">
           <colgroup><col style="width: 25%;"><col style="width: 67%;"><col style="width: 8%;"></colgroup>
+          <thead><tr><th id="p_schedule_key_preview_v15410">시간</th><th>내용</th><th>관리</th></tr></thead>
           <tbody id="p_schedTbody">
             <tr><td><input type="text" class="p-sch-time" placeholder="예: 14:00~14:10"></td><td><input type="text" class="p-sch-val" placeholder="세부 일정을 입력하세요"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
           </tbody>
@@ -667,6 +672,7 @@
     </div>
 
     <div class="btn-container no-print">
+      <button type="button" class="btn btn-result" onclick="openPosterV155()">🎨 홍보 포스터 만들기</button>
       <button class="btn btn-plan" onclick="generatePlanDocs()">📄 사업계획서 + 기안문서 통합 생성</button>
       <button class="btn btn-save" id="savePlanBtnV130" onclick="saveCloudDocument('PLAN')">💾 작성 내용 DB 저장</button>
       <button class="btn btn-add" onclick="startNewDocument('PLAN')">➕ 새 사업계획서 작성</button>
@@ -1529,13 +1535,16 @@
   }
   function updatePlanProgramScheduleHeadingsV1546(){
     const programVisible=window.planProgramVisible!==false,scheduleVisible=window.planScheduleVisible!==false;
+    const scheduleTitle=document.getElementById('p_schedule_section_title_v15410')?.value.trim()||'세부 일정(안)';
+    const scheduleKeyTitle=document.getElementById('p_schedule_key_title_v15410')?.value.trim()||'시간';
     const set=(id,text)=>{const el=document.getElementById(id);if(el)el.textContent=text;};
     set('p-program-heading-v1546','1. 주요 프로그램');
-    set('p-schedule-heading-v1546',(programVisible?'2':'1')+'. 세부 일정(안)');
+    set('p-schedule-heading-v1546',(programVisible?'2':'1')+'. '+scheduleTitle);
     set('out_p_program_heading_v1546','1. 주요 프로그램');
-    set('out_p_schedule_heading_v1546',(programVisible?'2':'1')+'. 세부 일정');
-    set('out_p_program_schedule_title_v1546',programVisible&&scheduleVisible?'Ⅱ. 주요 프로그램 및 세부일정(안)':programVisible?'Ⅱ. 주요 프로그램':'Ⅱ. 세부일정(안)');
-    set('subtab-2',programVisible&&scheduleVisible?'Ⅱ. 주요 프로그램 및 세부일정':programVisible?'Ⅱ. 주요 프로그램':'Ⅱ. 세부일정(안)');
+    set('out_p_schedule_heading_v1546',(programVisible?'2':'1')+'. '+scheduleTitle);
+    set('out_p_program_schedule_title_v1546',programVisible&&scheduleVisible?'Ⅱ. 주요 프로그램 및 '+scheduleTitle:programVisible?'Ⅱ. 주요 프로그램':'Ⅱ. '+scheduleTitle);
+    set('subtab-2',programVisible&&scheduleVisible?'Ⅱ. 주요 프로그램 및 '+scheduleTitle:programVisible?'Ⅱ. 주요 프로그램':'Ⅱ. '+scheduleTitle);
+    set('p_schedule_key_preview_v15410',scheduleKeyTitle);
   }
 
   // 사업계획서 생성 함수
@@ -1640,7 +1649,8 @@
     // 3. 세부 일정
     const scheduleRowsV1546=readPlanTableRowsV1546('p_schedTbody','p-sch-time','p-sch-val');
     let sRows=scheduleRowsV1546.map(row=>`<tr><td class="td-center">${esc(row.key||'-')}</td><td>${esc(row.value||'-').replaceAll('\n','<br>')}</td></tr>`).join('');
-    let sTbl='<thead><tr><th style="width:25%;">시간</th><th>내용</th></tr></thead><tbody>'+(sRows||'<tr><td colspan="2" class="td-center">작성된 세부 일정이 없습니다.</td></tr>')+'</tbody>';
+    const scheduleKeyTitleV15410=document.getElementById('p_schedule_key_title_v15410')?.value.trim()||'시간';
+    let sTbl='<thead><tr><th style="width:25%;">'+esc(scheduleKeyTitleV15410)+'</th><th>내용</th></tr></thead><tbody>'+(sRows||'<tr><td colspan="2" class="td-center">작성된 세부 일정이 없습니다.</td></tr>')+'</tbody>';
     document.getElementById('out_p_sched_table').innerHTML = sTbl;
     document.getElementById('out_p_schedule_block').style.display = window.planScheduleVisible === false ? 'none' : 'block';
     document.getElementById('out_p_program_schedule_section').style.display =
@@ -1909,6 +1919,7 @@
       window.currentPlanRecordId = item.id;
       p_orgName.value=d.orgName||''; p_staff.value=d.staff||''; p_reviewer.value=d.reviewer||''; p_approver.value=d.approver||'';
       applyPlanOfficialDataV134(d.officialDocument||{});
+      applyPosterV155(d.posterV155||null);
       setRows('p_overviewTbody',d.overview,['p-ov-key','p-ov-val'],'addOverviewRow');
       setRows('p_progTbody',d.programs,['p-prog-key','p-prog-val'],'addProgRow');
       setRows('p_schedTbody',d.schedule,['p-sch-time','p-sch-val'],'addScheduleRow');
@@ -2008,6 +2019,7 @@
     if(!confirm(label + ' 작성을 시작하시겠습니까?\n현재 화면의 입력 내용은 초기화됩니다. 저장하지 않은 내용은 사라집니다.')) return;
 
     if(type === 'PLAN') {
+      applyPosterV155(null);
       window.currentPlanRecordId = null;
       window.currentCloudPlanProjectId = null;
       window.planProgramVisible = true; window.planScheduleVisible = true;
@@ -2022,6 +2034,8 @@
       const aiApply=document.getElementById('aiApplyV110'); if(aiApply) aiApply.disabled=true;
       p_progTbody.innerHTML=''; addProgRow();
       p_schedTbody.innerHTML=''; addScheduleRow();
+      const scheduleSectionTitleV15410=document.getElementById('p_schedule_section_title_v15410');if(scheduleSectionTitleV15410)scheduleSectionTitleV15410.value='세부 일정(안)';
+      const scheduleKeyTitleV15410=document.getElementById('p_schedule_key_title_v15410');if(scheduleKeyTitleV15410)scheduleKeyTitleV15410.value='시간';
       p_budgetTbody.innerHTML=''; addPlanBudgetRow();
       if(typeof applyPlanAttachmentsV137==='function')applyPlanAttachmentsV137([]);
       if(typeof applyUploadedAttachmentsV142==='function')applyUploadedAttachmentsV142('PLAN',[]);
@@ -2288,6 +2302,7 @@
         setVal('p_reviewer',d.reviewer||'');
         setVal('p_approver',d.approver||'');
         applyPlanOfficialDataV134(d.officialDocument||{});
+      applyPosterV155(d.posterV155||null);
 
         if(typeof applyStandardPlanV106==='function'){
           const std=d.standard || (typeof standardFromLegacyV106==='function' ? standardFromLegacyV106(d) : null);
@@ -7034,6 +7049,100 @@ downloadExpenseCsvV1476=function(){
 };
 const resultLedgerRowsBaseV1548=resultLedgerRowsV1479;
 resultLedgerRowsV1479=async function(projectId,items){const rows=await resultLedgerRowsBaseV1548(projectId,items);return rows.map(row=>({...row,'r-bg-note':String(row['r-bg-note']||'').replace(/\[사업분야:[^\]]+\]\s*\/?\s*/g,'').trim()}));};
+
+// ===== v15.4.10: 세부일정 제목·첫 열 제목 사용자 수정 =====
+function applyScheduleTitlesV15410(data={}){
+  const section=document.getElementById('p_schedule_section_title_v15410'),key=document.getElementById('p_schedule_key_title_v15410');
+  if(section)section.value=String(data.scheduleSectionTitle||data.schedule_title||'세부 일정(안)');
+  if(key)key.value=String(data.scheduleKeyTitle||data.schedule_key_title||'시간');
+  updatePlanProgramScheduleHeadingsV1546();
+}
+const getPlanDataBaseV15410=getPlanData;
+getPlanData=function(){const data=getPlanDataBaseV15410();data.scheduleSectionTitle=document.getElementById('p_schedule_section_title_v15410')?.value.trim()||'세부 일정(안)';data.scheduleKeyTitle=document.getElementById('p_schedule_key_title_v15410')?.value.trim()||'시간';return data;};
+const loadSavedDataBaseV15410=loadSavedData;
+loadSavedData=function(id){const result=loadSavedDataBaseV15410(id),saved=typeof findSaved==='function'?findSaved(id):null;if(saved?.type==='PLAN')applyScheduleTitlesV15410(saved.data||{});return result;};
+const loadCloudDocumentBaseV15410=loadCloudDocument;
+loadCloudDocument=async function(docId){const result=await loadCloudDocumentBaseV15410.apply(this,arguments);try{const query=await sb.from('project_documents').select('doc_type,data').eq('id',docId).maybeSingle();if(!query.error&&query.data?.doc_type==='PLAN')applyScheduleTitlesV15410(query.data.data||{});}catch(error){console.warn('세부일정 제목 불러오기 경고:',error);}return result;};
+document.addEventListener('DOMContentLoaded',()=>applyScheduleTitlesV15410({}));
 </script>
+
+<style>
+#posterModalV155{position:fixed;inset:0;z-index:100050;background:#edf1f5;overflow:auto;color:#18283c;font-family:'Malgun Gothic',sans-serif}
+#posterModalV155 *{box-sizing:border-box}#posterModalV155 .ps-top{position:sticky;top:0;background:#fff;z-index:2;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #d6dfe7;gap:12px}
+#posterModalV155 .ps-grid{max-width:1440px;margin:24px auto;padding:0 20px;display:grid;grid-template-columns:400px minmax(0,1fr);gap:28px}
+#posterModalV155 .ps-card{background:#fff;border:1px solid #dbe2e9;border-radius:14px;padding:20px;margin-bottom:16px}
+#posterModalV155 h3{margin:0 0 16px;font-size:17px}#posterModalV155 label{display:block;font-size:13px;margin:12px 0 5px;font-weight:600}
+#posterModalV155 input:not([type=file]),#posterModalV155 select,#posterModalV155 textarea{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#17263b;font:inherit;margin-top:5px}
+#posterModalV155 textarea{resize:vertical}#posterModalV155 .ps-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}#posterModalV155 .ps-note{font-size:12px;color:#54657a;line-height:1.7}
+#posterModalV155 .ps-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}#posterModalV155 button:disabled{opacity:.5;cursor:wait}#posterModalV155 .ps-preview{position:sticky;top:96px;align-self:start;text-align:center}
+#posterCanvasV155{width:100%;max-width:670px;height:auto;box-shadow:0 16px 40px #102a4425;background:white}
+#posterProposalV156{white-space:pre-wrap;line-height:1.8;background:#f0f7ff;padding:12px;border-radius:8px;margin-top:12px;font-size:13px}
+@media(max-width:880px){#posterModalV155 .ps-grid{grid-template-columns:1fr}#posterModalV155 .ps-preview{position:static}#posterModalV155 .ps-top{position:static}}
+</style>
+<div id="posterModalV155" class="no-print" style="display:none" role="dialog" aria-modal="true" aria-label="홍보 포스터 스튜디오">
+ <div class="ps-top"><div><strong style="font-size:21px">홍보 포스터 스튜디오</strong><div class="ps-note">계획서에서 시작하는 우리 센터의 홍보 디자인</div></div><button class="btn btn-add" onclick="document.getElementById('posterModalV155').style.display='none'">닫기</button></div>
+ <div class="ps-grid"><div>
+ <div class="ps-card"><h3>01　디자인과 출력</h3><div class="ps-row"><label>디자인<select id="posterThemeV155"><option value="education">교육 · 블루 에디토리얼</option><option value="healing">힐링 · 내추럴 그린</option><option value="recruit">모집 · 볼드 캠페인</option></select></label><label>규격<select id="posterSizeV155"><option value="a4">A4 · 2480 × 3508</option><option value="square">SNS · 2160 × 2160</option><option value="mobile">모바일 · 2160 × 2880</option></select></label></div><label>포인트 색상<input id="posterColorV155" type="color" value="#1e40af" style="height:42px"></label><button class="btn btn-add" onclick="refreshPosterPlanV156()">계획서 정보 다시 불러오기</button><p class="ps-note">신청기간·참가비·연락처는 직접 확인해 입력합니다. 빈 항목은 출력되지 않습니다.</p></div>
+ <div class="ps-card"><h3>02　AI 홍보 문구</h3><label>문구 분위기<select id="posterToneV156"><option>친근하고 정중한 안내형</option><option>간결한 공공기관 안내형</option><option>참여를 권하는 모집형</option></select></label><button id="posterCopyBtnV156" class="btn btn-plan" onclick="generatePosterCopyV156()">✨ 홍보 문구 자동생성</button><div id="posterProposalV156" hidden></div><button id="posterApplyCopyV156" hidden class="btn btn-result" onclick="applyPosterCopyV156()">확인한 문구 적용</button><div id="posterFieldsV155"></div></div>
+ <div class="ps-card"><h3>03　이미지 만들기</h3><label>이미지 설명<textarea id="posterPromptV156" rows="4" placeholder="예: 편안한 영화관에서 함께 웃는 장기요양종사자들의 따뜻한 일러스트"></textarea></label><div class="ps-row"><label>표현 방식<select id="posterStyleV156"><option>따뜻한 에디토리얼 일러스트</option><option>자연스러운 고급 사진</option><option>정갈한 수채화</option><option>입체적인 종이 공예</option></select></label><label>생성 해상도<select id="posterQualityV156"><option value="2K">2K · 기본</option><option value="4K">4K · 고해상도</option></select></label></div><button id="posterImageBtnV156" class="btn btn-plan" onclick="generatePosterImageV156()">✨ 이미지 생성 / 다시 생성</button><p class="ps-note">기존 Gemini 연결로 요청합니다. 이미지 모델 사용 권한과 할당량이 필요하며 API 비용이 발생할 수 있습니다. 생성 후 확인하여 적용합니다.</p><div id="posterImageProposalV156" hidden><img id="posterCandidateV156" alt="생성 이미지 미리보기" style="width:100%;border-radius:8px"><button class="btn btn-result" onclick="applyPosterImageV156()">이 이미지 적용</button></div>
+ <label>내 사진·삽화 업로드<input type="file" accept="image/png,image/jpeg,image/webp" id="posterImageV155"></label><label>기관 로고 업로드<input type="file" accept="image/png,image/jpeg,image/webp" id="posterLogoV156"></label><div class="ps-row"><label>이미지 배치<select id="posterFitV156"><option value="cover">영역 채우기</option><option value="contain">전체 이미지 표시</option></select></label><label>상하 중심<input id="posterPositionV156" type="range" min="0" max="100" value="50"></label></div><div class="ps-actions"><button class="btn btn-add" onclick="removePosterAssetV156('image')">이미지 제거</button><button class="btn btn-add" onclick="removePosterAssetV156('logo')">로고 제거</button><button class="btn btn-add" onclick="downloadPosterImageV156()">이미지 원본 저장</button></div></div>
+ </div><div class="ps-preview"><canvas id="posterCanvasV155" aria-label="포스터 미리보기"></canvas><div class="ps-card" style="margin-top:18px;text-align:left"><div id="posterMsgV155" role="status" class="ps-note"></div><div id="posterAiMsgV156" role="status" style="font-size:13px;margin-top:8px"></div><div class="ps-actions"><button class="btn btn-save" onclick="downloadPosterV155()">고화질 PNG 저장</button><button class="btn btn-plan" onclick="printPosterV155()">인쇄 / PDF 저장</button><button class="btn btn-result" onclick="savePosterPlanV156()">계획서와 함께 DB 저장</button></div><p class="ps-note">A4는 300dpi 인쇄 크기입니다. PDF는 인쇄창에서 ‘PDF로 저장’을 선택하세요. 텍스트와 이미지의 편집 내용은 계획서에 함께 저장됩니다.</p></div></div></div>
+</div>
+<script>
+// v15.6: poster typography and imagery are independent editable layers.
+const posterFieldsV155=[['title','홍보 제목'],['subtitle','부제'],['details','핵심 홍보문구'],['date','운영일시'],['place','장소'],['target','참여대상'],['capacity','모집인원'],['application','신청기간'],['fee','참가비'],['link','신청방법·링크'],['contact','문의처'],['org','주최·주관']];
+let posterStateV155=null,posterImageCacheV155=null,posterLogoCacheV156=null,posterRenderValidV155=true;
+let posterBusyV156=false,posterLoadingV156=false,posterCandidateCopyV156=null,posterCandidateImageV156=null,posterEpochV156=0,posterFrameV156=0;
+const posterDefaultsV156={theme:'education',size:'a4',color:'#2457b7',image:'',logo:'',tone:'친근하고 정중한 안내형',image_prompt:'',visual_style:'따뜻한 에디토리얼 일러스트',image_size:'2K',fit:'cover',position:50};
+function normalizePosterV156(data){const s={...posterDefaultsV156,...data};for(const [key] of posterFieldsV155)s[key]=String(s[key]||'');if(!['education','healing','recruit'].includes(s.theme))s.theme='education';if(!['a4','square','mobile'].includes(s.size))s.size='a4';if(!/^#[0-9a-f]{6}$/i.test(s.color))s.color='#2457b7';for(const key of ['image','logo'])if(!/^data:image\/(png|jpeg|webp);base64,/.test(s[key]||''))s[key]='';return s;}
+function applyPosterV155(data){posterEpochV156++;posterStateV155=data?normalizePosterV156(data):null;posterImageCacheV155=null;posterLogoCacheV156=null;posterCandidateCopyV156=null;posterCandidateImageV156=null;}
+function posterFromPlanV155(){const d=getStandardPlanV106();applyPosterV155({...posterDefaultsV156,title:d.project_name||'',subtitle:'',details:d.content||'',date:d.operation_date||'',place:d.location||'',target:d.target_group||'',capacity:d.planned_participants?d.planned_participants+'명':'',application:'',fee:'',link:'',contact:'',org:document.getElementById('p_orgName')?.value||'화성시장기요양지원센터',image_prompt:[d.project_name,d.content].filter(Boolean).join('\n')});}
+function refreshPosterPlanV156(){if(posterBusyV156)return alert('생성이 끝난 후 다시 불러와 주세요.');if(!confirm('문구와 신청정보를 현재 계획서 기준으로 초기화할까요? 이미지와 디자인은 유지됩니다.'))return;const old=posterStateV155;posterFromPlanV155();for(const k of ['image','logo','theme','size','color','fit','position'])posterStateV155[k]=old[k];fillPosterV155();}
+function openPosterV155(){if(!posterStateV155)posterFromPlanV155();document.getElementById('posterModalV155').style.display='block';fillPosterV155();}
+function posterMessageV156(message,error=false){const e=document.getElementById('posterAiMsgV156');e.textContent=message;e.style.color=error?'#b91c1c':'#166534';}
+function queuePosterV156(){cancelAnimationFrame(posterFrameV156);posterFrameV156=requestAnimationFrame(drawPosterV155);}
+async function fillPosterV155(){const panel=document.getElementById('posterFieldsV155');panel.replaceChildren();for(const [key,label] of posterFieldsV155){const wrap=document.createElement('label');wrap.textContent=label;const input=document.createElement('textarea');input.rows=key==='details'?3:2;input.id='posterField_'+key;input.value=posterStateV155[key];input.oninput=()=>{posterStateV155[key]=input.value;queuePosterV156();};wrap.append(input);panel.append(wrap);}
+ const mapping={posterThemeV155:'theme',posterSizeV155:'size',posterColorV155:'color',posterToneV156:'tone',posterPromptV156:'image_prompt',posterStyleV156:'visual_style',posterQualityV156:'image_size',posterFitV156:'fit',posterPositionV156:'position'};
+ for(const [id,key] of Object.entries(mapping)){const e=document.getElementById(id);e.value=posterStateV155[key];e.oninput=()=>{posterStateV155[key]=e.value;if(key==='theme'){posterStateV155.color={education:'#2457b7',healing:'#36634e',recruit:'#cd532e'}[e.value];document.getElementById('posterColorV155').value=posterStateV155.color;}queuePosterV156();};}
+ document.getElementById('posterProposalV156').hidden=!posterCandidateCopyV156;document.getElementById('posterApplyCopyV156').hidden=!posterCandidateCopyV156;document.getElementById('posterImageProposalV156').hidden=!posterCandidateImageV156;
+ const state=posterStateV155;posterLoadingV156=true;drawPosterV155();try{const [image,logo]=await Promise.all([decodePosterImageV156(state.image),decodePosterImageV156(state.logo)]);if(posterStateV155!==state)return;posterImageCacheV155=image;posterLogoCacheV156=logo;}catch(error){posterMessageV156('저장된 이미지를 읽을 수 없습니다. 이미지 파일을 다시 선택해 주세요.',true);}finally{if(posterStateV155===state){posterLoadingV156=false;drawPosterV155();}}}
+function decodePosterImageV156(src){return new Promise((resolve,reject)=>{if(!src)return resolve(null);const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(new Error('이미지 읽기 실패'));im.src=src;});}
+function posterPayloadV156(type){const d=getStandardPlanV106(),s=posterStateV155;return {document_type:type,project_name:d.project_name||s.title,purpose:d.purpose||'',content:s.details||d.content||'',target:s.target,tone:s.tone,image_prompt:s.image_prompt,visual_style:s.visual_style,image_size:s.image_size,color:s.color};}
+async function posterRequestV156(type){if(typeof sb==='undefined'||!sb)throw new Error('공동 DB에 로그인한 후 이용해 주세요.');const session=await sb.auth.getSession();if(session.error||!session.data?.session)throw new Error('공동 DB에 로그인한 후 이용해 주세요.');const {data,error}=await sb.functions.invoke('ai-plan-draft-v11',{body:posterPayloadV156(type)});if(error){let detail='';try{detail=(await error.context?.json())?.error||'';}catch(_){}throw new Error(detail||'AI 요청에 실패했습니다. 서버 코드 배포와 로그인 상태를 확인해 주세요.');}if(data?.error)throw new Error(data.error);return data;}
+function posterBusyStateV156(busy){posterBusyV156=busy;for(const id of ['posterCopyBtnV156','posterImageBtnV156'])document.getElementById(id).disabled=busy;}
+async function generatePosterCopyV156(){if(posterBusyV156)return;const epoch=posterEpochV156;posterBusyStateV156(true);posterMessageV156('사업 내용에 맞는 제목과 홍보문구를 작성하고 있습니다…');try{const res=await posterRequestV156('POSTER');if(epoch!==posterEpochV156)return;if(!['title','subtitle','details','image_prompt'].every(k=>typeof res?.draft?.[k]==='string'))throw new Error('포스터 전용 응답이 없습니다. 제공한 index.ts를 ai-plan-draft-v11에 먼저 배포해 주세요.');posterCandidateCopyV156=res.draft;document.getElementById('posterProposalV156').textContent=['제목: '+res.draft.title,'부제: '+res.draft.subtitle,'홍보문구: '+res.draft.details].join('\n\n');document.getElementById('posterProposalV156').hidden=false;document.getElementById('posterApplyCopyV156').hidden=false;posterMessageV156('생성된 문구를 확인한 후 적용하세요. 일정·장소·연락처는 유지됩니다.');}catch(e){posterMessageV156(e.message,true);}finally{posterBusyStateV156(false);}}
+function applyPosterCopyV156(){if(!posterCandidateCopyV156)return;for(const k of ['title','subtitle','details','image_prompt'])posterStateV155[k]=posterCandidateCopyV156[k];posterCandidateCopyV156=null;fillPosterV155();posterMessageV156('홍보문구를 적용했습니다. 각 입력란에서 자유롭게 수정할 수 있습니다.');}
+async function generatePosterImageV156(){if(posterBusyV156)return;const epoch=posterEpochV156;posterBusyStateV156(true);posterMessageV156('이미지를 생성하고 있습니다. 완료까지 1~2분 정도 걸릴 수 있습니다…');try{const res=await posterRequestV156('POSTER_IMAGE');if(epoch!==posterEpochV156)return;const im=res?.image;if(!im||!['image/png','image/jpeg','image/webp'].includes(im.mimeType)||typeof im.data!=='string')throw new Error('이미지 응답이 없습니다. 서버의 이미지 생성 설정을 확인해 주세요.');const src=`data:${im.mimeType};base64,${im.data}`;await decodePosterImageV156(src);if(epoch!==posterEpochV156)return;posterCandidateImageV156=src;document.getElementById('posterCandidateV156').src=src;document.getElementById('posterImageProposalV156').hidden=false;posterMessageV156('이미지를 생성했습니다. 미리보기를 확인한 후 ‘이 이미지 적용’을 누르세요.');}catch(e){posterMessageV156(e.message,true);}finally{posterBusyStateV156(false);}}
+async function applyPosterImageV156(){if(!posterCandidateImageV156)return;const src=posterCandidateImageV156,epoch=posterEpochV156;posterLoadingV156=true;try{const im=await decodePosterImageV156(src);if(epoch!==posterEpochV156)return;posterStateV155.image=src;posterImageCacheV155=im;posterCandidateImageV156=null;document.getElementById('posterImageProposalV156').hidden=true;posterMessageV156('이미지를 적용했습니다. 전체 표시 또는 상하 중심을 조정할 수 있습니다.');}finally{posterLoadingV156=false;drawPosterV155();}}
+function removePosterAssetV156(key){posterStateV155[key]='';if(key==='image')posterImageCacheV155=null;else posterLogoCacheV156=null;drawPosterV155();}
+async function uploadPosterAssetV156(file,key){if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>20*1024*1024)return alert('20MB 이하 PNG/JPG/WebP 파일을 선택해 주세요.');const epoch=posterEpochV156;posterLoadingV156=true;try{const src=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});const im=await decodePosterImageV156(src);if(epoch!==posterEpochV156)return;posterStateV155[key]=src;if(key==='image')posterImageCacheV155=im;else posterLogoCacheV156=im;posterMessageV156('이미지를 불러왔습니다.');}catch(_){posterMessageV156('이미지를 불러오지 못했습니다.',true);}finally{posterLoadingV156=false;drawPosterV155();}}
+document.getElementById('posterImageV155').onchange=function(){uploadPosterAssetV156(this.files[0],'image');this.value='';};document.getElementById('posterLogoV156').onchange=function(){uploadPosterAssetV156(this.files[0],'logo');this.value='';};
+function posterDimensionsV156(){return posterStateV155.size==='square'?[2160,2160]:posterStateV155.size==='mobile'?[2160,2880]:[2480,3508];}
+function paintPosterV156(canvas,width,height){const s=posterStateV155;canvas.width=width;canvas.height=height;const x=canvas.getContext('2d');const W=1000,H=height/width*1000;x.scale(width/1000,width/1000);const font='"Malgun Gothic", "Noto Sans CJK KR", sans-serif';
+ const wrap=(value,size,max,bold=false)=>{x.font=`${bold?'700':'400'} ${size}px ${font}`;const result=[];for(const para of String(value||'').split('\n')){let row='';for(const ch of Array.from(para)){if(row&&x.measureText(row+ch).width>max){result.push(row);row=ch;}else row+=ch;}result.push(row);}return value?result:[];};
+ const infoKeys=posterFieldsV155.filter(([k])=>!['title','subtitle','details','org'].includes(k)&&s[k].trim());
+ const compact=s.size==='square',imageHeight=posterImageCacheV155?(compact?180:285):0;
+ let layout;for(let step=0;step<=12;step++){const f=1-step*.025,title=wrap(s.title||'홍보 제목',64*f,864,true),sub=wrap(s.subtitle,25*f,864),details=wrap(s.details,24*f,816),rows=infoKeys.map(([k,l])=>({label:l,text:wrap(s[k],23*f,655)})),footer=wrap(s.org,20,posterLogoCacheV156?690:864,true);const header=102+title.length*77*f+(sub.length?18+sub.length*36*f:0)+32;const detailH=details.length?32+details.length*34*f:0;const rowH=rows.reduce((n,r)=>n+Math.max(1,r.text.length)*32*f+15*f,0);const total=header+(imageHeight?imageHeight+28:0)+detailH+(detailH?24:0)+rowH+footer.length*27+80;layout={f,title,sub,details,rows,footer,header,total};if(total<=H)break;}
+ const L=layout,f=L.f,dark=s.theme==='recruit',healing=s.theme==='healing',accent=s.color,bg=healing?'#f6f4eb':'#ffffff',ink='#142e36';
+ x.fillStyle=bg;x.fillRect(0,0,W,H);x.fillStyle=dark?'#132439':healing?'#e3ebde':'#edf3ff';x.fillRect(0,0,W,L.header);x.fillStyle=accent;x.fillRect(0,0,12,L.header);
+ x.globalAlpha=.10;x.fillStyle=accent;x.beginPath();x.arc(940,70,190,0,Math.PI*2);x.fill();x.globalAlpha=1;
+ const write=(arr,size,color,left,y,bold=false,line=1.4)=>{x.font=`${bold?'700':'400'} ${size}px ${font}`;x.fillStyle=color;x.textBaseline='top';for(const t of arr){x.fillText(t,left,y);y+=size*line;}return y;};
+ write([{education:'함께 배우는 오늘',healing:'나를 위한 쉼, 함께하는 시간',recruit:'우리 센터 프로그램 안내'}[s.theme]],18,dark?'#c4d2e2':accent,68,43,true);let y=98;y=write(L.title,64*f,dark?'#ffffff':ink,68,y,true,77/64);if(L.sub.length){y+=18;y=write(L.sub,25*f,dark?'#d9e3ef':'#4b6369',68,y,false,36/25);}y=L.header;
+ if(posterImageCacheV155){const im=posterImageCacheV155;x.save();x.beginPath();x.rect(68,y+2,864,imageHeight);x.clip();x.fillStyle=healing?'#e3ebde':'#edf1f7';x.fillRect(68,y+2,864,imageHeight);const ratio=s.fit==='contain'?Math.min(864/im.width,imageHeight/im.height):Math.max(864/im.width,imageHeight/im.height),dw=im.width*ratio,dh=im.height*ratio;const pos=Math.max(0,Math.min(1,Number(s.position)/100||0));x.drawImage(im,68+(864-dw)/2,y+2+(imageHeight-dh)*pos,dw,dh);x.restore();y+=imageHeight+28;}
+ if(L.details.length){const dh=32+L.details.length*34*f;x.fillStyle=healing?'#e8eddf':'#eff4fa';x.fillRect(68,y,864,dh);write(L.details,24*f,ink,92,y+16,false,34/24);y+=dh+24;}
+ for(const row of L.rows){write([row.label],19*f,accent,68,y,true,1.4);y=write(row.text,23*f,ink,270,y,false,32/23)+15*f;}
+ const footerY=H-40-L.footer.length*27;x.fillStyle='#ccd6d9';x.fillRect(68,footerY-20,864,1);if(posterLogoCacheV156){const im=posterLogoCacheV156,r=Math.min(130/im.width,52/im.height);x.drawImage(im,68,footerY,im.width*r,im.height*r);}write(L.footer,20,ink,posterLogoCacheV156?230:68,footerY,true,27/20);
+ return {valid:L.total<=H&&y<=footerY-28,bodyBottom:y,footerTop:footerY,minimumBodySize:23*f};}
+function drawPosterV155(){if(!posterStateV155)return;const [w,h]=posterDimensionsV156(),canvas=document.getElementById('posterCanvasV155');const layout=paintPosterV156(canvas,1000,Math.round(h/w*1000));posterRenderValidV155=layout.valid;const warnings=[];if(!layout.valid)warnings.push('문구가 한 장을 넘습니다. 핵심 홍보문구를 줄이거나 A4 규격을 선택해 주세요.');if(posterLoadingV156)warnings.push('이미지를 불러오는 중입니다.');if(posterStateV155.image&&!posterImageCacheV155&&!posterLoadingV156)warnings.push('이미지를 읽지 못했습니다. 다시 업로드하거나 제거해 주세요.');if(!warnings.length)warnings.push(`출력 ${w.toLocaleString()} × ${h.toLocaleString()} px${posterStateV155.size==='a4'?' · A4 300dpi':''} · 입력 내용이 그대로 출력됩니다.`);document.getElementById('posterMsgV155').textContent=warnings.join(' ');}
+async function posterExportCanvasV156(){if(posterLoadingV156)throw new Error('이미지를 불러온 후 저장해 주세요.');if((posterStateV155.image&&!posterImageCacheV155)||(posterStateV155.logo&&!posterLogoCacheV156))throw new Error('이미지를 다시 업로드하거나 제거해 주세요.');if(document.fonts?.ready)await document.fonts.ready;const [w,h]=posterDimensionsV156(),c=document.createElement('canvas'),result=paintPosterV156(c,w,h);if(!result.valid)throw new Error('문구가 한 장을 넘습니다. 내용을 줄인 후 저장해 주세요.');return c;}
+function posterDownloadBlobV156(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);}
+async function posterPng300V156(canvas){const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw new Error('PNG 생성에 실패했습니다.');const src=new Uint8Array(await blob.arrayBuffer()),chunk=new Uint8Array(21),view=new DataView(chunk.buffer);view.setUint32(0,9);chunk.set([112,72,89,115],4);view.setUint32(8,11811);view.setUint32(12,11811);chunk[16]=1;let crc=0xffffffff;for(const byte of chunk.slice(4,17)){crc^=byte;for(let j=0;j<8;j++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);}view.setUint32(17,(crc^0xffffffff)>>>0);const parts=[src.slice(0,33),chunk];let pos=33;while(pos<src.length){const len=new DataView(src.buffer,src.byteOffset+pos,4).getUint32(0);const end=pos+len+12;if(String.fromCharCode(...src.slice(pos+4,pos+8))!=='pHYs')parts.push(src.slice(pos,end));pos=end;}return new Blob(parts,{type:'image/png'});}
+async function downloadPosterV155(){try{const c=await posterExportCanvasV156();posterDownloadBlobV156(await posterPng300V156(c),'홍보포스터_'+posterStateV155.size+'_고화질.png');}catch(e){alert(e.message);}}
+async function printPosterV155(){const win=window.open('','_blank');if(!win)return alert('인쇄창 팝업을 허용해 주세요.');try{const c=await posterExportCanvasV156(),size=posterStateV155.size==='square'?'210mm 210mm':posterStateV155.size==='mobile'?'210mm 280mm':'210mm 297mm',height=posterStateV155.size==='square'?'210mm':posterStateV155.size==='mobile'?'280mm':'297mm';win.document.write('<!doctype html><html><head><title>홍보 포스터</title><style>@page{size:'+size+';margin:0}html,body{margin:0;padding:0}img{display:block;width:210mm;height:'+height+'}</style></head><body><img alt="홍보 포스터"></body></html>');win.document.close();const im=win.document.querySelector('img');im.onload=()=>{win.focus();win.print();};im.src=c.toDataURL('image/png');}catch(e){win.close();alert(e.message);}}
+async function downloadPosterImageV156(){const src=posterStateV155?.image;if(!src)return alert('이미지를 먼저 생성하거나 업로드해 주세요.');const blob=await (await fetch(src)).blob();posterDownloadBlobV156(blob,'포스터_이미지원본.'+({ 'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[blob.type]||'png'));}
+async function savePosterPlanV156(){if(posterBusyV156||posterLoadingV156)return alert('이미지 처리가 끝난 후 저장해 주세요.');await saveCloudDocument('PLAN');}
+const posterPlanBaseV155=getPlanData;getPlanData=function(){const d=posterPlanBaseV155();d.posterV155=posterStateV155?{...posterStateV155}:null;return d;};
+</script>
+
 </body>
 </html>
