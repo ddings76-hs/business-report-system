@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.3 기안문 직접 수정)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.4 공문정보·편성예산 연계)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -391,7 +391,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.3 기안문 직접 수정)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.4.4 공문정보·편성예산 연계)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -537,7 +537,7 @@
       <div style="flex: 1;"><label style="font-weight: bold; font-size: 12px; color: #475569;">검토자</label><input type="text" id="p_reviewer" value="대리 박예원"></div>
       <div style="flex: 1;"><label style="font-weight: bold; font-size: 12px; color: #475569;">결재자</label><input type="text" id="p_approver" value="센터장 임은숙"></div>
     </div>
-    <div class="no-print" style="border:1px solid #94a3b8;border-radius:8px;padding:13px;margin-bottom:14px;background:#f8fafc">
+    <div id="planOfficialPanelV1544" class="no-print" style="border:1px solid #94a3b8;border-radius:8px;padding:13px;margin-bottom:14px;background:#f8fafc">
       <div style="font-weight:bold;color:#334155;margin-bottom:9px">공문 발행정보</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px">
         <label style="font-size:12px">수신자<input type="text" id="p_recipient" value="내부결재"></label>
@@ -1353,6 +1353,10 @@
     
     let targetSec = document.getElementById(`${prefix}-sub-section-${num}`);
     if(targetSec) targetSec.classList.add('active');
+    if(prefix === 'p') {
+      const officialPanel=document.getElementById('planOfficialPanelV1544');
+      if(officialPanel) officialPanel.style.display=num===1?'block':'none';
+    }
     if(prefix === 'r' && num === 2 && typeof window.openSurveyWorkspaceV117 === 'function') {
       setTimeout(window.openSurveyWorkspaceV117, 0);
     }
@@ -1624,6 +1628,7 @@
     document.getElementById('out_p_budget_table').innerHTML = bTbl;
     document.getElementById('out_p_budget_total').innerText = totalAmt.toLocaleString() + ' 원';
     document.getElementById('out_p_budget_total_bottom').innerText = totalAmt.toLocaleString() + ' 원';
+    if(typeof refreshGeneratedPlanBudgetV1544==='function')refreshGeneratedPlanBudgetV1544();
 
     document.getElementById('output-plan-container').style.display = 'block';
   }
@@ -6851,7 +6856,35 @@ async function refreshPlanBudgetOriginV154(projectId,autoImport){
   projectId=projectId||planBudgetProjectIdV154();if(!projectId){window.planHasAllocatedBudgetV154=false;setPlanBudgetInputsLockedV154(false);return planBudgetNoticeV154('<strong>임시예산</strong> · 계획서 작성 단계에서 직접 입력할 수 있습니다. 정식 예산은 사업 저장 후 예산·지출 관리에서 편성해 주세요.','temporary');}
   try{const rows=await allocatedBudgetRowsV154(projectId);window.planHasAllocatedBudgetV154=rows.length>0;if(!rows.length){setPlanBudgetInputsLockedV154(false);return planBudgetNoticeV154('<strong>임시예산</strong> · 아직 정식 편성예산이 없습니다. 현재 입력값은 계획서 초안에만 저장됩니다.','temporary');}const officialTotal=rows.reduce((sum,row)=>sum+budgetNumberV1471(row.planned_amount),0),formTotal=calcPlanBudget();if(autoImport||Math.abs(Number(formTotal||0)-officialTotal)>0)applyAllocatedBudgetRowsV154(rows);const different=Math.abs(Number(formTotal||0)-officialTotal)>0;setPlanBudgetInputsLockedV154(true);planBudgetNoticeV154('<strong>확정 편성예산 '+budgetMoneyV1471(officialTotal)+'</strong> · 예산관리 기준으로 연결되었습니다.'+(different?' <span style="color:#b91c1c">기존 계획서 금액과 차이가 있어 최신 편성예산을 적용했습니다.</span>':''),'allocation');}catch(error){planBudgetNoticeV154('<strong>예산 연결 확인 오류</strong> · '+budgetEscapeV1471(error.message||error),'warning');}
 }
-function applyAllocatedBudgetRowsV154(rows){setRows('p_budgetTbody',rows.map(row=>({'p-bg-item':row.item_name||'','p-bg-calc':row.calculation_basis||'','p-bg-amount':budgetNumberV1471(row.planned_amount),'p-bg-note':row.note||''})),['p-bg-item','p-bg-calc','p-bg-amount','p-bg-note'],'addPlanBudgetRow');calcPlanBudget();}
+function refreshGeneratedPlanBudgetV1544(){
+  const total=calcPlanBudget(),money=total>0?koreanMoneyV134(total):'없음';
+  const summary=document.getElementById('out_p_overview_summary');
+  if(summary){
+    let budgetLine=[...summary.querySelectorAll('.doc-list-item')].find(el=>/^[가-하]\.|^\d+\./.test(el.textContent.trim())&&/소요예산\s*:/.test(el.textContent));
+    if(budgetLine){const label=(budgetLine.textContent.trim().match(/^([가-하]|\d+)\./)||[])[1]||'아';budgetLine.innerHTML=label+'. 소요예산 : '+esc(money);}
+    let resourceLine=[...summary.querySelectorAll('.doc-list-item')].find(el=>/재원\s*:/.test(el.textContent));
+    const resource=officialResourceV1484(document.getElementById('p_budgetSource')?.value,document.getElementById('p_budgetCategory')?.value);
+    if(total<=0&&resourceLine)resourceLine.remove();
+    if(total>0&&resource){
+      if(!resourceLine){resourceLine=document.createElement('div');resourceLine.className='doc-list-item';summary.appendChild(resourceLine);}
+      resourceLine.innerHTML='자. 재원 : '+esc(resource);
+    }
+    if(typeof renumberPlanDraftItemsV1543==='function')renumberPlanDraftItemsV1543();
+  }
+  const meta=document.getElementById('out_p_budget_meta');
+  if(meta){meta.style.display=total>0?'block':'none';meta.innerText=total>0?'○ 재원 및 예산항목 : '+document.getElementById('p_budgetSource').value+' / '+document.getElementById('p_budgetCategory').value:'';}
+  const items=document.querySelectorAll('.p-bg-item'),calcs=document.querySelectorAll('.p-bg-calc'),amounts=document.querySelectorAll('.p-bg-amount'),notes=document.querySelectorAll('.p-bg-note');
+  let rows='';
+  for(let i=0;i<items.length;i++)if(items[i].value.trim())rows+='<tr><td class="td-center">'+esc(items[i].value)+'</td><td>'+esc(calcs[i]?.value.trim()||'-')+'</td><td class="td-right">'+(Number(amounts[i]?.value)||0).toLocaleString()+'</td><td class="td-center">'+esc(notes[i]?.value.trim()||'-')+'</td></tr>';
+  const table=document.getElementById('out_p_budget_table');
+  if(table)table.innerHTML='<thead><tr><th>세목</th><th>산출 근거</th><th>금액(원)</th><th>비고</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4" class="td-center">작성된 예산 내역이 없습니다.</td></tr>')+'</tbody><tfoot><tr><th colspan="2">합계</th><td class="td-right"><strong>'+total.toLocaleString()+'</strong></td><td></td></tr></tfoot>';
+  const totalTop=document.getElementById('out_p_budget_total');if(totalTop)totalTop.innerText=total.toLocaleString()+' 원';
+  const totalBottom=document.getElementById('out_p_budget_total_bottom');if(totalBottom)totalBottom.innerText=total.toLocaleString()+' 원';
+}
+function applyAllocatedBudgetRowsV154(rows){
+  setRows('p_budgetTbody',rows.map(row=>({'p-bg-item':row.item_name||'','p-bg-calc':row.calculation_basis||'','p-bg-amount':budgetNumberV1471(row.planned_amount),'p-bg-note':row.note||''})),['p-bg-item','p-bg-calc','p-bg-amount','p-bg-note'],'addPlanBudgetRow');
+  calcPlanBudget();refreshGeneratedPlanBudgetV1544();
+}
 async function importAllocatedBudgetToPlanV154(){const projectId=planBudgetProjectIdV154();if(!projectId)return alert('계획서를 공동 DB에 먼저 저장한 후 편성예산을 불러올 수 있습니다.');try{const rows=await allocatedBudgetRowsV154(projectId);if(!rows.length)return alert('저장된 편성예산이 없습니다. 「예산관리에서 편성·수정」을 먼저 이용해 주세요.');applyAllocatedBudgetRowsV154(rows);window.planHasAllocatedBudgetV154=true;setPlanBudgetInputsLockedV154(true);const total=rows.reduce((sum,row)=>sum+budgetNumberV1471(row.planned_amount),0);planBudgetNoticeV154('<strong>확정 편성예산 '+budgetMoneyV1471(total)+'</strong> · 최신 예산을 계획서에 불러왔습니다.','allocation');}catch(error){alert('편성예산 불러오기 오류: '+(error.message||error));}}
 async function openPlanBudgetManagerV154(){const projectId=planBudgetProjectIdV154();if(!projectId)return alert('계획서를 공동 DB에 먼저 저장한 후 예산을 편성할 수 있습니다.');await openBudgetPlanV1472(projectId);}
 function setTemporaryPlanBudgetV154(){if(window.planHasAllocatedBudgetV154)return alert('이미 확정 편성예산이 존재합니다. 금액 변경은 「예산관리에서 편성·수정」을 이용해 주세요.\n계획서에는 확정 편성예산이 우선 적용됩니다.');setPlanBudgetInputsLockedV154(false);planBudgetNoticeV154('<strong>임시예산 직접입력</strong> · 계획서 초안용이며 정식 편성예산이 아닙니다.','temporary');}
@@ -6862,7 +6895,11 @@ async function syncBudgetPlanDocumentsV154(projectId){
 }
 const loadCloudDocumentBaseV154=loadCloudDocument;
 loadCloudDocument=async function(docId){const result=await loadCloudDocumentBaseV154.apply(this,arguments);const query=await sb.from('project_documents').select('doc_type,project_id').eq('id',docId).maybeSingle();if(!query.error&&query.data?.doc_type==='PLAN')await refreshPlanBudgetOriginV154(query.data.project_id,true);return result;};
-document.addEventListener('DOMContentLoaded',()=>refreshPlanBudgetOriginV154(null,false));
+document.addEventListener('input',event=>{
+  if(!event.target?.matches?.('#p_budgetSource,#p_budgetCategory,.p-bg-item,.p-bg-calc,.p-bg-amount,.p-bg-note'))return;
+  if(document.getElementById('output-plan-container')?.style.display==='block')refreshGeneratedPlanBudgetV1544();
+});
+document.addEventListener('DOMContentLoaded',()=>{refreshPlanBudgetOriginV154(null,false);const panel=document.getElementById('planOfficialPanelV1544');if(panel)panel.style.display='block';});
 </script>
 </body>
 </html>
