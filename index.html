@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v16.0-20260918">
+<html lang="ko" data-build="v16.1-20260918">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.0 출력제목 수정·하단고정)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.1 3열 일정·예산표기·하단고정)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -74,8 +74,8 @@
   .doc-org-header { font-family:'Malgun Gothic','맑은 고딕',sans-serif !important;font-size:24pt !important;font-weight:700 !important;text-align:center;letter-spacing:-2px;margin:0;white-space:nowrap; }
   .doc-sub-header { font-size: 10px; color: #2563eb; text-align:right;margin-top:3px; }
   .doc-letterhead .doc-sub-header { display:none; }
-  .doc-cover-page { height:247mm;min-height:247mm;position:relative;display:flex;flex-direction:column;box-sizing:border-box;padding-bottom:0;overflow:visible; }
-  .doc-cover-page .doc-fixed-footer { position:static;flex:0 0 auto;margin-top:auto;margin-bottom:0; }
+  .doc-cover-page { height:247mm;min-height:247mm;max-height:247mm;position:relative;box-sizing:border-box;padding-bottom:39mm;overflow:hidden;page-break-after:always;break-after:page; }
+  .doc-cover-page .doc-fixed-footer { position:absolute;left:0;right:0;bottom:0;width:100%;margin:0;box-sizing:border-box; }
   .doc-meta-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12pt; }
   .doc-meta-table td { padding: 4px 0; vertical-align: top; }
   .doc-meta-label { width:72px;letter-spacing:.22em;white-space:nowrap; }
@@ -108,6 +108,9 @@
   .doc-sheet .out-table, .doc-sheet .out-table th, .doc-sheet .out-table td { font-size:12pt !important; }
   .doc-sheet p[id^="out_p_"], .doc-sheet p[id^="out_r_"], .doc-sheet div[id^="out_p_attach"], .doc-sheet div[id^="out_r_tbl_attach"] { font-size:12pt !important; }
   .output-two-col-v159 th:first-child { width:20% !important; }
+  .output-schedule-v161 th:nth-child(1) { width:20% !important; }
+  .output-schedule-v161 th:nth-child(2) { width:24% !important; }
+  #out_p_budget_total_line_v161, #out_p_budget_total_line_v161 strong { font-size:12pt !important; }
 
   /* 2단 고정 결재/시행선 스타일 */
   .doc-signature { position:relative;text-align:center;font-family:'Gulim','굴림',sans-serif !important;font-size:19pt !important;font-weight:700 !important;letter-spacing:.02em;margin:55px 0 50px; }
@@ -154,8 +157,8 @@
     .doc-sheet { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
     .doc-sheet { line-height: 1.55 !important; }
     .doc-attachment-title { break-before: page; page-break-before: always; padding:12px 8px !important; }
-    .doc-cover-page { height:247mm !important;min-height:247mm !important;position:relative !important;display:flex !important;flex-direction:column !important;padding-bottom:0 !important;overflow:visible !important; }
-    .doc-cover-page .doc-fixed-footer { position:static !important;flex:0 0 auto !important;margin-top:auto !important;margin-bottom:0 !important; }
+    .doc-cover-page { height:247mm !important;min-height:247mm !important;max-height:247mm !important;position:relative !important;padding-bottom:39mm !important;overflow:hidden !important;page-break-after:always !important;break-after:page !important; }
+    .doc-cover-page .doc-fixed-footer { position:absolute !important;left:0 !important;right:0 !important;bottom:0 !important;width:100% !important;margin:0 !important;box-sizing:border-box !important; }
     .doc-approval-container, .doc-approval-row, .doc-footer-address { break-inside: avoid; page-break-inside: avoid; }
     .doc-footer-line { transform:none; width:100%; }
     .doc-sheet table thead { display: table-header-group !important; }
@@ -403,7 +406,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.0 출력제목 수정·하단고정)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.1 3열 일정·예산표기·하단고정)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -631,15 +634,17 @@
             <button class="btn btn-del" onclick="setPlanSectionVisible('schedule', false)">항목 삭제</button>
           </div>
         </div>
-        <div class="no-print" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:8px;padding:9px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px">
-          <label style="font-size:11px;font-weight:bold">세부일정 제목<input id="p_schedule_section_title_v15410" value="세부 일정(안)" placeholder="예: 세부 일정(안)" oninput="updatePlanProgramScheduleHeadingsV1546()" style="width:100%;padding:7px;box-sizing:border-box;margin-top:4px"></label>
-          <label style="font-size:11px;font-weight:bold">첫 번째 열 제목<input id="p_schedule_key_title_v15410" value="시간" list="p_schedule_key_titles_v15410" placeholder="시간 또는 일자" oninput="updatePlanProgramScheduleHeadingsV1546()" style="width:100%;padding:7px;box-sizing:border-box;margin-top:4px"><datalist id="p_schedule_key_titles_v15410"><option value="시간"><option value="일자"><option value="기간"><option value="구분"></datalist></label>
+        <div class="no-print" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-top:8px;padding:9px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px">
+          <label style="font-size:11px;font-weight:bold">일정표 제목<input id="p_schedule_section_title_v15410" value="세부 일정(안)" placeholder="예: 추진 일정(안)" oninput="updatePlanProgramScheduleHeadingsV1546()" style="width:100%;padding:7px;box-sizing:border-box;margin-top:4px"></label>
+          <label style="font-size:11px;font-weight:bold">첫 번째 열<input id="p_schedule_key_title_v15410" value="일정" list="p_schedule_key_titles_v15410" placeholder="일정" oninput="updatePlanProgramScheduleHeadingsV1546()" style="width:100%;padding:7px;box-sizing:border-box;margin-top:4px"><datalist id="p_schedule_key_titles_v15410"><option value="일정"><option value="시간"><option value="일자"><option value="기간"></datalist></label>
+          <label style="font-size:11px;font-weight:bold">두 번째 열<input id="p_schedule_group_title_v161" value="구분" placeholder="구분" oninput="updatePlanProgramScheduleHeadingsV1546()" style="width:100%;padding:7px;box-sizing:border-box;margin-top:4px"></label>
+          <label style="font-size:11px;font-weight:bold">세 번째 열<input id="p_schedule_content_title_v161" value="내용" placeholder="내용" oninput="updatePlanProgramScheduleHeadingsV1546()" style="width:100%;padding:7px;box-sizing:border-box;margin-top:4px"></label>
         </div>
         <table class="form-table" style="margin-top: 8px;">
-          <colgroup><col style="width: 25%;"><col style="width: 67%;"><col style="width: 8%;"></colgroup>
-          <thead><tr><th id="p_schedule_key_preview_v15410">시간</th><th>내용</th><th>관리</th></tr></thead>
+          <colgroup><col style="width: 20%;"><col style="width: 24%;"><col style="width: 48%;"><col style="width: 8%;"></colgroup>
+          <thead><tr><th id="p_schedule_key_preview_v15410">일정</th><th id="p_schedule_group_preview_v161">구분</th><th id="p_schedule_content_preview_v161">내용</th><th>관리</th></tr></thead>
           <tbody id="p_schedTbody">
-            <tr><td><input type="text" class="p-sch-time" placeholder="예: 14:00~14:10"></td><td><input type="text" class="p-sch-val" placeholder="세부 일정을 입력하세요"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
+            <tr><td><input type="text" class="p-sch-time" placeholder="예: 2026. 9. 17.~9. 18."></td><td><input type="text" class="p-sch-group-v161" placeholder="예: 사업계획 수립"></td><td><input type="text" class="p-sch-val" placeholder="세부 내용을 입력하세요"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
           </tbody>
         </table>
       </div>
@@ -663,7 +668,7 @@
       <table class="form-table" style="margin-top: 8px;">
         <thead><tr><th>세목</th><th>산출 근거</th><th>금액(원)</th><th>비고</th><th>삭제</th></tr></thead>
         <tbody id="p_budgetTbody">
-          <tr><td><input type="text" class="p-bg-item" placeholder="세목"></td><td><input type="text" class="p-bg-calc" placeholder="예: 10,000원 × 30명" oninput="calcBasisAmountV1031(this)"></td><td><input type="number" class="p-bg-amount" value="0" oninput="calcPlanBudget()"></td><td><input type="text" class="p-bg-note" placeholder="비고"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcPlanBudget();">삭제</button></td></tr>
+          <tr><td><input type="text" class="p-bg-item" placeholder="세목"></td><td><input type="text" class="p-bg-calc" placeholder="예: 10,000원 × 30명" oninput="formatPlanBasisV161(this)"></td><td><input type="number" class="p-bg-amount" value="0" oninput="calcPlanBudget()"></td><td><input type="text" class="p-bg-note" placeholder="비고"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcPlanBudget();">삭제</button></td></tr>
         </tbody>
         <tfoot><tr><td colspan="2" class="td-center">합계</td><td class="td-right" style="font-weight:bold; color:#2563eb;" id="p_totalBudgetDisplay">0 원</td><td colspan="2"></td></tr></tfoot>
       </table>
@@ -751,11 +756,11 @@
         <div id="out_p_program_schedule_section">
           <h3 id="out_p_program_schedule_title_v1546" style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅱ. 주요 프로그램 및 세부일정(안)</h3>
           <div id="out_p_program_block"><h4 id="out_p_program_heading_v1546" class="doc-subsection-title">1. 주요 프로그램</h4><table class="out-table output-two-col-v159" id="out_p_prog_table"></table></div>
-          <div id="out_p_schedule_block"><h4 id="out_p_schedule_heading_v1546" class="doc-subsection-title">2. 세부 일정</h4><table class="out-table output-two-col-v159" id="out_p_sched_table"></table></div>
+          <div id="out_p_schedule_block"><h4 id="out_p_schedule_heading_v1546" class="doc-subsection-title">2. 세부 일정</h4><table class="out-table output-schedule-v161" id="out_p_sched_table"></table></div>
         </div>
         <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅲ. 소요 예산(안) 및 재원</h3>
         <p style="font-size:13px; font-family:'Batang', serif;" id="out_p_budget_meta"></p>
-        <p style="font-size:13px; font-family:'Batang', serif;">○ 총 소요예산 : <strong id="out_p_budget_total">0 원</strong></p>
+        <p id="out_p_budget_total_line_v161" style="font-size:12pt; font-family:'Batang', serif;">○ 총 소요예산 : <strong id="out_p_budget_total">0 원</strong></p>
         <table class="out-table" id="out_p_budget_table"></table>
         <div style="text-align:right;font-size:13px;font-family:'Batang',serif;margin-top:-12px;margin-bottom:20px;">
           <strong>합계금액 : <span id="out_p_budget_total_bottom">0 원</span></strong>
@@ -1415,11 +1420,11 @@
   }
   function addScheduleRow() {
     document.getElementById('p_schedTbody').insertAdjacentHTML('beforeend', 
-      `<tr><td><input type="text" class="p-sch-time" placeholder="시간"></td><td><input type="text" class="p-sch-val" placeholder="내용"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>`);
+      `<tr><td><input type="text" class="p-sch-time" placeholder="일정"></td><td><input type="text" class="p-sch-group-v161" placeholder="구분"></td><td><input type="text" class="p-sch-val" placeholder="내용"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>`);
   }
   function addPlanBudgetRow() {
     document.getElementById('p_budgetTbody').insertAdjacentHTML('beforeend', 
-      `<tr><td><input type="text" class="p-bg-item" placeholder="세목"></td><td><input type="text" class="p-bg-calc" placeholder="예: 11,000원 × 40명" oninput="calcBasisAmountV1031(this)"></td><td><input type="number" class="p-bg-amount" value="0" oninput="calcPlanBudget()"></td><td><input type="text" class="p-bg-note" placeholder="비고"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcPlanBudget();">삭제</button></td></tr>`);
+      `<tr><td><input type="text" class="p-bg-item" placeholder="세목"></td><td><input type="text" class="p-bg-calc" placeholder="예: 11,000원 × 40명" oninput="formatPlanBasisV161(this)"></td><td><input type="number" class="p-bg-amount" value="0" oninput="calcPlanBudget()"></td><td><input type="text" class="p-bg-note" placeholder="비고"></td><td class="td-center"><button class="btn-del" onclick="delRow(this);calcPlanBudget();">삭제</button></td></tr>`);
     calcPlanBudget();
   }
 
@@ -1559,7 +1564,9 @@
   function updatePlanProgramScheduleHeadingsV1546(){
     const programVisible=window.planProgramVisible!==false,scheduleVisible=window.planScheduleVisible!==false;
     const scheduleTitle=document.getElementById('p_schedule_section_title_v15410')?.value.trim()||'세부 일정(안)';
-    const scheduleKeyTitle=document.getElementById('p_schedule_key_title_v15410')?.value.trim()||'시간';
+    const scheduleKeyTitle=document.getElementById('p_schedule_key_title_v15410')?.value.trim()||'일정';
+    const scheduleGroupTitle=document.getElementById('p_schedule_group_title_v161')?.value.trim()||'구분';
+    const scheduleContentTitle=document.getElementById('p_schedule_content_title_v161')?.value.trim()||'내용';
     const set=(id,text)=>{const el=document.getElementById(id);if(el)el.textContent=text;};
     set('p-program-heading-v1546','1. 주요 프로그램');
     set('p-schedule-heading-v1546',(programVisible?'2':'1')+'. '+scheduleTitle);
@@ -1568,6 +1575,8 @@
     set('out_p_program_schedule_title_v1546',programVisible&&scheduleVisible?'Ⅱ. 주요 프로그램 및 '+scheduleTitle:programVisible?'Ⅱ. 주요 프로그램':'Ⅱ. '+scheduleTitle);
     set('subtab-2',programVisible&&scheduleVisible?'Ⅱ. 주요 프로그램 및 '+scheduleTitle:programVisible?'Ⅱ. 주요 프로그램':'Ⅱ. '+scheduleTitle);
     set('p_schedule_key_preview_v15410',scheduleKeyTitle);
+    set('p_schedule_group_preview_v161',scheduleGroupTitle);
+    set('p_schedule_content_preview_v161',scheduleContentTitle);
   }
 
   // 사업계획서 생성 함수
@@ -1670,10 +1679,16 @@
     document.getElementById('out_p_program_block').style.display = window.planProgramVisible === false ? 'none' : 'block';
 
     // 3. 세부 일정
-    const scheduleRowsV1546=readPlanTableRowsV1546('p_schedTbody','p-sch-time','p-sch-val');
-    let sRows=scheduleRowsV1546.map(row=>`<tr><td class="td-center">${esc(row.key||'-')}</td><td>${esc(row.value||'-').replaceAll('\n','<br>')}</td></tr>`).join('');
-    const scheduleKeyTitleV15410=document.getElementById('p_schedule_key_title_v15410')?.value.trim()||'시간';
-    let sTbl='<thead><tr><th style="width:25%;">'+esc(scheduleKeyTitleV15410)+'</th><th>내용</th></tr></thead><tbody>'+(sRows||'<tr><td colspan="2" class="td-center">작성된 세부 일정이 없습니다.</td></tr>')+'</tbody>';
+    const scheduleRowsV161=[...document.querySelectorAll('#p_schedTbody > tr')].map(row=>({
+      schedule:row.querySelector('.p-sch-time')?.value?.trim()||'',
+      group:row.querySelector('.p-sch-group-v161')?.value?.trim()||'',
+      content:row.querySelector('.p-sch-val')?.value?.trim()||''
+    })).filter(row=>row.schedule||row.group||row.content);
+    let sRows=scheduleRowsV161.map(row=>`<tr><td class="td-center">${esc(row.schedule||'-')}</td><td class="td-center">${esc(row.group||'-')}</td><td>${esc(row.content||'-').replaceAll('\n','<br>')}</td></tr>`).join('');
+    const scheduleKeyTitleV15410=document.getElementById('p_schedule_key_title_v15410')?.value.trim()||'일정';
+    const scheduleGroupTitleV161=document.getElementById('p_schedule_group_title_v161')?.value.trim()||'구분';
+    const scheduleContentTitleV161=document.getElementById('p_schedule_content_title_v161')?.value.trim()||'내용';
+    let sTbl='<thead><tr><th>'+esc(scheduleKeyTitleV15410)+'</th><th>'+esc(scheduleGroupTitleV161)+'</th><th>'+esc(scheduleContentTitleV161)+'</th></tr></thead><tbody>'+(sRows||'<tr><td colspan="3" class="td-center">작성된 세부 일정이 없습니다.</td></tr>')+'</tbody>';
     document.getElementById('out_p_sched_table').innerHTML = sTbl;
     document.getElementById('out_p_schedule_block').style.display = window.planScheduleVisible === false ? 'none' : 'block';
     document.getElementById('out_p_program_schedule_section').style.display =
@@ -1857,7 +1872,7 @@
       officialDocument:planOfficialDataV134(),
       overview:getRows('#p_overviewTbody',['p-ov-key','p-ov-val']),
       programs:getRows('#p_progTbody',['p-prog-key','p-prog-val']),
-      schedule:getRows('#p_schedTbody',['p-sch-time','p-sch-val']),
+      schedule:getRows('#p_schedTbody',['p-sch-time','p-sch-group-v161','p-sch-val']),
       budgetSource:p_budgetSource.value, budgetCategory:p_budgetCategory.value,
       budget:getRows('#p_budgetTbody',['p-bg-item','p-bg-calc','p-bg-amount','p-bg-note']),
       programVisible: window.planProgramVisible !== false,
@@ -1945,7 +1960,7 @@
       applyPosterV155(d.posterV155||null);
       setRows('p_overviewTbody',d.overview,['p-ov-key','p-ov-val'],'addOverviewRow');
       setRows('p_progTbody',d.programs,['p-prog-key','p-prog-val'],'addProgRow');
-      setRows('p_schedTbody',d.schedule,['p-sch-time','p-sch-val'],'addScheduleRow');
+      setRows('p_schedTbody',d.schedule,['p-sch-time','p-sch-group-v161','p-sch-val'],'addScheduleRow');
       setPlanSectionVisible('program', d.programVisible !== false, false);
       setPlanSectionVisible('schedule', d.scheduleVisible !== false, false);
       p_budgetSource.value=d.budgetSource||''; p_budgetCategory.value=d.budgetCategory||'';
@@ -2058,7 +2073,9 @@
       p_progTbody.innerHTML=''; addProgRow();
       p_schedTbody.innerHTML=''; addScheduleRow();
       const scheduleSectionTitleV15410=document.getElementById('p_schedule_section_title_v15410');if(scheduleSectionTitleV15410)scheduleSectionTitleV15410.value='세부 일정(안)';
-      const scheduleKeyTitleV15410=document.getElementById('p_schedule_key_title_v15410');if(scheduleKeyTitleV15410)scheduleKeyTitleV15410.value='시간';
+      const scheduleKeyTitleV15410=document.getElementById('p_schedule_key_title_v15410');if(scheduleKeyTitleV15410)scheduleKeyTitleV15410.value='일정';
+      const scheduleGroupTitleV161=document.getElementById('p_schedule_group_title_v161');if(scheduleGroupTitleV161)scheduleGroupTitleV161.value='구분';
+      const scheduleContentTitleV161=document.getElementById('p_schedule_content_title_v161');if(scheduleContentTitleV161)scheduleContentTitleV161.value='내용';
       p_budgetTbody.innerHTML=''; addPlanBudgetRow();
       if(typeof applyPlanAttachmentsV137==='function')applyPlanAttachmentsV137([]);
       if(typeof applyUploadedAttachmentsV142==='function')applyUploadedAttachmentsV142('PLAN',[]);
@@ -2106,16 +2123,16 @@
     const clone=container.cloneNode(true);clone.style.display='block';clone.classList.remove('print-target');clone.querySelectorAll('.no-print').forEach(el=>el.remove());
     const style=`<style>
       @page{size:A4 portrait;margin:30mm 20mm 20mm}body{font-family:Gulim,'굴림',sans-serif;color:#000;font-size:12pt;line-height:1.55}
-      .doc-sheet,.doc-sheet *{font-family:Gulim,'굴림',sans-serif!important}.doc-sheet{width:100%;border:0;padding:0;margin:0;font-size:12pt}.doc-cover-page{height:247mm;min-height:247mm;position:relative;display:flex;flex-direction:column;box-sizing:border-box;padding-bottom:0;overflow:visible}.doc-cover-page .doc-fixed-footer{position:static;flex:0 0 auto;margin-top:auto;margin-bottom:0}.doc-letterhead{width:100%;border-collapse:collapse;table-layout:fixed;margin:2px 0 42px}.doc-letterhead td{border:0;padding:0 8px;vertical-align:middle}.doc-letterhead td:first-child,.doc-letterhead td:last-child{width:155px!important}.doc-letterhead img{display:block;max-width:100%;height:auto}.doc-center-logo{width:88px;margin:auto}.doc-city-logo{width:120px;margin-left:auto}.doc-letterhead .doc-sub-header{display:none}
+      .doc-sheet,.doc-sheet *{font-family:Gulim,'굴림',sans-serif!important}.doc-sheet{width:100%;border:0;padding:0;margin:0;font-size:12pt}.doc-cover-page{height:247mm;min-height:247mm;max-height:247mm;position:relative;box-sizing:border-box;padding-bottom:39mm;overflow:hidden;page-break-after:always;break-after:page}.doc-cover-page .doc-fixed-footer{position:absolute;left:0;right:0;bottom:0;width:100%;margin:0;box-sizing:border-box}.doc-letterhead{width:100%;border-collapse:collapse;table-layout:fixed;margin:2px 0 42px}.doc-letterhead td{border:0;padding:0 8px;vertical-align:middle}.doc-letterhead td:first-child,.doc-letterhead td:last-child{width:155px!important}.doc-letterhead img{display:block;max-width:100%;height:auto}.doc-center-logo{width:88px;margin:auto}.doc-city-logo{width:120px;margin-left:auto}.doc-letterhead .doc-sub-header{display:none}
       .doc-org-header{font-family:'Malgun Gothic','맑은 고딕',sans-serif!important;font-size:24pt!important;font-weight:700!important;text-align:center;letter-spacing:-2px;white-space:nowrap}.doc-sub-header{font-size:10px;color:#2563eb;text-align:right;margin-top:3px}.doc-meta-table{width:100%;border-collapse:collapse;margin-bottom:15px;font-size:12pt}
       .doc-meta-table td{padding:4px 0;vertical-align:top}.doc-meta-label{width:72px;letter-spacing:.22em;white-space:nowrap}.doc-title-row td{border-bottom:1px solid #111;padding-bottom:6px}.doc-body-text{font-size:12pt;text-align:justify;line-height:1.75}.doc-body-text p{margin:5px 0}.doc-divider{text-align:center!important;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px;padding:0;text-indent:0}.doc-list-item{display:block;margin:3px 0 3px 34px!important;padding-left:30px!important;text-indent:-30px!important;font-size:12pt;text-align:left}.doc-signature{position:relative;text-align:center;font-family:Gulim,'굴림',sans-serif!important;font-size:19pt!important;font-weight:700!important;letter-spacing:.02em;margin:55px 0 50px}.doc-seal{position:absolute;width:64px;height:64px;object-fit:contain;margin-left:-20px;top:-18px}.doc-footer-signature{margin:18px 0 14px;flex:none}
       .out-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:10px 0 20px;font-size:12pt}.out-table th,.out-table td{border:1px solid #000;padding:6px 8px;overflow-wrap:anywhere;font-size:12pt!important}
       .out-table th{background:#f2f2f2;text-align:center}.td-center{text-align:center}.td-right{text-align:right}
       .doc-fixed-footer{width:100%;font-family:Batang,serif;font-size:12pt;line-height:1.5;background:#fff}.doc-approval-container{border-top:8px solid #b7b7b7;margin:0;padding-top:6px;font-size:12pt;line-height:1.5}.doc-approval-row{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;min-height:22px;margin:0;line-height:1.5}.doc-approval-row.doc-routing-row{display:block}.doc-app-item{display:flex;align-items:center;min-width:0;font-size:12pt;line-height:1.5;white-space:nowrap}
       .doc-app-label{font-size:12pt;margin-right:12px;letter-spacing:.08em}.doc-app-value{font-size:12pt;font-weight:normal;white-space:nowrap}.doc-receipt-label-v159{margin-right:0}.doc-footer-address,.doc-footer-address *{font-size:12pt}.doc-footer-address{margin-top:0;line-height:1.5;white-space:nowrap}.doc-footer-line{display:block;white-space:nowrap;letter-spacing:-.45px}
-      .doc-attachment-title{page-break-before:always;text-align:center;font-size:20pt!important;line-height:1.35;font-weight:700;margin:0 0 24px;padding:12px 8px;border-top:3px solid #000;border-bottom:3px solid #000;word-break:keep-all}.doc-subsection-title{font-size:12pt!important;margin:12px 0 5px}h3{font-size:14pt!important}h4{font-size:12pt!important}.output-two-col-v159 th:first-child{width:20%!important}.doc-sheet p[id^="out_p_"],.doc-sheet p[id^="out_r_"],.doc-sheet div[id^="out_p_attach"],.doc-sheet div[id^="out_r_tbl_attach"]{font-size:12pt!important}
+      .doc-attachment-title{page-break-before:always;text-align:center;font-size:20pt!important;line-height:1.35;font-weight:700;margin:0 0 24px;padding:12px 8px;border-top:3px solid #000;border-bottom:3px solid #000;word-break:keep-all}.doc-subsection-title{font-size:12pt!important;margin:12px 0 5px}h3{font-size:14pt!important}h4{font-size:12pt!important}.output-two-col-v159 th:first-child{width:20%!important}.output-schedule-v161 th:nth-child(1){width:20%!important}.output-schedule-v161 th:nth-child(2){width:24%!important}#out_p_budget_total_line_v161,#out_p_budget_total_line_v161 strong{font-size:12pt!important}.doc-sheet p[id^="out_p_"],.doc-sheet p[id^="out_r_"],.doc-sheet div[id^="out_p_attach"],.doc-sheet div[id^="out_r_tbl_attach"]{font-size:12pt!important}
       tr{page-break-inside:avoid}thead{display:table-header-group}h3,h4{page-break-after:avoid}.tag-plan,.tag-result{display:none}
-      @media print{body{margin:0}.doc-sheet{box-shadow:none}.doc-cover-page{height:247mm;min-height:247mm;position:relative;display:flex;flex-direction:column;padding-bottom:0;overflow:visible}.doc-cover-page .doc-fixed-footer{position:static;flex:0 0 auto;margin-top:auto;margin-bottom:0}.doc-footer-line{transform:none;width:100%}.doc-attachment-title{break-before:page;page-break-before:always;padding:12px 8px}}
+      @media print{body{margin:0}.doc-sheet{box-shadow:none}.doc-cover-page{height:247mm!important;min-height:247mm!important;max-height:247mm!important;position:relative!important;padding-bottom:39mm!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important}.doc-cover-page .doc-fixed-footer{position:absolute!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;margin:0!important;box-sizing:border-box!important}.doc-footer-line{transform:none;width:100%}.doc-attachment-title{break-before:page;page-break-before:always;padding:12px 8px}}
     </style>`;
     return "<!doctype html><html lang='ko' xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>"+esc(title||'문서')+"</title>"+style+"</head><body>"+clone.innerHTML+"</body></html>";
   }
@@ -2333,7 +2350,7 @@
         }
         if(Array.isArray(d.overview)) setRows('p_overviewTbody',d.overview,['p-ov-key','p-ov-val'],'addOverviewRow');
         if(Array.isArray(d.programs)) setRows('p_progTbody',d.programs,['p-prog-key','p-prog-val'],'addProgRow');
-        if(Array.isArray(d.schedule)) setRows('p_schedTbody',d.schedule,['p-sch-time','p-sch-val'],'addScheduleRow');
+        if(Array.isArray(d.schedule)) setRows('p_schedTbody',d.schedule,['p-sch-time','p-sch-group-v161','p-sch-val'],'addScheduleRow');
         if(Array.isArray(d.budget)) setRows('p_budgetTbody',d.budget,['p-bg-item','p-bg-calc','p-bg-amount','p-bg-note'],'addPlanBudgetRow');
         if(typeof applyPlanAttachmentsV137==='function')applyPlanAttachmentsV137(d.attachmentsV137||[]);
 
@@ -3400,6 +3417,21 @@
     const v=safeArithmeticV115(t);
     return v!==null&&v>=0?Math.round(v):null;
   }
+  function formatBasisNumericRunsV161(text){
+    return String(text||'').replace(/\d[\d,]*/g,token=>{
+      const digits=token.replace(/,/g,'');
+      return /^\d+$/.test(digits)&&digits.length>=4?Number(digits).toLocaleString('ko-KR'):digits;
+    });
+  }
+  function formatPlanBasisV161(input){
+    if(!input)return;
+    const start=typeof input.selectionStart==='number'?input.selectionStart:null;
+    const before=start===null?'':formatBasisNumericRunsV161(input.value.slice(0,start));
+    const formatted=formatBasisNumericRunsV161(input.value);
+    if(input.value!==formatted){input.value=formatted;if(start!==null)try{input.setSelectionRange(before.length,before.length);}catch(_){}}
+    calcBasisAmountV1031(input);
+  }
+  window.formatPlanBasisV161=formatPlanBasisV161;
   function calcBasisAmountV1031(input){
     const row=input.closest('tr'); if(!row) return;
     const amount=row.querySelector('.p-bg-amount'); if(!amount) return;
@@ -5669,7 +5701,7 @@ ${centerMissionV1493}
       ['참여인원',planned+'명',actual+'명',participationRate.toFixed(1)+'%'],['예산',moneyV10(plannedBudget),moneyV10(actualBudget),budgetRate.toFixed(1)+'%'],['만족도','-',satisfaction?satisfaction.toFixed(2)+'점':'-','-']
     ]);
     const programs=(Array.isArray(pd.programs)?pd.programs:[]).map(row=>pair(row,'p-prog-key','p-prog-val')).filter(row=>String(row[0]||row[1]).trim());
-    const schedules=(Array.isArray(pd.schedule)?pd.schedule:[]).map(row=>pair(row,'p-sch-time','p-sch-val')).filter(row=>String(row[0]||row[1]).trim());
+    const schedules=(Array.isArray(pd.schedule)?pd.schedule:[]).map(row=>Array.isArray(row)?(row.length>=3?[row[0]??'',row[1]??'',row[2]??'']:['',row[0]??'',row[1]??'']):[row?.['p-sch-time']??'',row?.['p-sch-group-v161']??'',row?.['p-sch-val']??'']).filter(row=>String(row[0]||row[1]||row[2]).trim());
     const planBudgetRows=(Array.isArray(pd.budget)?pd.budget:[]).map(row=>Array.isArray(row)?[row[0]??'',row[1]??'',moneyV10(number(row[2])),row[3]??'']:[row?.['p-bg-item']??row?.item??'',row?.['p-bg-calc']??row?.basis??'',moneyV10(number(row?.['p-bg-amount']??row?.planned)),row?.['p-bg-note']??row?.note??'']).filter(row=>String(row[0]||row[1]||row[2]).trim());
     const planFields=[
       ['사업명',ps.project_name||project.project_name||''],['추진배경 및 필요성',ps.background||''],['사업목적',ps.purpose||''],['기대효과',ps.expected_effect||''],
@@ -5681,7 +5713,7 @@ ${centerMissionV1493}
       '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px"><strong style="color:#1d4ed8">저장된 사업계획서</strong><span style="font-size:11px;color:#64748b">최종 저장 '+esc(new Date(plan.updated_at).toLocaleString())+'</span></div>'+
       table(['계획 항목','내용'],planFields)+
       '<h3 style="margin:16px 0 7px">세부 프로그램</h3>'+(programs.length?table(['프로그램','계획내용'],programs):'<div style="color:#666">저장된 프로그램 정보가 없습니다.</div>')+
-      '<h3 style="margin:16px 0 7px">추진 일정</h3>'+(schedules.length?table(['시간','일정내용'],schedules):'<div style="color:#666">저장된 일정 정보가 없습니다.</div>')+
+      '<h3 style="margin:16px 0 7px">추진 일정</h3>'+(schedules.length?table([pd.scheduleKeyTitle||'일정',pd.scheduleGroupTitleV161||'구분',pd.scheduleContentTitleV161||'내용'],schedules):'<div style="color:#666">저장된 일정 정보가 없습니다.</div>')+
       '<h3 style="margin:16px 0 7px">계획 예산</h3>'+(planBudgetRows.length?table(['항목','산출근거','금액','비고'],planBudgetRows):'<div style="color:#666">저장된 계획 예산이 없습니다.</div>'):
       '<div style="color:#b91c1c">저장된 사업계획서가 없습니다.</div>';
     const actualRows=result?[
@@ -5690,7 +5722,7 @@ ${centerMissionV1493}
     const schedule=document.getElementById('v10ScheduleBox');
     if(schedule)schedule.innerHTML=
       '<h3 style="margin:0 0 7px">계획 프로그램</h3>'+(programs.length?table(['프로그램','계획내용'],programs):'<div style="color:#666;margin-bottom:12px">저장된 프로그램 정보가 없습니다.</div>')+
-      '<h3 style="margin:14px 0 7px">계획 일정</h3>'+(schedules.length?table(['시간','일정내용'],schedules):'<div style="color:#666;margin-bottom:12px">저장된 일정 정보가 없습니다.</div>')+
+      '<h3 style="margin:14px 0 7px">계획 일정</h3>'+(schedules.length?table([pd.scheduleKeyTitle||'일정',pd.scheduleGroupTitleV161||'구분',pd.scheduleContentTitleV161||'내용'],schedules):'<div style="color:#666;margin-bottom:12px">저장된 일정 정보가 없습니다.</div>')+
       '<h3 style="margin:14px 0 7px">실제 운영실적</h3>'+(actualRows.length?table(['구분','실적'],actualRows):'<div style="color:#666">저장된 결과보고서 실적이 없습니다.</div>');
   }
   renderIntegratedProjectV10=async function(projectId){
@@ -7073,20 +7105,34 @@ downloadExpenseCsvV1476=function(){
 const resultLedgerRowsBaseV1548=resultLedgerRowsV1479;
 resultLedgerRowsV1479=async function(projectId,items){const rows=await resultLedgerRowsBaseV1548(projectId,items);return rows.map(row=>({...row,'r-bg-note':String(row['r-bg-note']||'').replace(/\[사업분야:[^\]]+\]\s*\/?\s*/g,'').trim()}));};
 
-// ===== v15.4.10: 세부일정 제목·첫 열 제목 사용자 수정 =====
+// ===== v16.1: 3열 추진일정·열 제목 사용자 수정·기존 자료 호환 =====
+function normalizeLegacyScheduleRowsV161(){
+  document.querySelectorAll('#p_schedTbody > tr').forEach(row=>{
+    const schedule=row.querySelector('.p-sch-time'),group=row.querySelector('.p-sch-group-v161');
+    if(!schedule||!group||group.value.trim()||!schedule.value.trim())return;
+    const value=schedule.value.trim();
+    const looksLikeSchedule=/(?:19|20)\d{2}|\d{1,2}:\d{2}|^\d{1,2}\s*(?:월|일|[.\/-])/.test(value);
+    if(!looksLikeSchedule){group.value=value;schedule.value='';}
+  });
+}
+function formatLoadedPlanBasisV161(){
+  document.querySelectorAll('#p_budgetTbody .p-bg-calc').forEach(input=>formatPlanBasisV161(input));
+}
 function applyScheduleTitlesV15410(data={}){
-  const section=document.getElementById('p_schedule_section_title_v15410'),key=document.getElementById('p_schedule_key_title_v15410');
+  const section=document.getElementById('p_schedule_section_title_v15410'),key=document.getElementById('p_schedule_key_title_v15410'),group=document.getElementById('p_schedule_group_title_v161'),content=document.getElementById('p_schedule_content_title_v161');
   if(section)section.value=String(data.scheduleSectionTitle||data.schedule_title||'세부 일정(안)');
-  if(key)key.value=String(data.scheduleKeyTitle||data.schedule_key_title||'시간');
+  if(key)key.value=String(data.scheduleKeyTitle||data.schedule_key_title||'일정');
+  if(group)group.value=String(data.scheduleGroupTitleV161||data.schedule_group_title||'구분');
+  if(content)content.value=String(data.scheduleContentTitleV161||data.schedule_content_title||'내용');
   updatePlanProgramScheduleHeadingsV1546();
 }
 const getPlanDataBaseV15410=getPlanData;
-getPlanData=function(){const data=getPlanDataBaseV15410();data.scheduleSectionTitle=document.getElementById('p_schedule_section_title_v15410')?.value.trim()||'세부 일정(안)';data.scheduleKeyTitle=document.getElementById('p_schedule_key_title_v15410')?.value.trim()||'시간';return data;};
+getPlanData=function(){const data=getPlanDataBaseV15410();data.scheduleSectionTitle=document.getElementById('p_schedule_section_title_v15410')?.value.trim()||'세부 일정(안)';data.scheduleKeyTitle=document.getElementById('p_schedule_key_title_v15410')?.value.trim()||'일정';data.scheduleGroupTitleV161=document.getElementById('p_schedule_group_title_v161')?.value.trim()||'구분';data.scheduleContentTitleV161=document.getElementById('p_schedule_content_title_v161')?.value.trim()||'내용';return data;};
 const loadSavedDataBaseV15410=loadSavedData;
-loadSavedData=function(id){const result=loadSavedDataBaseV15410(id),saved=typeof findSaved==='function'?findSaved(id):null;if(saved?.type==='PLAN')applyScheduleTitlesV15410(saved.data||{});return result;};
+loadSavedData=function(id){const result=loadSavedDataBaseV15410(id),saved=typeof findSaved==='function'?findSaved(id):null;if(saved?.type==='PLAN'){applyScheduleTitlesV15410(saved.data||{});normalizeLegacyScheduleRowsV161();formatLoadedPlanBasisV161();}return result;};
 const loadCloudDocumentBaseV15410=loadCloudDocument;
-loadCloudDocument=async function(docId){const result=await loadCloudDocumentBaseV15410.apply(this,arguments);try{const query=await sb.from('project_documents').select('doc_type,data').eq('id',docId).maybeSingle();if(!query.error&&query.data?.doc_type==='PLAN')applyScheduleTitlesV15410(query.data.data||{});}catch(error){console.warn('세부일정 제목 불러오기 경고:',error);}return result;};
-document.addEventListener('DOMContentLoaded',()=>applyScheduleTitlesV15410({}));
+loadCloudDocument=async function(docId){const result=await loadCloudDocumentBaseV15410.apply(this,arguments);try{const query=await sb.from('project_documents').select('doc_type,data').eq('id',docId).maybeSingle();if(!query.error&&query.data?.doc_type==='PLAN'){applyScheduleTitlesV15410(query.data.data||{});normalizeLegacyScheduleRowsV161();formatLoadedPlanBasisV161();}}catch(error){console.warn('세부일정 제목 불러오기 경고:',error);}return result;};
+document.addEventListener('DOMContentLoaded',()=>{applyScheduleTitlesV15410({});formatLoadedPlanBasisV161();});
 </script>
 
 <style>
