@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v16.1-20260918">
+<html lang="ko" data-build="v16.2-20260918">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.1 3열 일정·예산표기·하단고정)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.2 기안문 하단 고정 보강)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -76,6 +76,12 @@
   .doc-letterhead .doc-sub-header { display:none; }
   .doc-cover-page { height:247mm;min-height:247mm;max-height:247mm;position:relative;box-sizing:border-box;padding-bottom:39mm;overflow:hidden;page-break-after:always;break-after:page; }
   .doc-cover-page .doc-fixed-footer { position:absolute;left:0;right:0;bottom:0;width:100%;margin:0;box-sizing:border-box; }
+  .doc-cover-page.cover-table-ready-v162 { height:247mm;min-height:247mm;max-height:247mm;padding:0;overflow:hidden; }
+  .doc-cover-layout-v162 { width:100%;height:247mm;border:0 !important;border-collapse:collapse;table-layout:fixed;margin:0;padding:0; }
+  .doc-cover-layout-v162 > tbody > tr > td { border:0 !important;padding:0 !important; }
+  .doc-cover-layout-v162 .doc-cover-main-cell-v162 { height:210mm;vertical-align:top; }
+  .doc-cover-layout-v162 .doc-cover-footer-cell-v162 { height:37mm;vertical-align:bottom; }
+  .doc-cover-layout-v162 .doc-fixed-footer { position:static !important;left:auto !important;right:auto !important;bottom:auto !important;width:100% !important;margin:0 !important; }
   .doc-meta-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12pt; }
   .doc-meta-table td { padding: 4px 0; vertical-align: top; }
   .doc-meta-label { width:72px;letter-spacing:.22em;white-space:nowrap; }
@@ -159,6 +165,12 @@
     .doc-attachment-title { break-before: page; page-break-before: always; padding:12px 8px !important; }
     .doc-cover-page { height:247mm !important;min-height:247mm !important;max-height:247mm !important;position:relative !important;padding-bottom:39mm !important;overflow:hidden !important;page-break-after:always !important;break-after:page !important; }
     .doc-cover-page .doc-fixed-footer { position:absolute !important;left:0 !important;right:0 !important;bottom:0 !important;width:100% !important;margin:0 !important;box-sizing:border-box !important; }
+    .doc-cover-page.cover-table-ready-v162 { height:247mm !important;min-height:247mm !important;max-height:247mm !important;padding:0 !important;overflow:hidden !important; }
+    .doc-cover-layout-v162 { width:100% !important;height:247mm !important;border:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 !important;padding:0 !important; }
+    .doc-cover-layout-v162 > tbody > tr > td { border:0 !important;padding:0 !important; }
+    .doc-cover-layout-v162 .doc-cover-main-cell-v162 { height:210mm !important;vertical-align:top !important; }
+    .doc-cover-layout-v162 .doc-cover-footer-cell-v162 { height:37mm !important;vertical-align:bottom !important; }
+    .doc-cover-layout-v162 .doc-fixed-footer { position:static !important;left:auto !important;right:auto !important;bottom:auto !important;margin:0 !important; }
     .doc-approval-container, .doc-approval-row, .doc-footer-address { break-inside: avoid; page-break-inside: avoid; }
     .doc-footer-line { transform:none; width:100%; }
     .doc-sheet table thead { display: table-header-group !important; }
@@ -406,7 +418,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.1 3열 일정·예산표기·하단고정)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.2 기안문 하단 고정 보강)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -2121,9 +2133,10 @@
   function documentFileHTMLV133(containerId,title){
     const container=document.getElementById(containerId);if(!container)return null;
     const clone=container.cloneNode(true);clone.style.display='block';clone.classList.remove('print-target');clone.querySelectorAll('.no-print').forEach(el=>el.remove());
+    if(typeof buildCoverTableLayoutV162==='function')buildCoverTableLayoutV162(clone);
     const style=`<style>
       @page{size:A4 portrait;margin:30mm 20mm 20mm}body{font-family:Gulim,'굴림',sans-serif;color:#000;font-size:12pt;line-height:1.55}
-      .doc-sheet,.doc-sheet *{font-family:Gulim,'굴림',sans-serif!important}.doc-sheet{width:100%;border:0;padding:0;margin:0;font-size:12pt}.doc-cover-page{height:247mm;min-height:247mm;max-height:247mm;position:relative;box-sizing:border-box;padding-bottom:39mm;overflow:hidden;page-break-after:always;break-after:page}.doc-cover-page .doc-fixed-footer{position:absolute;left:0;right:0;bottom:0;width:100%;margin:0;box-sizing:border-box}.doc-letterhead{width:100%;border-collapse:collapse;table-layout:fixed;margin:2px 0 42px}.doc-letterhead td{border:0;padding:0 8px;vertical-align:middle}.doc-letterhead td:first-child,.doc-letterhead td:last-child{width:155px!important}.doc-letterhead img{display:block;max-width:100%;height:auto}.doc-center-logo{width:88px;margin:auto}.doc-city-logo{width:120px;margin-left:auto}.doc-letterhead .doc-sub-header{display:none}
+      .doc-sheet,.doc-sheet *{font-family:Gulim,'굴림',sans-serif!important}.doc-sheet{width:100%;border:0;padding:0;margin:0;font-size:12pt}.doc-cover-page{height:247mm;min-height:247mm;max-height:247mm;position:relative;box-sizing:border-box;padding-bottom:39mm;overflow:hidden;page-break-after:always;break-after:page}.doc-cover-page .doc-fixed-footer{position:absolute;left:0;right:0;bottom:0;width:100%;margin:0;box-sizing:border-box}.doc-cover-page.cover-table-ready-v162{height:247mm;min-height:247mm;max-height:247mm;padding:0;overflow:hidden}.doc-cover-layout-v162{width:100%;height:247mm;border:0!important;border-collapse:collapse;table-layout:fixed;margin:0;padding:0}.doc-cover-layout-v162>tbody>tr>td{border:0!important;padding:0!important}.doc-cover-layout-v162 .doc-cover-main-cell-v162{height:210mm;vertical-align:top}.doc-cover-layout-v162 .doc-cover-footer-cell-v162{height:37mm;vertical-align:bottom}.doc-cover-layout-v162 .doc-fixed-footer{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;margin:0!important}.doc-letterhead{width:100%;border-collapse:collapse;table-layout:fixed;margin:2px 0 42px}.doc-letterhead td{border:0;padding:0 8px;vertical-align:middle}.doc-letterhead td:first-child,.doc-letterhead td:last-child{width:155px!important}.doc-letterhead img{display:block;max-width:100%;height:auto}.doc-center-logo{width:88px;margin:auto}.doc-city-logo{width:120px;margin-left:auto}.doc-letterhead .doc-sub-header{display:none}
       .doc-org-header{font-family:'Malgun Gothic','맑은 고딕',sans-serif!important;font-size:24pt!important;font-weight:700!important;text-align:center;letter-spacing:-2px;white-space:nowrap}.doc-sub-header{font-size:10px;color:#2563eb;text-align:right;margin-top:3px}.doc-meta-table{width:100%;border-collapse:collapse;margin-bottom:15px;font-size:12pt}
       .doc-meta-table td{padding:4px 0;vertical-align:top}.doc-meta-label{width:72px;letter-spacing:.22em;white-space:nowrap}.doc-title-row td{border-bottom:1px solid #111;padding-bottom:6px}.doc-body-text{font-size:12pt;text-align:justify;line-height:1.75}.doc-body-text p{margin:5px 0}.doc-divider{text-align:center!important;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px;padding:0;text-indent:0}.doc-list-item{display:block;margin:3px 0 3px 34px!important;padding-left:30px!important;text-indent:-30px!important;font-size:12pt;text-align:left}.doc-signature{position:relative;text-align:center;font-family:Gulim,'굴림',sans-serif!important;font-size:19pt!important;font-weight:700!important;letter-spacing:.02em;margin:55px 0 50px}.doc-seal{position:absolute;width:64px;height:64px;object-fit:contain;margin-left:-20px;top:-18px}.doc-footer-signature{margin:18px 0 14px;flex:none}
       .out-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:10px 0 20px;font-size:12pt}.out-table th,.out-table td{border:1px solid #000;padding:6px 8px;overflow-wrap:anywhere;font-size:12pt!important}
@@ -2132,7 +2145,7 @@
       .doc-app-label{font-size:12pt;margin-right:12px;letter-spacing:.08em}.doc-app-value{font-size:12pt;font-weight:normal;white-space:nowrap}.doc-receipt-label-v159{margin-right:0}.doc-footer-address,.doc-footer-address *{font-size:12pt}.doc-footer-address{margin-top:0;line-height:1.5;white-space:nowrap}.doc-footer-line{display:block;white-space:nowrap;letter-spacing:-.45px}
       .doc-attachment-title{page-break-before:always;text-align:center;font-size:20pt!important;line-height:1.35;font-weight:700;margin:0 0 24px;padding:12px 8px;border-top:3px solid #000;border-bottom:3px solid #000;word-break:keep-all}.doc-subsection-title{font-size:12pt!important;margin:12px 0 5px}h3{font-size:14pt!important}h4{font-size:12pt!important}.output-two-col-v159 th:first-child{width:20%!important}.output-schedule-v161 th:nth-child(1){width:20%!important}.output-schedule-v161 th:nth-child(2){width:24%!important}#out_p_budget_total_line_v161,#out_p_budget_total_line_v161 strong{font-size:12pt!important}.doc-sheet p[id^="out_p_"],.doc-sheet p[id^="out_r_"],.doc-sheet div[id^="out_p_attach"],.doc-sheet div[id^="out_r_tbl_attach"]{font-size:12pt!important}
       tr{page-break-inside:avoid}thead{display:table-header-group}h3,h4{page-break-after:avoid}.tag-plan,.tag-result{display:none}
-      @media print{body{margin:0}.doc-sheet{box-shadow:none}.doc-cover-page{height:247mm!important;min-height:247mm!important;max-height:247mm!important;position:relative!important;padding-bottom:39mm!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important}.doc-cover-page .doc-fixed-footer{position:absolute!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;margin:0!important;box-sizing:border-box!important}.doc-footer-line{transform:none;width:100%}.doc-attachment-title{break-before:page;page-break-before:always;padding:12px 8px}}
+      @media print{body{margin:0}.doc-sheet{box-shadow:none}.doc-cover-page{height:247mm!important;min-height:247mm!important;max-height:247mm!important;position:relative!important;padding-bottom:39mm!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important}.doc-cover-page .doc-fixed-footer{position:absolute!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;margin:0!important;box-sizing:border-box!important}.doc-cover-page.cover-table-ready-v162{height:247mm!important;min-height:247mm!important;max-height:247mm!important;padding:0!important}.doc-cover-layout-v162{width:100%!important;height:247mm!important;border:0!important;border-collapse:collapse!important;table-layout:fixed!important}.doc-cover-layout-v162>tbody>tr>td{border:0!important;padding:0!important}.doc-cover-layout-v162 .doc-cover-main-cell-v162{height:210mm!important;vertical-align:top!important}.doc-cover-layout-v162 .doc-cover-footer-cell-v162{height:37mm!important;vertical-align:bottom!important}.doc-cover-layout-v162 .doc-fixed-footer{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;margin:0!important}.doc-footer-line{transform:none;width:100%}.doc-attachment-title{break-before:page;page-break-before:always;padding:12px 8px}}
     </style>`;
     return "<!doctype html><html lang='ko' xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>"+esc(title||'문서')+"</title>"+style+"</head><body>"+clone.innerHTML+"</body></html>";
   }
@@ -7462,6 +7475,67 @@ const posterPlanBaseV155=getPlanData;getPlanData=function(){const d=posterPlanBa
   startNewDocument=function(type){if(type!=='RESULT')customPlanTitle='';return startNewBase.apply(this,arguments);};
   window.getCustomPlanTitleV160=()=>customPlanTitle;
 })();
+</script>
+
+<script>
+// ===== v16.2: 브라우저·PDF·Word 공통 기안문 하단 고정 =====
+function buildCoverTableLayoutV162(root){
+  const scope=root&&root.querySelectorAll?root:document;
+  scope.querySelectorAll('.doc-cover-page').forEach(cover=>{
+    if(cover.classList.contains('cover-table-ready-v162'))return;
+    const footer=[...cover.children].find(node=>node.classList&&node.classList.contains('doc-fixed-footer'));
+    if(!footer)return;
+
+    cover.removeChild(footer);
+    const main=document.createElement('div');
+    main.className='doc-cover-main-v162';
+    [...cover.childNodes].forEach(node=>main.appendChild(node));
+
+    const table=document.createElement('table');
+    table.className='doc-cover-layout-v162';
+    table.setAttribute('role','presentation');
+    table.style.cssText='width:100%;height:247mm;border:0;border-collapse:collapse;table-layout:fixed;margin:0;padding:0;mso-table-lspace:0pt;mso-table-rspace:0pt;';
+    const tbody=document.createElement('tbody');
+    const mainRow=document.createElement('tr');
+    mainRow.style.cssText='height:210mm;mso-height-source:userset;mso-height-rule:exactly;';
+    const mainCell=document.createElement('td');
+    mainCell.className='doc-cover-main-cell-v162';
+    mainCell.style.cssText='height:210mm;vertical-align:top;border:0;padding:0;mso-height-source:userset;mso-height-rule:exactly;';
+    mainCell.appendChild(main);
+    mainRow.appendChild(mainCell);
+
+    const footerRow=document.createElement('tr');
+    footerRow.style.cssText='height:37mm;mso-height-source:userset;mso-height-rule:exactly;';
+    const footerCell=document.createElement('td');
+    footerCell.className='doc-cover-footer-cell-v162';
+    footerCell.style.cssText='height:37mm;vertical-align:bottom;border:0;padding:0;mso-height-source:userset;mso-height-rule:exactly;';
+    footer.style.setProperty('position','static','important');
+    footer.style.setProperty('left','auto','important');
+    footer.style.setProperty('right','auto','important');
+    footer.style.setProperty('bottom','auto','important');
+    footer.style.setProperty('width','100%','important');
+    footer.style.setProperty('margin','0','important');
+    footerCell.appendChild(footer);
+    footerRow.appendChild(footerCell);
+
+    tbody.appendChild(mainRow);
+    tbody.appendChild(footerRow);
+    table.appendChild(tbody);
+    cover.replaceChildren(table);
+    cover.classList.add('cover-table-ready-v162');
+    cover.style.setProperty('height','247mm','important');
+    cover.style.setProperty('min-height','247mm','important');
+    cover.style.setProperty('max-height','247mm','important');
+    cover.style.setProperty('padding','0','important');
+  });
+  return root;
+}
+window.buildCoverTableLayoutV162=buildCoverTableLayoutV162;
+document.addEventListener('DOMContentLoaded',()=>{
+  ['output-plan-container','output-result-container','output-external-v146'].forEach(id=>{
+    const target=document.getElementById(id);if(target)buildCoverTableLayoutV162(target);
+  });
+});
 </script>
 
 </body>
