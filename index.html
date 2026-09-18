@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v16.2-20260918">
+<html lang="ko" data-build="v16.3-20260918">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.2 기안문 하단 고정 보강)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.3 정적 하단행·13pt 출력)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -135,6 +135,33 @@
   .doc-footer-address { font-size:12pt;color:#333;margin-top:0;text-align:left;line-height:1.5;font-family:'Batang',serif;white-space:nowrap; }
   .doc-footer-address * { font-size:12pt; }
   .doc-footer-line { display:block; white-space:nowrap; letter-spacing:-.45px; }
+  /* v16.3 출력문서 13pt 통일 및 기안문 정적 하단행 */
+  .doc-sheet { font-size:13pt !important;line-height:1.62 !important; }
+  .doc-meta-table, .doc-meta-table td, .doc-body-text, .doc-body-text p, .doc-list-item,
+  .doc-sheet .out-table, .doc-sheet .out-table th, .doc-sheet .out-table td,
+  .doc-subsection-title, .doc-sheet h4,
+  .doc-fixed-footer, .doc-approval-container, .doc-approval-row, .doc-app-item,
+  .doc-app-label, .doc-app-value, .doc-footer-address, .doc-footer-address * { font-size:13pt !important; }
+  .doc-sheet p[id^="out_p_"], .doc-sheet p[id^="out_r_"], .doc-sheet div[id^="out_p_attach"], .doc-sheet div[id^="out_r_tbl_attach"] { font-size:13pt !important; }
+  .doc-sheet h3 { font-size:15pt !important; }
+  .doc-attachment-title { font-size:20pt !important; }
+  .doc-org-header { font-size:24pt !important; }
+  .doc-signature { font-size:19pt !important; }
+  .doc-cover-static-v163 { height:247mm !important;min-height:247mm !important;max-height:247mm !important;padding:0 !important;overflow:hidden !important; }
+  .doc-cover-static-table-v163 { width:100% !important;height:247mm !important;border:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 !important;padding:0 !important; }
+  .doc-cover-static-table-v163 > tbody > tr > td { border:0 !important;padding:0 !important; }
+  .doc-cover-static-main-row-v163, .doc-cover-static-main-cell-v163 { height:210mm !important;vertical-align:top !important; }
+  .doc-cover-static-footer-row-v163, .doc-cover-static-footer-cell-v163 { height:37mm !important;vertical-align:bottom !important; }
+  .doc-cover-static-table-v163 .doc-fixed-footer-static-v163 { position:static !important;left:auto !important;right:auto !important;bottom:auto !important;width:100% !important;margin:0 !important; }
+  .doc-approval-row:not(.doc-routing-row) { column-gap:24px; }
+  .doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(2) { justify-content:center; }
+  .doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(3) { justify-content:flex-end; }
+  .doc-routing-row .doc-app-item { gap:5px; }
+  .doc-receipt-label-v159 { margin-left:16px !important;margin-right:0 !important; }
+  .doc-footer-address { margin-top:3px !important; }
+  .doc-footer-line { width:100%;letter-spacing:.01em;word-spacing:.08em; }
+  .doc-footer-address-row-v163 { margin-bottom:2px; }
+  .doc-footer-contact-row-v163 { display:flex !important;justify-content:space-between;align-items:center;gap:14px; }
   .doc-number-input { display:flex;align-items:stretch;border:1px solid #cbd5e1;border-radius:5px;background:#fff;overflow:hidden;margin-top:4px; }
   .doc-number-input span { display:flex;align-items:center;padding:0 8px;background:#f1f5f9;color:#334155;white-space:nowrap;font-size:12px;border-right:1px solid #cbd5e1; }
   .doc-number-input input { border:0 !important;border-radius:0 !important;margin:0 !important;min-width:55px; }
@@ -418,7 +445,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.2 기안문 하단 고정 보강)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.3 정적 하단행·13pt 출력)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -730,7 +757,8 @@
       </div>
       <div class="doc-sheet">
         <span class="tag-plan">내부결재 기안문</span>
-        <div class="doc-cover-page">
+        <div class="doc-cover-page doc-cover-static-v163">
+        <table class="doc-cover-static-table-v163" role="presentation" height="933" style="height:247mm;mso-table-lspace:0pt;mso-table-rspace:0pt"><tbody><tr class="doc-cover-static-main-row-v163" height="793" style="height:210mm;mso-height-source:userset;mso-height-rule:exactly"><td class="doc-cover-static-main-cell-v163" height="793" style="height:210mm;vertical-align:top;mso-height-source:userset;mso-height-rule:exactly">
         <table class="doc-letterhead"><tr><td style="width:110px">
           <img class="doc-center-logo" id="out_p_center_logo" src="data:image/jpeg;base64,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" alt="화성시장기요양지원센터 로고">
           </td><td><div class="doc-org-header" id="out_p_org">화성시장기요양지원센터</div></td><td style="width:155px">
@@ -749,7 +777,8 @@
           <div style="margin-top:36px" id="out_p_coverAttachmentListV137">붙임&nbsp;&nbsp;1. 사업계획서(안) 1부.&nbsp;&nbsp;끝.</div>
           <span id="out_p_attachment" style="display:none">사업계획서(안) 1부.</span>
         </div>
-        <div class="doc-fixed-footer">
+        </td></tr><tr class="doc-cover-static-footer-row-v163" height="140" style="height:37mm;mso-height-source:userset;mso-height-rule:exactly"><td class="doc-cover-static-footer-cell-v163" height="140" style="height:37mm;vertical-align:bottom;mso-height-source:userset;mso-height-rule:exactly">
+        <div class="doc-fixed-footer doc-fixed-footer-static-v163">
           <div class="doc-approval-container">
             <div class="doc-approval-row">
               <div class="doc-app-item"><span class="doc-app-label">담당</span><span class="doc-app-value" id="out_p_staff">최송아</span></div>
@@ -758,8 +787,9 @@
             </div>
             <div class="doc-approval-row doc-routing-row"><div class="doc-app-item"><span class="doc-app-label">시행</span><span id="out_p_docNumber">화성시장기요양-</span>&nbsp;&nbsp;(<span id="out_p_docDate">시행일 미입력</span>)&nbsp;<span class="doc-app-label doc-receipt-label-v159">접수</span></div></div>
           </div>
-          <div class="doc-footer-address"><div class="doc-footer-line"><span id="out_p_address">우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층</span> /</div><div class="doc-footer-line">전화 <span id="out_p_phone">(031) 294-1630</span> / 전송 <span id="out_p_fax">(031) 294-1633</span> / <span id="out_p_email">hsgoodcare@daum.net</span> / <span id="out_p_disclosure">공개</span></div></div>
+          <div class="doc-footer-address"><div class="doc-footer-line doc-footer-address-row-v163"><span id="out_p_address">우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층</span></div><div class="doc-footer-line doc-footer-contact-row-v163"><span>전화 <span id="out_p_phone">(031) 294-1630</span></span><span>전송 <span id="out_p_fax">(031) 294-1633</span></span><span id="out_p_email">hsgoodcare@daum.net</span><span id="out_p_disclosure">공개</span></div></div>
         </div>
+        </td></tr></tbody></table>
         </div>
         <hr style="margin: 40px 0; border: 0; border-top: 1px dashed #aaa;" class="no-print">
         <h2 class="doc-attachment-title" id="out_p_mainTitleV159">사업계획서</h2>
@@ -1058,7 +1088,8 @@
       </div>
       <div class="doc-sheet">
         <span class="tag-result">내부결재 기안문</span>
-        <div class="doc-cover-page">
+        <div class="doc-cover-page doc-cover-static-v163">
+          <table class="doc-cover-static-table-v163" role="presentation" height="933" style="height:247mm;mso-table-lspace:0pt;mso-table-rspace:0pt"><tbody><tr class="doc-cover-static-main-row-v163" height="793" style="height:210mm;mso-height-source:userset;mso-height-rule:exactly"><td class="doc-cover-static-main-cell-v163" height="793" style="height:210mm;vertical-align:top;mso-height-source:userset;mso-height-rule:exactly">
           <table class="doc-letterhead"><tr><td style="width:110px">
             <img class="doc-center-logo" id="out_r_center_logo" alt="화성시장기요양지원센터 로고">
           </td><td><div class="doc-org-header" id="out_r_org">화성시장기요양지원센터</div></td><td style="width:155px">
@@ -1077,7 +1108,8 @@
             <div style="margin-top:42px" id="out_r_coverAttachmentListV142">붙임&nbsp;&nbsp;1. 사업 운영결과보고서 1부.&nbsp;&nbsp;끝.</div>
             <span id="out_r_attachment" style="display:none">사업 운영결과보고서 1부.</span>
           </div>
-          <div class="doc-fixed-footer">
+          </td></tr><tr class="doc-cover-static-footer-row-v163" height="140" style="height:37mm;mso-height-source:userset;mso-height-rule:exactly"><td class="doc-cover-static-footer-cell-v163" height="140" style="height:37mm;vertical-align:bottom;mso-height-source:userset;mso-height-rule:exactly">
+          <div class="doc-fixed-footer doc-fixed-footer-static-v163">
             <div class="doc-approval-container">
               <div class="doc-approval-row">
                 <div class="doc-app-item"><span class="doc-app-label">담당</span><span class="doc-app-value" id="out_r_staff">최송아</span></div>
@@ -1086,8 +1118,9 @@
               </div>
               <div class="doc-approval-row doc-routing-row"><div class="doc-app-item"><span class="doc-app-label">시행</span><span id="out_r_docNumber">화성시장기요양-</span>&nbsp;&nbsp;(<span id="out_r_docDate"></span>)&nbsp;<span class="doc-app-label doc-receipt-label-v159">접수</span></div></div>
             </div>
-            <div class="doc-footer-address"><div class="doc-footer-line"><span id="out_r_address"></span> /</div><div class="doc-footer-line">전화 <span id="out_r_phone"></span> / 전송 <span id="out_r_fax"></span> / <span id="out_r_email"></span> / <span id="out_r_disclosure"></span></div></div>
+            <div class="doc-footer-address"><div class="doc-footer-line doc-footer-address-row-v163"><span id="out_r_address"></span></div><div class="doc-footer-line doc-footer-contact-row-v163"><span>전화 <span id="out_r_phone"></span></span><span>전송 <span id="out_r_fax"></span></span><span id="out_r_email"></span><span id="out_r_disclosure"></span></div></div>
           </div>
+          </td></tr></tbody></table>
         </div>
         <hr style="margin: 40px 0; border: 0; border-top: 1px dashed #aaa;" class="no-print">
         
@@ -2143,9 +2176,10 @@
       .out-table th{background:#f2f2f2;text-align:center}.td-center{text-align:center}.td-right{text-align:right}
       .doc-fixed-footer{width:100%;font-family:Batang,serif;font-size:12pt;line-height:1.5;background:#fff}.doc-approval-container{border-top:8px solid #b7b7b7;margin:0;padding-top:6px;font-size:12pt;line-height:1.5}.doc-approval-row{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;min-height:22px;margin:0;line-height:1.5}.doc-approval-row.doc-routing-row{display:block}.doc-app-item{display:flex;align-items:center;min-width:0;font-size:12pt;line-height:1.5;white-space:nowrap}
       .doc-app-label{font-size:12pt;margin-right:12px;letter-spacing:.08em}.doc-app-value{font-size:12pt;font-weight:normal;white-space:nowrap}.doc-receipt-label-v159{margin-right:0}.doc-footer-address,.doc-footer-address *{font-size:12pt}.doc-footer-address{margin-top:0;line-height:1.5;white-space:nowrap}.doc-footer-line{display:block;white-space:nowrap;letter-spacing:-.45px}
-      .doc-attachment-title{page-break-before:always;text-align:center;font-size:20pt!important;line-height:1.35;font-weight:700;margin:0 0 24px;padding:12px 8px;border-top:3px solid #000;border-bottom:3px solid #000;word-break:keep-all}.doc-subsection-title{font-size:12pt!important;margin:12px 0 5px}h3{font-size:14pt!important}h4{font-size:12pt!important}.output-two-col-v159 th:first-child{width:20%!important}.output-schedule-v161 th:nth-child(1){width:20%!important}.output-schedule-v161 th:nth-child(2){width:24%!important}#out_p_budget_total_line_v161,#out_p_budget_total_line_v161 strong{font-size:12pt!important}.doc-sheet p[id^="out_p_"],.doc-sheet p[id^="out_r_"],.doc-sheet div[id^="out_p_attach"],.doc-sheet div[id^="out_r_tbl_attach"]{font-size:12pt!important}
+      .doc-attachment-title{page-break-before:always;text-align:center;font-size:20pt!important;line-height:1.35;font-weight:700;margin:0 0 24px;padding:12px 8px;border-top:3px solid #000;border-bottom:3px solid #000;word-break:keep-all}.doc-subsection-title{font-size:13pt!important;margin:12px 0 5px}h3{font-size:15pt!important}h4{font-size:13pt!important}.output-two-col-v159 th:first-child{width:20%!important}.output-schedule-v161 th:nth-child(1){width:20%!important}.output-schedule-v161 th:nth-child(2){width:24%!important}#out_p_budget_total_line_v161,#out_p_budget_total_line_v161 strong{font-size:13pt!important}.doc-sheet p[id^="out_p_"],.doc-sheet p[id^="out_r_"],.doc-sheet div[id^="out_p_attach"],.doc-sheet div[id^="out_r_tbl_attach"]{font-size:13pt!important}
+      .doc-sheet{font-size:13pt!important;line-height:1.62!important}.doc-meta-table,.doc-meta-table td,.doc-body-text,.doc-body-text p,.doc-list-item,.doc-sheet .out-table,.doc-sheet .out-table th,.doc-sheet .out-table td,.doc-subsection-title,.doc-sheet h4,.doc-fixed-footer,.doc-approval-container,.doc-approval-row,.doc-app-item,.doc-app-label,.doc-app-value,.doc-footer-address,.doc-footer-address *{font-size:13pt!important}.doc-sheet h3{font-size:15pt!important}.doc-cover-static-v163{height:247mm!important;min-height:247mm!important;max-height:247mm!important;padding:0!important;overflow:hidden!important}.doc-cover-static-table-v163{width:100%!important;height:247mm!important;border:0!important;border-collapse:collapse!important;table-layout:fixed!important;margin:0!important;padding:0!important}.doc-cover-static-table-v163>tbody>tr>td{border:0!important;padding:0!important}.doc-cover-static-main-row-v163,.doc-cover-static-main-cell-v163{height:210mm!important;vertical-align:top!important}.doc-cover-static-footer-row-v163,.doc-cover-static-footer-cell-v163{height:37mm!important;vertical-align:bottom!important}.doc-cover-static-table-v163 .doc-fixed-footer-static-v163{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;margin:0!important}.doc-approval-row:not(.doc-routing-row){column-gap:24px}.doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(2){justify-content:center}.doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(3){justify-content:flex-end}.doc-routing-row .doc-app-item{gap:5px}.doc-receipt-label-v159{margin-left:16px!important;margin-right:0!important}.doc-footer-address{margin-top:3px!important}.doc-footer-line{width:100%;letter-spacing:.01em;word-spacing:.08em}.doc-footer-address-row-v163{margin-bottom:2px}.doc-footer-contact-row-v163{display:flex!important;justify-content:space-between;align-items:center;gap:14px}
       tr{page-break-inside:avoid}thead{display:table-header-group}h3,h4{page-break-after:avoid}.tag-plan,.tag-result{display:none}
-      @media print{body{margin:0}.doc-sheet{box-shadow:none}.doc-cover-page{height:247mm!important;min-height:247mm!important;max-height:247mm!important;position:relative!important;padding-bottom:39mm!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important}.doc-cover-page .doc-fixed-footer{position:absolute!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;margin:0!important;box-sizing:border-box!important}.doc-cover-page.cover-table-ready-v162{height:247mm!important;min-height:247mm!important;max-height:247mm!important;padding:0!important}.doc-cover-layout-v162{width:100%!important;height:247mm!important;border:0!important;border-collapse:collapse!important;table-layout:fixed!important}.doc-cover-layout-v162>tbody>tr>td{border:0!important;padding:0!important}.doc-cover-layout-v162 .doc-cover-main-cell-v162{height:210mm!important;vertical-align:top!important}.doc-cover-layout-v162 .doc-cover-footer-cell-v162{height:37mm!important;vertical-align:bottom!important}.doc-cover-layout-v162 .doc-fixed-footer{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;margin:0!important}.doc-footer-line{transform:none;width:100%}.doc-attachment-title{break-before:page;page-break-before:always;padding:12px 8px}}
+      @media print{body{margin:0}.doc-sheet{box-shadow:none}.doc-cover-page{height:247mm!important;min-height:247mm!important;max-height:247mm!important;position:relative!important;padding-bottom:39mm!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important}.doc-cover-page .doc-fixed-footer{position:absolute!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;margin:0!important;box-sizing:border-box!important}.doc-cover-page.cover-table-ready-v162{height:247mm!important;min-height:247mm!important;max-height:247mm!important;padding:0!important}.doc-cover-layout-v162{width:100%!important;height:247mm!important;border:0!important;border-collapse:collapse!important;table-layout:fixed!important}.doc-cover-layout-v162>tbody>tr>td{border:0!important;padding:0!important}.doc-cover-layout-v162 .doc-cover-main-cell-v162{height:210mm!important;vertical-align:top!important}.doc-cover-layout-v162 .doc-cover-footer-cell-v162{height:37mm!important;vertical-align:bottom!important}.doc-cover-layout-v162 .doc-fixed-footer{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;margin:0!important}.doc-cover-static-v163{height:247mm!important;min-height:247mm!important;max-height:247mm!important;padding:0!important}.doc-cover-static-table-v163{height:247mm!important}.doc-cover-static-table-v163 .doc-fixed-footer-static-v163{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;margin:0!important}.doc-footer-line{transform:none;width:100%}.doc-attachment-title{break-before:page;page-break-before:always;padding:12px 8px}}
     </style>`;
     return "<!doctype html><html lang='ko' xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>"+esc(title||'문서')+"</title>"+style+"</head><body>"+clone.innerHTML+"</body></html>";
   }
