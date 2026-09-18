@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v14.6.4-20260906">
+<html lang="ko" data-build="v15.9-20260918">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.7 템플릿 포스터 스튜디오)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.9 출력서식 표준화)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -63,7 +63,7 @@
   .external-task-v146 { display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee; }
   
   /* 공문서 서식 스타일 */
-  .doc-sheet { background:#ffffff;border:1px solid #94a3b8;padding:40px;font-family:'Gulim','굴림',sans-serif;color:#000;box-shadow:0 0 5px rgba(0,0,0,.1);margin-top:20px;line-height:1.8;page-break-inside:auto; }
+  .doc-sheet { background:#ffffff;border:1px solid #94a3b8;padding:40px;font-family:'Gulim','굴림',sans-serif;color:#000;box-shadow:0 0 5px rgba(0,0,0,.1);margin-top:20px;font-size:12pt;line-height:1.65;page-break-inside:auto; }
   .doc-sheet, .doc-sheet * { font-family:'Gulim','굴림',sans-serif !important; }
   .doc-letterhead { width:100%;border-collapse:collapse;margin:2px 0 42px;table-layout:fixed; }
   .doc-letterhead td { border:0;padding:0 8px;vertical-align:middle; }
@@ -74,46 +74,56 @@
   .doc-org-header { font-family:'Malgun Gothic','맑은 고딕',sans-serif !important;font-size:24pt !important;font-weight:700 !important;text-align:center;letter-spacing:-2px;margin:0;white-space:nowrap; }
   .doc-sub-header { font-size: 10px; color: #2563eb; text-align:right;margin-top:3px; }
   .doc-letterhead .doc-sub-header { display:none; }
-  .doc-cover-page { min-height:250mm;display:flex;flex-direction:column;box-sizing:border-box; }
-  .doc-cover-page .doc-fixed-footer { margin-top:auto; }
-  .doc-meta-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 14px; }
+  .doc-cover-page { height:247mm;min-height:247mm;position:relative;display:flex;flex-direction:column;box-sizing:border-box;padding-bottom:34mm;overflow:visible; }
+  .doc-cover-page .doc-fixed-footer { position:absolute;left:0;right:0;bottom:0;margin:0; }
+  .doc-meta-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12pt; }
   .doc-meta-table td { padding: 4px 0; vertical-align: top; }
   .doc-meta-label { width:72px;letter-spacing:.22em;white-space:nowrap; }
   .doc-title-row td { border-bottom:1px solid #111;padding-bottom:6px; }
-  .doc-body-text { font-size: 14px; margin-bottom: 20px; text-align: justify;line-height:1.85; }
+  .doc-body-text { font-size: 12pt; margin-bottom: 20px; text-align: justify;line-height:1.75; }
   .doc-body-text p { margin:5px 0; }
   .doc-divider { text-align:center;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px; }
-  .doc-list-item { display:block;margin:3px 0 3px 34px !important;padding-left:30px !important;text-indent:-30px !important;font-size:14px;text-align:left; }
+  .doc-list-item { display:block;margin:3px 0 3px 34px !important;padding-left:30px !important;text-indent:-30px !important;font-size:12pt;text-align:left; }
   .plan-draft-editable-v1543[contenteditable="true"] { outline:1px dashed #2563eb;outline-offset:2px;background:#eff6ff;cursor:text; }
   #out_p_overview_summary.plan-draft-editing-v1543 .doc-list-item { outline:1px dashed #93c5fd;outline-offset:1px;background:#eff6ff;cursor:text; }
   #out_p_overview_summary.plan-draft-editing-v1543 .doc-list-item:hover { background:#dbeafe; }
   #out_p_overview_summary.plan-draft-editing-v1543 .doc-list-item.plan-draft-selected-v1543 { outline:2px solid #2563eb;background:#bfdbfe; }
+  #out_r_overview_summary.plan-draft-editing-v1543 .doc-list-item { outline:1px dashed #86efac;outline-offset:1px;background:#f0fdf4;cursor:text; }
+  #out_r_overview_summary.plan-draft-editing-v1543 .doc-list-item:hover { background:#dcfce7; }
+  #out_r_overview_summary.plan-draft-editing-v1543 .doc-list-item.plan-draft-selected-v1543 { outline:2px solid #059669;background:#bbf7d0; }
   .plan-draft-editor-v1543 { display:none;margin:8px 0 12px;padding:10px;border:1px solid #bfdbfe;border-radius:6px;background:#f8fbff; }
   .plan-draft-editor-v1543.active { display:flex;gap:6px;align-items:center;flex-wrap:wrap; }
   .plan-draft-editor-v1543 .hint { margin-right:auto;font-size:12px;color:#475569; }
 
   /* 출력용 테이블 스타일 */
-  .out-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 10px 0 20px 0; font-size: 13px; font-family: 'Batang', serif; }
+  .out-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 10px 0 20px 0; font-size: 12pt; font-family: 'Batang', serif; }
   .out-table th, .out-table td { border: 1px solid #000; padding: 6px 8px; text-align: left; }
   .out-table th { background-color: #f2f2f2; text-align: center; font-weight: bold; }
   .out-table td { white-space: normal; overflow-wrap: anywhere; word-break: keep-all; }
-  .doc-attachment-title { text-align:center; font-size:20px; font-family:'Batang',serif; margin:0 0 20px; padding-top:8px; }
-  .doc-subsection-title { font-size:13px; font-family:'Batang',serif; margin:12px 0 5px; }
+  .doc-attachment-title { text-align:center; font-size:20pt; line-height:1.35; font-weight:700; font-family:'Batang',serif; margin:0 0 24px; padding-top:8px; word-break:keep-all; }
+  .doc-subsection-title { font-size:12pt; font-family:'Batang',serif; margin:12px 0 5px; }
+  .doc-sheet h3 { font-size:14pt !important; }
+  .doc-sheet h4 { font-size:12pt !important; }
+  .doc-sheet .out-table, .doc-sheet .out-table th, .doc-sheet .out-table td { font-size:12pt !important; }
+  .doc-sheet p[id^="out_p_"], .doc-sheet p[id^="out_r_"], .doc-sheet div[id^="out_p_attach"], .doc-sheet div[id^="out_r_tbl_attach"] { font-size:12pt !important; }
+  .output-two-col-v159 th:first-child { width:20% !important; }
 
   /* 2단 고정 결재/시행선 스타일 */
   .doc-signature { position:relative;text-align:center;font-family:'Gulim','굴림',sans-serif !important;font-size:19pt !important;font-weight:700 !important;letter-spacing:.02em;margin:55px 0 50px; }
   .doc-seal { position:absolute;width:64px;height:64px;object-fit:contain;margin-left:-20px;top:-18px; }
   .doc-seal-text { display:inline-block;margin-left:10px;color:#b91c1c;font-size:17px;font-weight:bold;letter-spacing:0;vertical-align:middle;white-space:nowrap; }
   .doc-footer-signature { margin:18px 0 14px;flex:none; }
-  .doc-fixed-footer { width:100%; margin-top:auto; font-family:'Batang',serif; font-size:14px; line-height:1.55; }
-  .doc-approval-container { width: 100%; border-top: 8px solid #b7b7b7; margin-top: 0; padding-top: 7px; font-size: 14px; line-height:1.55; font-family: 'Batang', serif; }
-  .doc-approval-row { display: flex; justify-content: flex-start; min-height:22px; margin:0; line-height:1.55; }
-  .doc-app-item { flex: 1; display: flex; align-items: center; font-size:14px; line-height:1.55; }
-  .doc-app-label { font-size: 14px; font-weight: normal; margin-right: 12px; white-space: nowrap; }
-  .doc-app-value { font-size: 14px; font-weight: bold; }
+  .doc-fixed-footer { width:100%;font-family:'Batang',serif;font-size:12pt;line-height:1.5;background:#fff; }
+  .doc-approval-container { width:100%;border-top:8px solid #b7b7b7;margin:0;padding-top:6px;font-size:12pt;line-height:1.5;font-family:'Batang',serif; }
+  .doc-approval-row { display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;min-height:22px;margin:0;line-height:1.55; }
+  .doc-approval-row.doc-routing-row { display:block; }
+  .doc-app-item { min-width:0;display:flex;align-items:center;font-size:12pt;line-height:1.5;white-space:nowrap; }
+  .doc-app-label { display:inline-block;font-size:12pt;font-weight:normal;margin-right:12px;white-space:nowrap;letter-spacing:.08em; }
+  .doc-app-value { font-size:12pt;font-weight:normal;white-space:nowrap; }
+  .doc-receipt-label-v159 { margin-right:0; }
   
-  .doc-footer-address { font-size: 14px; color: #333; margin-top: 0; text-align: left; line-height: 1.55; font-family: 'Batang', serif; white-space:nowrap; }
-  .doc-footer-address * { font-size: 14px; }
+  .doc-footer-address { font-size:12pt;color:#333;margin-top:0;text-align:left;line-height:1.5;font-family:'Batang',serif;white-space:nowrap; }
+  .doc-footer-address * { font-size:12pt; }
   .doc-footer-line { display:block; white-space:nowrap; letter-spacing:-.45px; }
   .doc-number-input { display:flex;align-items:stretch;border:1px solid #cbd5e1;border-radius:5px;background:#fff;overflow:hidden;margin-top:4px; }
   .doc-number-input span { display:flex;align-items:center;padding:0 8px;background:#f1f5f9;color:#334155;white-space:nowrap;font-size:12px;border-right:1px solid #cbd5e1; }
@@ -131,7 +141,7 @@
   .tag-result { background-color: #d1fae5; color: #065f46; padding: 2px 6px; border-radius: 3px; font-size: 12px; font-weight: bold; }
 
   @media print {
-    @page { size: A4 portrait; margin: 15mm; }
+    @page { size: A4 portrait; margin: 30mm 20mm 20mm; }
     body { padding: 0 !important; margin: 0 !important; background-color: #ffffff !important; }
     .app-container { border: none !important; box-shadow: none !important; padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
     .mode-selector, .form-section, h1, h2, .btn-container, .no-print, .sub-tab-container { display: none !important; }
@@ -143,9 +153,10 @@
     .doc-sheet { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
     .doc-sheet { line-height: 1.55 !important; }
     .doc-attachment-title { break-before: page; page-break-before: always; padding-top: 0 !important; }
-    .doc-cover-page .doc-fixed-footer { position:static; margin-top:auto !important; }
+    .doc-cover-page { height:247mm !important;min-height:247mm !important;position:relative !important;padding-bottom:34mm !important;overflow:visible !important; }
+    .doc-cover-page .doc-fixed-footer { position:absolute !important;left:0 !important;right:0 !important;bottom:0 !important;margin:0 !important; }
     .doc-approval-container, .doc-approval-row, .doc-footer-address { break-inside: avoid; page-break-inside: avoid; }
-    .doc-footer-line { transform:scaleX(.78); transform-origin:left top; width:128%; }
+    .doc-footer-line { transform:none; width:100%; }
     .doc-sheet table thead { display: table-header-group !important; }
     .doc-sheet table tfoot { display: table-footer-group; }
     .doc-sheet tr { break-inside: avoid; page-break-inside: avoid; }
@@ -391,7 +402,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.7 템플릿 포스터 스튜디오)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v15.9 출력서식 표준화)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -723,22 +734,22 @@
           <div class="doc-approval-container">
             <div class="doc-approval-row">
               <div class="doc-app-item"><span class="doc-app-label">담당</span><span class="doc-app-value" id="out_p_staff">최송아</span></div>
-              <div class="doc-app-item"><span class="doc-app-value" id="out_p_reviewer">대리 박예원</span></div>
-              <div class="doc-app-item"><span class="doc-app-value" id="out_p_approver">센터장 임은숙</span></div>
+              <div class="doc-app-item"><span class="doc-app-label">대리</span><span class="doc-app-value" id="out_p_reviewer">박예원</span></div>
+              <div class="doc-app-item"><span class="doc-app-label">센터장</span><span class="doc-app-value" id="out_p_approver">임은숙</span></div>
             </div>
-            <div class="doc-approval-row"><div class="doc-app-item">시행&nbsp;&nbsp;<span id="out_p_docNumber">화성시장기요양-</span>&nbsp;&nbsp;(<span id="out_p_docDate">시행일 미입력</span>)</div><div class="doc-app-item"><span class="doc-app-label">접수</span></div></div>
+            <div class="doc-approval-row doc-routing-row"><div class="doc-app-item"><span class="doc-app-label">시행</span><span id="out_p_docNumber">화성시장기요양-</span>&nbsp;&nbsp;(<span id="out_p_docDate">시행일 미입력</span>)&nbsp;<span class="doc-app-label doc-receipt-label-v159">접수</span></div></div>
           </div>
-          <div class="doc-footer-address"><div class="doc-footer-line"><span id="out_p_address">우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층</span>&nbsp;&nbsp;전화 <span id="out_p_phone">(031) 294-1630</span> / 팩스 <span id="out_p_fax">(031) 294-1633</span> / <span id="out_p_email">hsgoodcare@daum.net</span> / <span id="out_p_disclosure">공개</span></div></div>
+          <div class="doc-footer-address"><div class="doc-footer-line"><span id="out_p_address">우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층</span> /</div><div class="doc-footer-line">전화 <span id="out_p_phone">(031) 294-1630</span> / 전송 <span id="out_p_fax">(031) 294-1633</span> / <span id="out_p_email">hsgoodcare@daum.net</span> / <span id="out_p_disclosure">공개</span></div></div>
         </div>
         </div>
         <hr style="margin: 40px 0; border: 0; border-top: 1px dashed #aaa;" class="no-print">
-        <h2 class="doc-attachment-title">[사업계획서]</h2>
+        <h2 class="doc-attachment-title" id="out_p_mainTitleV159">사업계획서</h2>
         <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px;">Ⅰ. 사업 개요</h3>
-        <table class="out-table" id="out_p_overview_table"></table>
+        <table class="out-table output-two-col-v159" id="out_p_overview_table"></table>
         <div id="out_p_program_schedule_section">
           <h3 id="out_p_program_schedule_title_v1546" style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅱ. 주요 프로그램 및 세부일정(안)</h3>
-          <div id="out_p_program_block"><h4 id="out_p_program_heading_v1546" class="doc-subsection-title">1. 주요 프로그램</h4><table class="out-table" id="out_p_prog_table"></table></div>
-          <div id="out_p_schedule_block"><h4 id="out_p_schedule_heading_v1546" class="doc-subsection-title">2. 세부 일정</h4><table class="out-table" id="out_p_sched_table"></table></div>
+          <div id="out_p_program_block"><h4 id="out_p_program_heading_v1546" class="doc-subsection-title">1. 주요 프로그램</h4><table class="out-table output-two-col-v159" id="out_p_prog_table"></table></div>
+          <div id="out_p_schedule_block"><h4 id="out_p_schedule_heading_v1546" class="doc-subsection-title">2. 세부 일정</h4><table class="out-table output-two-col-v159" id="out_p_sched_table"></table></div>
         </div>
         <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅲ. 소요 예산(안) 및 재원</h3>
         <p style="font-size:13px; font-family:'Batang', serif;" id="out_p_budget_meta"></p>
@@ -1012,9 +1023,19 @@
       <div style="display: flex; justify-content: space-between; align-items: center;" class="no-print">
         <h2 class="section-result-head">생성된 사업 결과보고서 통합본</h2>
         <div>
-          <button type="button" class="btn btn-result" style="padding: 6px 12px; font-size:12px;" onclick="printDoc('output-result-container')">🖨️ 인쇄 / PDF 저장</button>
-          <button type="button" class="btn btn-save" style="padding: 6px 12px; font-size:12px;" onclick="exportDoc('output-result-container', '사업결과보고서_통합본')">📥 Word 저장</button>
+          <button type="button" id="resultDraftEditBtnV158" class="btn btn-add" style="padding:6px 12px;font-size:12px;" onclick="startResultDraftEditV158()">✏️ 기안문 내용 수정</button>
+          <button type="button" id="resultDraftDoneBtnV158" class="btn btn-result" style="display:none;padding:6px 12px;font-size:12px;" onclick="finishResultDraftEditV158()">✅ 수정 완료</button>
+          <button type="button" class="btn btn-del" style="padding:6px 12px;font-size:12px;" onclick="resetResultDraftV158()">↩ 자동 생성으로 되돌리기</button>
+          <button type="button" class="btn btn-result" style="padding: 6px 12px; font-size:12px;" onclick="finishResultDraftEditV158();printDoc('output-result-container')">🖨️ 인쇄 / PDF 저장</button>
+          <button type="button" class="btn btn-save" style="padding: 6px 12px; font-size:12px;" onclick="finishResultDraftEditV158();exportDoc('output-result-container', '사업결과보고서_통합본')">📥 Word 저장</button>
         </div>
+      </div>
+      <div id="resultDraftEditorV158" class="plan-draft-editor-v1543 no-print">
+        <span class="hint">초록색 영역을 직접 수정할 수 있습니다. 아래 항목은 클릭하여 선택한 후 이동하거나 삭제하세요.</span>
+        <button type="button" class="btn btn-add" onclick="addResultDraftItemV158()">+ 항목 추가</button>
+        <button type="button" class="btn btn-add" onclick="moveResultDraftItemV158(-1)">↑ 위로</button>
+        <button type="button" class="btn btn-add" onclick="moveResultDraftItemV158(1)">↓ 아래로</button>
+        <button type="button" class="btn btn-del" onclick="deleteResultDraftItemV158()">선택 항목 삭제</button>
       </div>
       <div class="doc-sheet">
         <span class="tag-result">내부결재 기안문</span>
@@ -1044,16 +1065,16 @@
                 <div class="doc-app-item"><span class="doc-app-label">대리</span><span class="doc-app-value" id="out_r_reviewer">박예원</span></div>
                 <div class="doc-app-item"><span class="doc-app-label">센터장</span><span class="doc-app-value" id="out_r_approver">임은숙</span></div>
               </div>
-              <div class="doc-approval-row"><div class="doc-app-item"><span class="doc-app-label">시&nbsp;&nbsp;행</span><span id="out_r_docNumber">화성시장기요양-</span>&nbsp;&nbsp;(<span id="out_r_docDate"></span>)</div><div class="doc-app-item"><span class="doc-app-label">접수</span></div></div>
+              <div class="doc-approval-row doc-routing-row"><div class="doc-app-item"><span class="doc-app-label">시행</span><span id="out_r_docNumber">화성시장기요양-</span>&nbsp;&nbsp;(<span id="out_r_docDate"></span>)&nbsp;<span class="doc-app-label doc-receipt-label-v159">접수</span></div></div>
             </div>
-            <div class="doc-footer-address"><div class="doc-footer-line"><span id="out_r_address"></span>&nbsp;&nbsp;전화 <span id="out_r_phone"></span> / 팩스 <span id="out_r_fax"></span> / <span id="out_r_email"></span> / <span id="out_r_disclosure"></span></div></div>
+            <div class="doc-footer-address"><div class="doc-footer-line"><span id="out_r_address"></span> /</div><div class="doc-footer-line">전화 <span id="out_r_phone"></span> / 전송 <span id="out_r_fax"></span> / <span id="out_r_email"></span> / <span id="out_r_disclosure"></span></div></div>
           </div>
         </div>
         <hr style="margin: 40px 0; border: 0; border-top: 1px dashed #aaa;" class="no-print">
         
-        <h2 class="doc-attachment-title">[사업 결과보고서]</h2>
+        <h2 class="doc-attachment-title" id="out_r_mainTitleV159">사업 결과보고서</h2>
         <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px;">Ⅰ. 사업 개요 및 추진 결과</h3>
-        <table class="out-table">
+        <table class="out-table output-two-col-v159" id="out_r_overview_table_v159">
           <tr><th style="width:25%;">사업명</th><td id="out_r_tbl_pName"></td></tr>
           <tr><th>사업유형</th><td id="out_r_typeV136"></td></tr>
           <tr><th>일시 및 장소</th><td id="out_r_tbl_dateLoc"></td></tr>
@@ -1070,7 +1091,7 @@
         <div id="out_r_surveySectionV136">
         <h3 id="out_r_surveyTitleV136" style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅲ. 설문 결과</h3>
         <h4 style="font-size:13px; font-family:'Batang', serif; margin:5px 0;">1. 만족도 조사 요약</h4>
-        <table class="out-table">
+        <table class="out-table output-two-col-v159">
           <tr><th style="width:25%;">분석 기준</th><td id="out_r_tbl_surveyInfo"></td></tr>
           <tr><th style="width:25%;">전반적 만족도</th><td id="out_r_tbl_score"></td></tr>
           <tr><th>주요 항목별 만족도</th><td id="out_r_tbl_surveyItems"></td></tr>
@@ -1081,7 +1102,7 @@
         </div>
 
         <h3 id="out_r_evalTitleV136" style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅳ. 운영평가 및 환류</h3>
-        <table class="out-table">
+        <table class="out-table output-two-col-v159">
           <tr><th style="width:25%;">주요성과</th><td id="out_r_evalGoodV136"></td></tr>
           <tr><th>문제점·개선사항</th><td id="out_r_evalBadV136"></td></tr>
           <tr><th>종합 평가결과</th><td id="out_r_evalResultV136"></td></tr>
@@ -1574,9 +1595,9 @@
 
     document.getElementById('out_p_org').innerText = org;
     document.querySelectorAll('.bind_p_org').forEach(el => el.innerText = org);
-    document.getElementById('out_p_staff').innerText = staff;
-    document.getElementById('out_p_reviewer').innerText = reviewer;
-    document.getElementById('out_p_approver').innerText = approver;
+    document.getElementById('out_p_staff').innerText = String(staff||'').replace(/^담당\s*/, '');
+    document.getElementById('out_p_reviewer').innerText = String(reviewer||'').replace(/^(검토자|대리)\s*/, '');
+    document.getElementById('out_p_approver').innerText = String(approver||'').replace(/^(결재자|센터장)\s*/, '');
 
     // 1. 사업개요/기안문 매핑
     const stdPlan = (typeof getStandardPlanV106 === 'function' ? getStandardPlanV106() : {}) || {};
@@ -2082,17 +2103,17 @@
     const container=document.getElementById(containerId);if(!container)return null;
     const clone=container.cloneNode(true);clone.style.display='block';clone.classList.remove('print-target');clone.querySelectorAll('.no-print').forEach(el=>el.remove());
     const style=`<style>
-      @page{size:A4 portrait;margin:15mm}body{font-family:Gulim,'굴림',sans-serif;color:#000;line-height:1.55}
-      .doc-sheet,.doc-sheet *{font-family:Gulim,'굴림',sans-serif!important}.doc-sheet{width:100%;border:0;padding:0;margin:0}.doc-cover-page{min-height:250mm;display:flex;flex-direction:column;box-sizing:border-box}.doc-cover-page .doc-fixed-footer{margin-top:auto}.doc-letterhead{width:100%;border-collapse:collapse;table-layout:fixed;margin:2px 0 42px}.doc-letterhead td{border:0;padding:0 8px;vertical-align:middle}.doc-letterhead td:first-child,.doc-letterhead td:last-child{width:155px!important}.doc-letterhead img{display:block;max-width:100%;height:auto}.doc-center-logo{width:88px;margin:auto}.doc-city-logo{width:120px;margin-left:auto}.doc-letterhead .doc-sub-header{display:none}
-      .doc-org-header{font-family:'Malgun Gothic','맑은 고딕',sans-serif!important;font-size:24pt!important;font-weight:700!important;text-align:center;letter-spacing:-2px;white-space:nowrap}.doc-sub-header{font-size:10px;color:#2563eb;text-align:right;margin-top:3px}.doc-meta-table{width:100%;border-collapse:collapse;margin-bottom:15px;font-size:14px}
-      .doc-meta-table td{padding:4px 0;vertical-align:top}.doc-meta-label{width:72px;letter-spacing:.22em;white-space:nowrap}.doc-title-row td{border-bottom:1px solid #111;padding-bottom:6px}.doc-body-text{font-size:14px;text-align:justify;line-height:1.85}.doc-body-text p{margin:5px 0}.doc-divider{text-align:center!important;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px;padding:0;text-indent:0}.doc-list-item{display:block;margin:3px 0 3px 34px!important;padding-left:30px!important;text-indent:-30px!important;font-size:14px;text-align:left}.doc-signature{position:relative;text-align:center;font-family:Gulim,'굴림',sans-serif!important;font-size:19pt!important;font-weight:700!important;letter-spacing:.02em;margin:55px 0 50px}.doc-seal{position:absolute;width:64px;height:64px;object-fit:contain;margin-left:-20px;top:-18px}.doc-footer-signature{margin:18px 0 14px;flex:none}
-      .out-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:10px 0 20px;font-size:13px}.out-table th,.out-table td{border:1px solid #000;padding:6px 8px;overflow-wrap:anywhere}
+      @page{size:A4 portrait;margin:30mm 20mm 20mm}body{font-family:Gulim,'굴림',sans-serif;color:#000;font-size:12pt;line-height:1.55}
+      .doc-sheet,.doc-sheet *{font-family:Gulim,'굴림',sans-serif!important}.doc-sheet{width:100%;border:0;padding:0;margin:0;font-size:12pt}.doc-cover-page{height:247mm;min-height:247mm;position:relative;display:flex;flex-direction:column;box-sizing:border-box;padding-bottom:34mm;overflow:visible}.doc-cover-page .doc-fixed-footer{position:absolute;left:0;right:0;bottom:0;margin:0}.doc-letterhead{width:100%;border-collapse:collapse;table-layout:fixed;margin:2px 0 42px}.doc-letterhead td{border:0;padding:0 8px;vertical-align:middle}.doc-letterhead td:first-child,.doc-letterhead td:last-child{width:155px!important}.doc-letterhead img{display:block;max-width:100%;height:auto}.doc-center-logo{width:88px;margin:auto}.doc-city-logo{width:120px;margin-left:auto}.doc-letterhead .doc-sub-header{display:none}
+      .doc-org-header{font-family:'Malgun Gothic','맑은 고딕',sans-serif!important;font-size:24pt!important;font-weight:700!important;text-align:center;letter-spacing:-2px;white-space:nowrap}.doc-sub-header{font-size:10px;color:#2563eb;text-align:right;margin-top:3px}.doc-meta-table{width:100%;border-collapse:collapse;margin-bottom:15px;font-size:12pt}
+      .doc-meta-table td{padding:4px 0;vertical-align:top}.doc-meta-label{width:72px;letter-spacing:.22em;white-space:nowrap}.doc-title-row td{border-bottom:1px solid #111;padding-bottom:6px}.doc-body-text{font-size:12pt;text-align:justify;line-height:1.75}.doc-body-text p{margin:5px 0}.doc-divider{text-align:center!important;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px;padding:0;text-indent:0}.doc-list-item{display:block;margin:3px 0 3px 34px!important;padding-left:30px!important;text-indent:-30px!important;font-size:12pt;text-align:left}.doc-signature{position:relative;text-align:center;font-family:Gulim,'굴림',sans-serif!important;font-size:19pt!important;font-weight:700!important;letter-spacing:.02em;margin:55px 0 50px}.doc-seal{position:absolute;width:64px;height:64px;object-fit:contain;margin-left:-20px;top:-18px}.doc-footer-signature{margin:18px 0 14px;flex:none}
+      .out-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:10px 0 20px;font-size:12pt}.out-table th,.out-table td{border:1px solid #000;padding:6px 8px;overflow-wrap:anywhere;font-size:12pt!important}
       .out-table th{background:#f2f2f2;text-align:center}.td-center{text-align:center}.td-right{text-align:right}
-      .doc-fixed-footer{width:100%;margin-top:auto;font-family:Batang,serif;font-size:14px;line-height:1.55}.doc-approval-container{border-top:8px solid #b7b7b7;margin-top:0;padding-top:7px;font-size:14px;line-height:1.55}.doc-approval-row{display:flex;min-height:22px;margin:0;line-height:1.55}.doc-app-item{display:flex;align-items:center;flex:1;font-size:14px;line-height:1.55}
-      .doc-app-label{font-size:14px;margin-right:12px}.doc-app-value{font-size:14px;font-weight:bold}.doc-footer-address,.doc-footer-address *{font-size:14px}.doc-footer-address{margin-top:0;line-height:1.55;white-space:nowrap}.doc-footer-line{display:block;white-space:nowrap;letter-spacing:-.45px}
-      .doc-attachment-title{page-break-before:always;text-align:center;font-size:20px;margin:0 0 20px}.doc-subsection-title{font-size:13px;margin:12px 0 5px}
+      .doc-fixed-footer{width:100%;font-family:Batang,serif;font-size:12pt;line-height:1.5;background:#fff}.doc-approval-container{border-top:8px solid #b7b7b7;margin:0;padding-top:6px;font-size:12pt;line-height:1.5}.doc-approval-row{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;min-height:22px;margin:0;line-height:1.5}.doc-approval-row.doc-routing-row{display:block}.doc-app-item{display:flex;align-items:center;min-width:0;font-size:12pt;line-height:1.5;white-space:nowrap}
+      .doc-app-label{font-size:12pt;margin-right:12px;letter-spacing:.08em}.doc-app-value{font-size:12pt;font-weight:normal;white-space:nowrap}.doc-receipt-label-v159{margin-right:0}.doc-footer-address,.doc-footer-address *{font-size:12pt}.doc-footer-address{margin-top:0;line-height:1.5;white-space:nowrap}.doc-footer-line{display:block;white-space:nowrap;letter-spacing:-.45px}
+      .doc-attachment-title{page-break-before:always;text-align:center;font-size:20pt!important;line-height:1.35;font-weight:700;margin:0 0 24px;word-break:keep-all}.doc-subsection-title{font-size:12pt!important;margin:12px 0 5px}h3{font-size:14pt!important}h4{font-size:12pt!important}.output-two-col-v159 th:first-child{width:20%!important}.doc-sheet p[id^="out_p_"],.doc-sheet p[id^="out_r_"],.doc-sheet div[id^="out_p_attach"],.doc-sheet div[id^="out_r_tbl_attach"]{font-size:12pt!important}
       tr{page-break-inside:avoid}thead{display:table-header-group}h3,h4{page-break-after:avoid}.tag-plan,.tag-result{display:none}
-      @media print{body{margin:0}.doc-sheet{box-shadow:none}.doc-cover-page .doc-fixed-footer{position:static;margin-top:auto}.doc-footer-line{transform:scaleX(.78);transform-origin:left top;width:128%}.doc-attachment-title{break-before:page;page-break-before:always}}
+      @media print{body{margin:0}.doc-sheet{box-shadow:none}.doc-cover-page{height:247mm;min-height:247mm;position:relative;padding-bottom:34mm;overflow:visible}.doc-cover-page .doc-fixed-footer{position:absolute;left:0;right:0;bottom:0;margin:0}.doc-footer-line{transform:none;width:100%}.doc-attachment-title{break-before:page;page-break-before:always}}
     </style>`;
     return "<!doctype html><html lang='ko' xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>"+esc(title||'문서')+"</title>"+style+"</head><body>"+clone.innerHTML+"</body></html>";
   }
@@ -3557,7 +3578,7 @@
     if(resultTheme&&!resultTheme.value.trim())resultTheme.value=st.purpose||'';
     const plannedBudget=Number(d.budgetTotal||d.totalBudget||normalizePlanBudgetV1031(d).total||0);
     if(plannedBudget>0)set('r_approvedBudget',plannedBudget);
-    window.resultPlanSnapshotV136={operation_date:st.operation_date||'',target_group:st.target_group||'',planned_participants:Number(st.planned_participants||0),location:st.location||'',planned_budget:plannedBudget};
+    window.resultPlanSnapshotV136={operation_date:st.operation_date||'',target_group:st.target_group||'',planned_participants:Number(st.planned_participants||0),location:st.location||'',planned_budget:plannedBudget,business_area:st.business_area||d.businessArea||''};
     renderPlanCompareV107(st);
   }
 
@@ -3967,7 +3988,7 @@
    const planned=document.getElementById('r_plannedParticipants');if(planned&&Number(planned.value||0)===0)planned.value=Number(st.planned_participants||0);
    set('r_summaryContent',st.content);set('r_actualLocation',st.location);
    const planBudget=Number(pd.budgetTotal||pd.totalBudget||(typeof normalizePlanBudgetV1031==='function'?normalizePlanBudgetV1031(pd).total:0)||0);
-   window.resultPlanSnapshotV136={operation_date:st.operation_date||'',target_group:st.target_group||'',planned_participants:Number(st.planned_participants||0),location:st.location||'',planned_budget:planBudget};
+   window.resultPlanSnapshotV136={operation_date:st.operation_date||'',target_group:st.target_group||'',planned_participants:Number(st.planned_participants||0),location:st.location||'',planned_budget:planBudget,business_area:st.business_area||pd.businessArea||''};
    if(typeof setResultTypeFromPlanV136==='function')setResultTypeFromPlanV136(pd);
    renderPlanCompareV107(st);
   }
@@ -7201,6 +7222,160 @@ async function printPosterV155(){const win=window.open('','_blank');if(!win)retu
 async function downloadPosterImageV156(){const src=posterStateV155?.image;if(!src)return alert('이미지를 먼저 생성하거나 업로드해 주세요.');const blob=await (await fetch(src)).blob();posterDownloadBlobV156(blob,'포스터_이미지원본.'+({ 'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[blob.type]||'png'));}
 async function savePosterPlanV156(){if(posterBusyV156||posterLoadingV156)return alert('이미지 처리가 끝난 후 저장해 주세요.');await saveCloudDocument('PLAN');}
 const posterPlanBaseV155=getPlanData;getPlanData=function(){const d=posterPlanBaseV155();d.posterV155=posterStateV155?{...posterStateV155}:null;return d;};
+</script>
+
+<script>
+// ===== v15.8: 계획서·결과보고서 기안문 수정본 저장/복원 =====
+(function(){
+  'use strict';
+  const draftFields={
+    p:['out_p_recipient','out_p_docTitle','out_p_basis_text','out_p_request_text','out_p_coverAttachmentListV137','out_p_staff','out_p_reviewer','out_p_approver','out_p_docNumber','out_p_docDate','out_p_address','out_p_phone','out_p_fax','out_p_email','out_p_disclosure'],
+    r:['out_r_recipient','out_r_docTitle','out_r_basis_text','out_r_request_text','out_r_coverAttachmentListV142','out_r_staff','out_r_reviewer','out_r_approver','out_r_docNumber','out_r_docDate','out_r_address','out_r_phone','out_r_fax','out_r_email','out_r_disclosure']
+  };
+  const summaryId={p:'out_p_overview_summary',r:'out_r_overview_summary'};
+  let customDraft={p:null,r:null},resultEditing=false,selectedResultItem=null,suppressCapture=false;
+  const clone=value=>value?JSON.parse(JSON.stringify(value)):null;
+  const safe=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const status=(kind,message,color='#166534')=>{const box=document.getElementById(kind==='p'?'savePlanStatusV130':'saveResultStatusV130');if(box){box.textContent=message;box.style.color=color;}};
+  function collect(kind){
+    const values={};draftFields[kind].forEach(id=>{const el=document.getElementById(id);if(el)values[id]=el.innerText;});
+    const summary=document.getElementById(summaryId[kind]);
+    const items=summary?[...summary.querySelectorAll(':scope > .doc-list-item')].map(el=>el.innerText):[];
+    return {schema:'15.8',values,items,savedAt:new Date().toISOString()};
+  }
+  function apply(kind,draft){
+    if(!draft||!draft.values)return;
+    draftFields[kind].forEach(id=>{const el=document.getElementById(id);if(el&&Object.prototype.hasOwnProperty.call(draft.values,id))el.innerText=String(draft.values[id]??'');});
+    const summary=document.getElementById(summaryId[kind]);
+    if(summary&&Array.isArray(draft.items))summary.innerHTML=draft.items.map(item=>'<div class="doc-list-item">'+safe(item).replace(/\r?\n/g,'<br>')+'</div>').join('');
+  }
+  function setEditable(kind,enabled){
+    draftFields[kind].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.contentEditable=enabled?'true':'false';el.spellcheck=enabled;el.classList.toggle('plan-draft-editable-v1543',enabled);});
+    const summary=document.getElementById(summaryId[kind]);if(!summary)return;
+    summary.classList.toggle('plan-draft-editing-v1543',enabled);
+    summary.querySelectorAll('.doc-list-item').forEach(el=>{el.contentEditable=enabled?'true':'false';el.spellcheck=enabled;if(!enabled)el.classList.remove('plan-draft-selected-v1543');});
+  }
+  function renumber(kind){
+    const labels=['가','나','다','라','마','바','사','아','자','차','카','타','파','하'];
+    document.querySelectorAll('#'+summaryId[kind]+' .doc-list-item').forEach((el,index)=>{el.innerHTML=el.innerHTML.replace(/^\s*(?:[가-하]|\d+)\.\s*/, (labels[index]||String(index+1))+'. ');});
+  }
+
+  const finishPlanBase=finishPlanDraftEditV1543;
+  finishPlanDraftEditV1543=function(){
+    const wasEditing=document.getElementById('planDraftDoneBtnV1543')?.style.display!=='none';
+    const result=finishPlanBase.apply(this,arguments);
+    if(wasEditing&&!suppressCapture){customDraft.p=collect('p');status('p','기안문 수정내용 반영 완료 · DB 저장 후 다시 불러와도 유지됩니다.');}
+    return result;
+  };
+  resetPlanDraftV1543=function(){
+    if(!confirm('직접 수정한 계획서 기안문을 삭제하고 입력자료 기준으로 다시 생성하시겠습니까?'))return;
+    suppressCapture=true;try{finishPlanBase();}finally{suppressCapture=false;}
+    customDraft.p=null;generatePlanDocs();status('p','자동 생성 내용으로 되돌렸습니다. DB 저장 시 변경사항이 확정됩니다.','#b45309');
+  };
+
+  window.startResultDraftEditV158=function(){
+    if(resultEditing)return;resultEditing=true;setEditable('r',true);
+    const summary=document.getElementById(summaryId.r);if(summary)summary.onclick=event=>{const item=event.target.closest('.doc-list-item');if(!item)return;summary.querySelectorAll('.doc-list-item').forEach(el=>el.classList.remove('plan-draft-selected-v1543'));selectedResultItem=item;item.classList.add('plan-draft-selected-v1543');};
+    document.getElementById('resultDraftEditorV158')?.classList.add('active');
+    const edit=document.getElementById('resultDraftEditBtnV158'),done=document.getElementById('resultDraftDoneBtnV158');if(edit)edit.style.display='none';if(done)done.style.display='inline-block';
+  };
+  window.finishResultDraftEditV158=function(){
+    const wasEditing=resultEditing;setEditable('r',false);const summary=document.getElementById(summaryId.r);if(summary)summary.onclick=null;
+    resultEditing=false;selectedResultItem=null;document.getElementById('resultDraftEditorV158')?.classList.remove('active');
+    const edit=document.getElementById('resultDraftEditBtnV158'),done=document.getElementById('resultDraftDoneBtnV158');if(edit)edit.style.display='inline-block';if(done)done.style.display='none';
+    if(wasEditing&&!suppressCapture){customDraft.r=collect('r');status('r','기안문 수정내용 반영 완료 · DB 저장 후 다시 불러와도 유지됩니다.');}
+  };
+  window.addResultDraftItemV158=function(){
+    if(!resultEditing)window.startResultDraftEditV158();const name=prompt('추가할 항목명을 입력해 주세요.','기타');if(name===null||!name.trim())return;const content=prompt('항목 내용을 입력해 주세요.','');if(content===null)return;
+    const summary=document.getElementById(summaryId.r);if(!summary)return;const el=document.createElement('div');el.className='doc-list-item';el.contentEditable='true';el.spellcheck=true;el.innerHTML='가. '+safe(name.trim())+' : '+safe(content.trim()).replace(/\r?\n/g,'<br>');summary.appendChild(el);renumber('r');selectedResultItem=el;el.classList.add('plan-draft-selected-v1543');el.focus();
+  };
+  window.moveResultDraftItemV158=function(direction){const el=selectedResultItem;if(!el)return alert('이동할 항목을 먼저 클릭해 주세요.');if(direction<0&&el.previousElementSibling)el.parentNode.insertBefore(el,el.previousElementSibling);if(direction>0&&el.nextElementSibling)el.parentNode.insertBefore(el.nextElementSibling,el);renumber('r');};
+  window.deleteResultDraftItemV158=function(){if(!selectedResultItem)return alert('삭제할 항목을 먼저 클릭해 주세요.');selectedResultItem.remove();selectedResultItem=null;renumber('r');};
+  window.resetResultDraftV158=function(){
+    if(!confirm('직접 수정한 결과보고서 기안문을 삭제하고 입력자료 기준으로 다시 생성하시겠습니까?'))return;
+    suppressCapture=true;try{window.finishResultDraftEditV158();}finally{suppressCapture=false;}customDraft.r=null;generateResultDocs();status('r','자동 생성 내용으로 되돌렸습니다. DB 저장 시 변경사항이 확정됩니다.','#b45309');
+  };
+
+  const generatePlanBase=generatePlanDocs;
+  generatePlanDocs=function(){const result=generatePlanBase.apply(this,arguments);if(customDraft.p&&document.getElementById('output-plan-container')?.style.display!=='none')apply('p',customDraft.p);return result;};
+  const generateResultBase=generateResultDocs;
+  generateResultDocs=function(){if(resultEditing)window.finishResultDraftEditV158();const result=generateResultBase.apply(this,arguments);if(customDraft.r&&document.getElementById('output-result-container')?.style.display!=='none')apply('r',customDraft.r);return result;};
+
+  const getPlanBase=getPlanData;getPlanData=function(){const data=getPlanBase.apply(this,arguments);data.draftDocumentV158=clone(customDraft.p);return data;};
+  const getResultBase=getResultData;getResultData=function(){const data=getResultBase.apply(this,arguments);data.draftDocumentV158=clone(customDraft.r);return data;};
+
+  const loadSavedBase=loadSavedData;
+  loadSavedData=function(id){
+    const item=typeof findSaved==='function'?findSaved(id):null,kind=item?.type==='RESULT'?'r':'p';customDraft[kind]=clone(item?.data?.draftDocumentV158);customDraft[kind==='p'?'r':'p']=null;
+    const output=document.getElementById(kind==='p'?'output-plan-container':'output-result-container');if(output)output.style.display='none';
+    const result=loadSavedBase.apply(this,arguments);setTimeout(()=>{if(kind==='p')generatePlanDocs();else generateResultDocs();if(customDraft[kind])apply(kind,customDraft[kind]);},80);return result;
+  };
+  const loadCloudBase=loadCloudDocument;
+  loadCloudDocument=async function(docId){
+    let record=null;try{const query=await sb.from('project_documents').select('doc_type,data').eq('id',docId).maybeSingle();if(!query.error)record=query.data;}catch(error){console.warn('기안문 수정본 확인 경고:',error);}
+    const kind=record?.doc_type==='RESULT'?'r':'p';customDraft[kind]=clone(record?.data?.draftDocumentV158);customDraft[kind==='p'?'r':'p']=null;
+    const output=document.getElementById(kind==='p'?'output-plan-container':'output-result-container');if(output)output.style.display='none';
+    const result=await loadCloudBase.apply(this,arguments);if(record?.doc_type==='RESULT')generateResultDocs();if(customDraft[kind])apply(kind,customDraft[kind]);return result;
+  };
+  const startNewBase=startNewDocument;
+  startNewDocument=function(type){const kind=type==='RESULT'?'r':'p';customDraft[kind]=null;if(kind==='r'&&resultEditing)window.finishResultDraftEditV158();return startNewBase.apply(this,arguments);};
+
+  const externalNumber=document.getElementById('out_ext_number_v146');
+  externalNumber?.closest('.doc-approval-row')?.classList.add('doc-routing-row');
+  const externalAddress=document.getElementById('out_ext_address_v146'),externalFooter=externalAddress?.closest('.doc-footer-address');
+  if(externalFooter&&externalFooter.children.length===1){
+    const values={address:externalAddress?.innerText||'',phone:document.getElementById('out_ext_phone_v146')?.innerText||'',fax:document.getElementById('out_ext_fax_v146')?.innerText||'',email:document.getElementById('out_ext_email_v146')?.innerText||'',disclosure:document.getElementById('out_ext_disclosure_v146')?.innerText||''};
+    externalFooter.innerHTML='<div class="doc-footer-line"><span id="out_ext_address_v146"></span> /</div><div class="doc-footer-line">전화 <span id="out_ext_phone_v146"></span> / 전송 <span id="out_ext_fax_v146"></span> / <span id="out_ext_email_v146"></span> / <span id="out_ext_disclosure_v146"></span></div>';
+    Object.entries(values).forEach(([key,value])=>{const id={address:'out_ext_address_v146',phone:'out_ext_phone_v146',fax:'out_ext_fax_v146',email:'out_ext_email_v146',disclosure:'out_ext_disclosure_v146'}[key],el=document.getElementById(id);if(el)el.innerText=value;});
+  }
+
+  window.captureDraftDocumentV158=collect;
+  window.applyDraftDocumentV158=apply;
+})();
+</script>
+
+<script>
+// ===== v15.9: 출력서식 표준화 및 사업분류·사업명 제목 자동 구성 =====
+(function(){
+  'use strict';
+  const areaTitleMap={
+    '교육(역량강화)':'장기요양종사자 역량강화사업',
+    '인식개선':'장기요양 인식개선사업',
+    '권익증진':'장기요양종사자 권익증진사업',
+    '건강증진':'장기요양종사자 건강증진사업',
+    '네트워크':'장기요양기관 네트워크사업',
+    '협력':'지역사회 협력사업',
+    '기타':'기타사업'
+  };
+  function yearFrom(value){const match=String(value||'').match(/(?:19|20)\d{2}/);return match?match[0]:String(new Date().getFullYear());}
+  function formalArea(area){const value=String(area||'').trim();if(!value)return '';return areaTitleMap[value]||(/사업$/.test(value)?value:value+'사업');}
+  function cleanProjectName(name){return String(name||'').replace(/^\s*(?:19|20)\d{2}년?\s*/,'').replace(/\s*(?:계획\s*\(안\)|결과보고서?|운영계획)\s*$/,'').trim();}
+  function outputTitle(year,area,name,suffix){return [year+'년',formalArea(area),cleanProjectName(name),suffix].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();}
+  function resultArea(){
+    const snapshot=window.resultPlanSnapshotV136||{};if(String(snapshot.business_area||'').trim())return String(snapshot.business_area).trim();
+    const live=String(document.getElementById('sp_business_area')?.value||'').trim();if(live)return live;
+    const category=String(document.getElementById('r_budgetCategory')?.value||'');return Object.keys(areaTitleMap).find(area=>category.includes(area)||category.includes(area.replace(/\(.*?\)/g,'')))||'';
+  }
+  function updatePlanTitle(){
+    const std=typeof getStandardPlanV106==='function'?getStandardPlanV106():{},target=document.getElementById('out_p_mainTitleV159');if(!target)return;
+    target.textContent=outputTitle(yearFrom(std.operation_date),std.business_area,std.project_name,'계획(안)');
+  }
+  function updateResultTitle(){
+    const std=typeof getStandardResultV107==='function'?getStandardResultV107():{},target=document.getElementById('out_r_mainTitleV159');if(!target)return;
+    target.textContent=outputTitle(yearFrom(std.actual_date),resultArea(),std.project_name,'결과보고');
+  }
+  const planBase=generatePlanDocs;generatePlanDocs=function(){const result=planBase.apply(this,arguments);if(document.getElementById('output-plan-container')?.style.display!=='none')updatePlanTitle();return result;};
+  const resultBase=generateResultDocs;generateResultDocs=function(){const result=resultBase.apply(this,arguments);if(document.getElementById('output-result-container')?.style.display!=='none')updateResultTitle();return result;};
+
+  const externalNumber=document.getElementById('out_ext_number_v146'),routing=externalNumber?.closest('.doc-approval-row');
+  if(routing){
+    const number=externalNumber.innerText,date=document.getElementById('out_ext_date_v146')?.innerText||'';
+    routing.classList.add('doc-routing-row');
+    routing.innerHTML='<div class="doc-app-item"><span class="doc-app-label">시행</span><span id="out_ext_number_v146"></span>&nbsp;&nbsp;(<span id="out_ext_date_v146"></span>)&nbsp;<span class="doc-app-label doc-receipt-label-v159">접수</span></div>';
+    document.getElementById('out_ext_number_v146').innerText=number;document.getElementById('out_ext_date_v146').innerText=date;
+  }
+  window.updateOutputTitlesV159=function(){updatePlanTitle();updateResultTitle();};
+})();
 </script>
 
 </body>
