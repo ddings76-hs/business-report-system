@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v16.5.0-20260919">
+<html lang="ko" data-build="v16.6.0-20260919">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -679,7 +679,7 @@
           </div>
         </div>
         <table class="form-table" style="margin-top: 8px;">
-          <colgroup><col style="width: 25%;"><col style="width: 67%;"><col style="width: 8%;"></colgroup>
+          <colgroup><col style="width: 20%;"><col style="width: 76%;"><col style="width: 4%;"></colgroup>
           <tbody id="p_progTbody">
             <tr><td><input type="text" class="p-prog-key" placeholder="프로그램명"></td><td><textarea class="p-prog-val" placeholder="프로그램 내용을 입력하세요"></textarea></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
           </tbody>
@@ -700,7 +700,7 @@
           <label style="font-size:11px;font-weight:bold">세 번째 열<input id="p_schedule_content_title_v161" value="내용" placeholder="내용" oninput="updatePlanProgramScheduleHeadingsV1546()" style="width:100%;padding:7px;box-sizing:border-box;margin-top:4px"></label>
         </div>
         <table class="form-table" style="margin-top: 8px;">
-          <colgroup><col style="width: 20%;"><col style="width: 24%;"><col style="width: 48%;"><col style="width: 8%;"></colgroup>
+          <colgroup><col style="width: 18%;"><col style="width: 18%;"><col style="width: 60%;"><col style="width: 4%;"></colgroup>
           <thead><tr><th id="p_schedule_key_preview_v15410">일정</th><th id="p_schedule_group_preview_v161">구분</th><th id="p_schedule_content_preview_v161">내용</th><th>관리</th></tr></thead>
           <tbody id="p_schedTbody">
             <tr><td><input type="text" class="p-sch-time" placeholder="예: 2026. 9. 17.~9. 18."></td><td><input type="text" class="p-sch-group-v161" placeholder="예: 사업계획 수립"></td><td><input type="text" class="p-sch-val" placeholder="세부 내용을 입력하세요"></td><td class="td-center"><button class="btn-del" onclick="delRow(this)">삭제</button></td></tr>
@@ -1739,7 +1739,7 @@
       ['주요내용', paragraphGeneratedTextV164(stdPlan.content)],
       ...customDraftRows,
       ['소요예산', draftBudget>0?koreanMoneyV134(draftBudget):'없음'],
-      ...(draftBudget>0?[['재원', officialResourceV1484(document.getElementById('p_budgetSource').value,document.getElementById('p_budgetCategory').value)]]:[])
+      ['재원', draftBudget>0?(officialResourceV1484(document.getElementById('p_budgetSource').value,document.getElementById('p_budgetCategory').value)||'미입력'):'해당 없음']
     ];
     const ga = ['가','나','다','라','마','바','사','아','자','차','카','타','파','하'];
     draftItems.filter(x=>x[1]).forEach((x,i)=>{
@@ -1851,7 +1851,7 @@
     const budgetOutline=koreanMoneyV134(approvedBudget>0?approvedBudget:totalBudget);
     const draftItems=[
       ['사업명',pName],['교육주제',official.operation_theme],['참여인원',participation],['교육운영',official.operation_lead],
-      ['교육내용',summaryContent],['소요예산',budgetOutline],['집행예산',koreanMoneyV134(totalBudget)],['재원',resource]
+      ['교육내용',summaryContent],['소요예산',budgetOutline],['재원',resource||'해당 없음'],['집행예산',koreanMoneyV134(totalBudget)]
     ];
     const ga=['가','나','다','라','마','바','사','아'];
     document.getElementById('out_r_overview_summary').innerHTML=draftItems.filter(x=>String(x[1]??'').trim()).map((x,i)=>`<div class="doc-list-item">${ga[i]||String(i+1)}. ${esc(x[0])} : ${esc(x[1]).replaceAll('\n','<br>')}</div>`).join('');
@@ -2219,29 +2219,19 @@
     const clone=container.cloneNode(true);clone.style.display='block';clone.classList.remove('print-target');clone.querySelectorAll('.no-print').forEach(el=>el.remove());
     if(typeof buildCoverTableLayoutV162==='function')buildCoverTableLayoutV162(clone);
     if(typeof anchorDocumentFootersV164==='function')anchorDocumentFootersV164(clone);
-    const style=`<style>
-      @page{size:A4 portrait;margin:30mm 20mm 20mm}body{font-family:Gulim,'굴림',sans-serif;color:#000;font-size:9.6pt;line-height:1.55}
-      .doc-sheet,.doc-sheet *{font-family:Gulim,'굴림',sans-serif!important}.doc-sheet{width:100%;border:0;padding:0;margin:0;font-size:9.6pt}.doc-cover-page{height:247mm;min-height:247mm;max-height:247mm;position:relative;box-sizing:border-box;padding-bottom:39mm;overflow:hidden;page-break-after:always;break-after:page}.doc-cover-page .doc-fixed-footer{position:absolute;left:0;right:0;bottom:0;width:100%;margin:0;box-sizing:border-box}.doc-cover-page.cover-table-ready-v162{height:247mm;min-height:247mm;max-height:247mm;padding:0;overflow:hidden}.doc-cover-layout-v162{width:100%;height:247mm;border:0!important;border-collapse:collapse;table-layout:fixed;margin:0;padding:0}.doc-cover-layout-v162>tbody>tr>td{border:0!important;padding:0!important}.doc-cover-layout-v162 .doc-cover-main-cell-v162{height:210mm;vertical-align:top}.doc-cover-layout-v162 .doc-cover-footer-cell-v162{height:37mm;vertical-align:bottom}.doc-cover-layout-v162 .doc-fixed-footer{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;margin:0!important}.doc-letterhead{width:100%;border-collapse:collapse;table-layout:fixed;margin:2px 0 42px}.doc-letterhead td{border:0;padding:0 8px;vertical-align:middle}.doc-letterhead td:first-child,.doc-letterhead td:last-child{width:155px!important}.doc-letterhead img{display:block;max-width:100%;height:auto}.doc-center-logo{width:88px;margin:auto}.doc-city-logo{width:120px;margin-left:auto}.doc-letterhead .doc-sub-header{display:none}
-      .doc-org-header{font-family:'Malgun Gothic','맑은 고딕',sans-serif!important;font-size:19.2pt!important;font-weight:700!important;text-align:center;letter-spacing:-2px;white-space:nowrap}.doc-sub-header{font-size:8px;color:#2563eb;text-align:right;margin-top:3px}.doc-meta-table{width:100%;border-collapse:collapse;margin-bottom:15px;font-size:9.6pt}
-      .doc-meta-table td{padding:4px 0;vertical-align:top}.doc-meta-label{width:72px;letter-spacing:.22em;white-space:nowrap}.doc-title-row td{border-bottom:1px solid #111;padding-bottom:6px}.doc-body-text{font-size:9.6pt;text-align:justify;line-height:1.75}.doc-body-text p{margin:5px 0;white-space:pre-line}.doc-divider{text-align:center!important;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px;padding:0;text-indent:0}.doc-list-item{display:block;margin:3px 0 3px 34px!important;padding-left:30px!important;text-indent:-30px!important;font-size:9.6pt;text-align:left}.doc-signature{position:relative;text-align:center;font-family:Gulim,'굴림',sans-serif!important;font-size:15.2pt!important;font-weight:700!important;letter-spacing:.02em;margin:55px 0 50px}.doc-seal{position:absolute;width:64px;height:64px;object-fit:contain;margin-left:-20px;top:-18px}.doc-footer-signature{margin:18px 0 14px;flex:none}
-      .out-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:10px 0 20px;font-size:9.6pt}.out-table th,.out-table td{border:1px solid #000;padding:6px 8px;overflow-wrap:anywhere;font-size:9.6pt!important}
-      .out-table th{background:#f2f2f2;text-align:center}.td-center{text-align:center}.td-right{text-align:right}
-      .doc-fixed-footer{width:100%;font-family:Batang,serif;font-size:9.6pt;line-height:1.5;background:#fff}.doc-approval-container{border-top:8px solid #b7b7b7;margin:0;padding-top:6px;font-size:9.6pt;line-height:1.5}.doc-approval-row{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;min-height:22px;margin:0;line-height:1.5}.doc-approval-row.doc-routing-row{display:block}.doc-app-item{display:flex;align-items:center;min-width:0;font-size:9.6pt;line-height:1.5;white-space:nowrap}
-      .doc-app-label{font-size:9.6pt;margin-right:12px;letter-spacing:.08em}.doc-app-value{font-size:9.6pt;font-weight:normal;white-space:nowrap}.doc-receipt-label-v159{margin-right:0}.doc-footer-address,.doc-footer-address *{font-size:9.6pt}.doc-footer-address{margin-top:0;line-height:1.5;white-space:nowrap}.doc-footer-line{display:block;white-space:nowrap;letter-spacing:-.45px}
-      .doc-attachment-title{page-break-before:always;text-align:center;font-size:16pt!important;line-height:1.35;font-weight:700;margin:0 0 24px;padding:12px 8px;border-top:3px solid #000;border-bottom:3px solid #000;word-break:keep-all}.doc-subsection-title{font-size:10.4pt!important;margin:12px 0 5px}h3{font-size:12pt!important}h4{font-size:10.4pt!important}.output-two-col-v159 th:first-child{width:20%!important}.output-schedule-v161 th:nth-child(1){width:20%!important}.output-schedule-v161 th:nth-child(2){width:24%!important}#out_p_budget_total_line_v161,#out_p_budget_total_line_v161 strong{font-size:10.4pt!important}.doc-sheet p[id^="out_p_"],.doc-sheet p[id^="out_r_"],.doc-sheet div[id^="out_p_attach"],.doc-sheet div[id^="out_r_tbl_attach"]{font-size:10.4pt!important}
-      .doc-sheet{font-size:10.4pt!important;line-height:1.62!important}.doc-meta-table,.doc-meta-table td,.doc-body-text,.doc-body-text p,.doc-list-item,.doc-sheet .out-table,.doc-sheet .out-table th,.doc-sheet .out-table td,.doc-subsection-title,.doc-sheet h4,.doc-fixed-footer,.doc-approval-container,.doc-approval-row,.doc-app-item,.doc-app-label,.doc-app-value,.doc-footer-address,.doc-footer-address *{font-size:10.4pt!important}.doc-sheet h3{font-size:12pt!important}.doc-cover-static-v163{height:247mm!important;min-height:247mm!important;max-height:247mm!important;padding:0!important;overflow:hidden!important}.doc-cover-static-table-v163{width:100%!important;height:247mm!important;border:0!important;border-collapse:collapse!important;table-layout:fixed!important;margin:0!important;padding:0!important}.doc-cover-static-table-v163>tbody>tr>td{border:0!important;padding:0!important}.doc-cover-static-main-row-v163,.doc-cover-static-main-cell-v163{height:210mm!important;vertical-align:top!important}.doc-cover-static-footer-row-v163,.doc-cover-static-footer-cell-v163{height:37mm!important;vertical-align:bottom!important}.doc-cover-static-table-v163 .doc-fixed-footer-static-v163{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;margin:0!important}.doc-approval-row:not(.doc-routing-row){column-gap:24px}.doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(2){justify-content:center;transform:translateX(-30px);}.doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(3){justify-content:flex-end}.doc-routing-row .doc-app-item{gap:5px}.doc-receipt-label-v159{margin-left:16px!important;margin-right:0!important}.doc-footer-address{margin-top:3px!important}.doc-footer-line{width:100%;letter-spacing:.01em;word-spacing:.08em}.doc-footer-address-row-v163{margin-bottom:2px}.doc-footer-contact-row-v163{display:flex!important;justify-content:space-between;align-items:center;gap:14px}
-      .doc-title-row td{font-weight:700!important}.doc-official-intro-v165{margin:5px 0 5px 20px!important;padding-left:24px!important;text-indent:-24px!important;text-align:left!important}.doc-list-item.doc-list-aligned-v165{display:grid!important;grid-template-columns:118px minmax(0,1fr)!important;column-gap:8px!important;align-items:start!important;margin:4px 0 4px 34px!important;padding-left:0!important;text-indent:0!important;text-align:left!important;white-space:normal!important}.doc-list-label-v165{display:grid;grid-template-columns:26px minmax(0,1fr) 10px;column-gap:2px;white-space:nowrap}.doc-list-colon-v165{text-align:center}.doc-list-value-v165{min-width:0;white-space:pre-line;overflow-wrap:anywhere}.doc-purpose-lines-v165{display:grid;row-gap:2px}.doc-purpose-line-v165{display:grid;grid-template-columns:12px minmax(0,1fr);column-gap:2px}.doc-purpose-bullet-v165{text-align:center}
-      tr{page-break-inside:avoid}thead{display:table-header-group}h3,h4{page-break-after:avoid}.tag-plan,.tag-result{display:none}
-      @media print{body{margin:0}.doc-sheet{box-shadow:none}.doc-cover-page{height:247mm!important;min-height:247mm!important;max-height:247mm!important;position:relative!important;padding-bottom:39mm!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important}.doc-cover-page .doc-fixed-footer{position:absolute!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;margin:0!important;box-sizing:border-box!important}.doc-cover-page.cover-table-ready-v162{height:247mm!important;min-height:247mm!important;max-height:247mm!important;padding:0!important}.doc-cover-layout-v162{width:100%!important;height:247mm!important;border:0!important;border-collapse:collapse!important;table-layout:fixed!important}.doc-cover-layout-v162>tbody>tr>td{border:0!important;padding:0!important}.doc-cover-layout-v162 .doc-cover-main-cell-v162{height:210mm!important;vertical-align:top!important}.doc-cover-layout-v162 .doc-cover-footer-cell-v162{height:37mm!important;vertical-align:bottom!important}.doc-cover-layout-v162 .doc-fixed-footer{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;margin:0!important}.doc-cover-static-v163{height:247mm!important;min-height:247mm!important;max-height:247mm!important;padding:0!important}.doc-cover-static-table-v163{height:247mm!important}.doc-cover-static-table-v163 .doc-fixed-footer-static-v163{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;margin:0!important}.doc-footer-line{transform:none;width:100%}.doc-attachment-title{break-before:page;page-break-before:always;padding:12px 8px}}
-    </style>`;
-    return "<!doctype html><html lang='ko' xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>"+esc(title||'문서')+"</title>"+style+"</head><body>"+clone.innerHTML+"</body></html>";
+    const style='<style>'+DOCUMENT_OUTPUT_CSS_V166+'</style>';
+    window.formatOfficialDocumentV165(clone);
+    const host=document.createElement('div');host.className='doc-output-export-v166';host.style.cssText='position:fixed;left:-10000px;top:0;width:170mm;visibility:hidden;';host.append(clone);document.body.append(host);
+    let content;
+    try{paginateDocumentCoversV166(clone);content=clone.innerHTML;}finally{host.remove();}
+    return "<!doctype html><html lang='ko' xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><title>"+esc(title||'문서')+"</title>"+style+"</head><body class='doc-output-export-v166'>"+content+"</body></html>";
   }
 
   function printDoc(targetId) {
     const target=document.getElementById(targetId);
     if(!target)return alert('인쇄할 문서를 먼저 생성해 주세요.');
     const title=targetId==='output-plan-container'?'사업계획서 통합본':targetId==='output-external-v146'?'외부공문':'사업결과보고서 통합본';
-    const source=documentFileHTMLV133(targetId,title);if(!source)return alert('인쇄할 문서를 찾을 수 없습니다.');
+    let source;try{source=documentFileHTMLV133(targetId,title);}catch(error){return alert('출력 준비 오류: '+error.message);}if(!source)return alert('인쇄할 문서를 찾을 수 없습니다.');
     const popup=window.open('','_blank','width=1000,height=820');
     if(popup){
       popup.document.open();popup.document.write(source);popup.document.close();
@@ -2249,15 +2239,11 @@
       if(popup.document.readyState==='complete')setTimeout(runPrint,250);else popup.addEventListener('load',()=>setTimeout(runPrint,250),{once:true});
       return;
     }
-    document.querySelectorAll('#output-plan-container, #output-result-container').forEach(el=>el.classList.remove('print-target'));
-    document.querySelectorAll('.form-section').forEach(el=>el.classList.remove('print-parent'));
-    target.classList.add('print-target');const parent=target.closest('.form-section');if(parent)parent.classList.add('print-parent');
-    const cleanup=()=>{target.classList.remove('print-target');if(parent)parent.classList.remove('print-parent');window.removeEventListener('afterprint',cleanup);};
-    window.addEventListener('afterprint',cleanup);setTimeout(()=>window.print(),50);
+    alert('인쇄창을 열 수 없습니다. 브라우저에서 팝업을 허용한 뒤 다시 인쇄해 주세요.');
   }
 
   function exportDoc(containerId, filename) {
-    const sourceHTML=documentFileHTMLV133(containerId,filename);if(!sourceHTML)return alert('저장할 문서를 먼저 생성해 주세요.');
+    let sourceHTML;try{sourceHTML=documentFileHTMLV133(containerId,filename);}catch(error){return alert('출력 준비 오류: '+error.message);}if(!sourceHTML)return alert('저장할 문서를 먼저 생성해 주세요.');
     try{
       const blob=new Blob(['\ufeff',sourceHTML],{type:'application/msword;charset=utf-8'});
       if(navigator.msSaveOrOpenBlob){navigator.msSaveOrOpenBlob(blob,filename+'.doc');return;}
@@ -6071,7 +6057,7 @@ ${centerMissionV1493}
     const section=document.getElementById('out_r_surveySectionV136'),appendix=document.getElementById('out_r_surveyAppendixV122');if(section)section.style.display=includeSurvey?'block':'none';if(appendix&&!includeSurvey)appendix.style.display='none';
     setText('out_r_evalTitleV136',(includeSurvey?'Ⅳ':'Ⅲ')+'. 운영평가 및 환류');setText('out_r_budgetTitleV136',(includeSurvey?'Ⅴ':'Ⅳ')+'. 예산 집행내역');setText('out_r_attachTitleV136',(includeSurvey?'Ⅵ':'Ⅴ')+'. 붙임 서류');
     const ga=['가','나','다','라','마','바','사','아'],participation='총 '+actualPeople.toLocaleString()+'명'+(std.actual_target_group?' ('+std.actual_target_group+')':''),resource=officialResourceV1484(val('r_budgetSource'),val('r_budgetCategory')),budgetOutline=koreanMoneyV134(plannedBudget||actualBudget);
-    const cover=[['사업명',std.project_name],[meta.theme,official.operation_theme],['참여인원',participation],[meta.lead,official.operation_lead],[meta.content,std.actual_content],['소요예산',budgetOutline],['집행예산',koreanMoneyV134(actualBudget)],['재원',resource]].filter(x=>String(x[1]??'').trim());
+    const cover=[['사업명',std.project_name],[meta.theme,official.operation_theme],['참여인원',participation],[meta.lead,official.operation_lead],[meta.content,std.actual_content],['소요예산',budgetOutline],['재원',resource||'해당 없음'],['집행예산',koreanMoneyV134(actualBudget)]].filter(x=>String(x[1]??'').trim());
     const coverBox=document.getElementById('out_r_overview_summary');if(coverBox)coverBox.innerHTML=cover.map((x,i)=>'<div class="doc-list-item">'+(ga[i]||String(i+1))+'. '+esc(x[0])+' : '+esc(x[1]).replaceAll('\n','<br>')+'</div>').join('');
     const attachBox=document.getElementById('out_r_tbl_attachList');if(attachBox){const values=Array.from(document.querySelectorAll('.r-attach-val')).map(x=>x.value.trim()).filter(Boolean).filter(x=>includeSurvey||!/설문/.test(x));attachBox.innerHTML=values.map((x,i)=>'<div style="margin:3px 0">붙임 '+(i+1)+'. '+esc(x)+'</div>').join('')||'<div>별도 붙임 없음</div>';}
   }
@@ -7097,15 +7083,15 @@ function refreshGeneratedPlanBudgetV1544(){
   const summary=document.getElementById('out_p_overview_summary');
   if(summary){
     let budgetLine=[...summary.querySelectorAll('.doc-list-item')].find(el=>/^[가-하]\.|^\d+\./.test(el.textContent.trim())&&/소요예산\s*:/.test(el.textContent));
-    if(budgetLine){const label=(budgetLine.textContent.trim().match(/^([가-하]|\d+)\./)||[])[1]||'아';budgetLine.innerHTML=label+'. 소요예산 : '+esc(money);}
+    if(budgetLine){const label=(budgetLine.textContent.trim().match(/^([가-하]|\d+)\./)||[])[1]||'아';budgetLine.classList.remove('doc-list-aligned-v165');budgetLine.innerHTML=label+'. 소요예산 : '+esc(money);}
     let resourceLine=[...summary.querySelectorAll('.doc-list-item')].find(el=>/재원\s*:/.test(el.textContent));
     const resource=officialResourceV1484(document.getElementById('p_budgetSource')?.value,document.getElementById('p_budgetCategory')?.value);
-    if(total<=0&&resourceLine)resourceLine.remove();
-    if(total>0&&resource){
-      if(!resourceLine){resourceLine=document.createElement('div');resourceLine.className='doc-list-item';summary.appendChild(resourceLine);}
-      resourceLine.innerHTML='자. 재원 : '+esc(resource);
-    }
+    if(!resourceLine){resourceLine=document.createElement('div');resourceLine.className='doc-list-item';summary.appendChild(resourceLine);}
+    resourceLine.classList.remove('doc-list-aligned-v165');
+    resourceLine.innerHTML='자. 재원 : '+esc(total>0?(resource||'미입력'):'해당 없음');
+    if(budgetLine)budgetLine.after(resourceLine);
     if(typeof renumberPlanDraftItemsV1543==='function')renumberPlanDraftItemsV1543();
+    if(typeof window.formatOfficialDocumentV165==='function')window.formatOfficialDocumentV165(summary);
   }
   const meta=document.getElementById('out_p_budget_meta');
   if(meta){meta.style.display=total>0?'block':'none';meta.innerText=total>0?'○ 재원 및 예산항목 : '+document.getElementById('p_budgetSource').value+' / '+document.getElementById('p_budgetCategory').value:'';}
@@ -7385,23 +7371,49 @@ const posterPlanBaseV155=getPlanData;getPlanData=function(){const d=posterPlanBa
   const clone=value=>value?JSON.parse(JSON.stringify(value)):null;
   const safe=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const status=(kind,message,color='#166534')=>{const box=document.getElementById(kind==='p'?'savePlanStatusV130':'saveResultStatusV130');if(box){box.textContent=message;box.style.color=color;}};
+  // Financial fields always come from generated form/ledger data, never a saved prose override.
+  function financialKeyV1651(text){
+    const match=String(text??'').replace(/\s+/g,' ').trim().match(/^(?:[가-하]|\d+)\.\s*(소요예산|집행예산|재원)\s*[:：]/);
+    return match?match[1]:null;
+  }
+  function summaryTextV1651(el){
+    const order=el.querySelector('.doc-list-order-v165')?.textContent?.trim();
+    const name=el.querySelector('.doc-list-name-v165')?.textContent?.trim();
+    const box=el.querySelector('.doc-list-value-v165');
+    const purpose=box?.querySelectorAll('.doc-purpose-line-v165');
+    const value=purpose?.length?[...purpose].map(row=>row.lastElementChild.textContent.trim()).join('\n'):box?.innerText?.trim();
+    return order&&name?order+' '+name+' : '+(value||''):el.innerText;
+  }
+  function mergeFinancialItemsV1651(saved,current){
+    const financial=new Map(current.map(text=>[financialKeyV1651(text),text]).filter(([key])=>key));
+    const used=new Set(),merged=[];
+    for(const item of saved){
+      const key=financialKeyV1651(item);
+      if(!key){merged.push(item);continue;}
+      if(financial.has(key)&&!used.has(key)){merged.push(financial.get(key));used.add(key);}
+    }
+    for(const [key,text] of financial)if(!used.has(key))merged.push(text);
+    return merged;
+  }
   function collect(kind){
     const values={};draftFields[kind].forEach(id=>{const el=document.getElementById(id);if(el)values[id]=el.innerText;});
     const summary=document.getElementById(summaryId[kind]);
-    const items=summary?[...summary.querySelectorAll(':scope > .doc-list-item')].map(el=>{
-      const order=el.querySelector('.doc-list-order-v165')?.textContent?.trim();
-      const name=el.querySelector('.doc-list-name-v165')?.textContent?.trim();
-      const value=el.querySelector('.doc-list-value-v165')?.innerText?.trim();
-      return order&&name?order+' '+name+' : '+(value||''):el.innerText;
+    const items=summary?[...summary.querySelectorAll(':scope > .doc-list-item')].map(summaryTextV1651).map(text=>{
+      const key=financialKeyV1651(text);
+      return key?'가. '+key+' : ':text;
     }):[];
-    return {schema:'15.8',values,items,savedAt:new Date().toISOString()};
+    return {schema:'16.5.1',financialSource:'generated',values,items,savedAt:new Date().toISOString()};
   }
+
   function apply(kind,draft){
     if(!draft||!draft.values)return;
     draftFields[kind].forEach(id=>{const el=document.getElementById(id);if(el&&Object.prototype.hasOwnProperty.call(draft.values,id))el.innerText=String(draft.values[id]??'');});
     const summary=document.getElementById(summaryId[kind]);
     if(summary&&Array.isArray(draft.items)){
-      summary.innerHTML=draft.items.map(item=>'<div class="doc-list-item">'+safe(item).replace(/\r?\n/g,'<br>')+'</div>').join('');
+      const current=[...summary.querySelectorAll(':scope > .doc-list-item')].map(summaryTextV1651);
+      const items=mergeFinancialItemsV1651(draft.items,current);
+      summary.innerHTML=items.map(item=>'<div class="doc-list-item">'+safe(item).replace(/\r?\n/g,'<br>')+'</div>').join('');
+      renumber(kind);
       if(typeof window.formatOfficialDocumentV165==='function')window.formatOfficialDocumentV165(summary);
     }
   }
@@ -7578,57 +7590,8 @@ const posterPlanBaseV155=getPlanData;getPlanData=function(){const d=posterPlanBa
 
 <script>
 // ===== v16.2: 브라우저·PDF·Word 공통 기안문 하단 고정 =====
-function buildCoverTableLayoutV162(root){
-  const scope=root&&root.querySelectorAll?root:document;
-  scope.querySelectorAll('.doc-cover-page').forEach(cover=>{
-    if(cover.classList.contains('cover-table-ready-v162')||cover.classList.contains('doc-cover-static-v163'))return;
-    const footer=[...cover.children].find(node=>node.classList&&node.classList.contains('doc-fixed-footer'));
-    if(!footer)return;
+function buildCoverTableLayoutV162(root){return normalizeCoverV166(root&&root.querySelectorAll?root:document);}
 
-    cover.removeChild(footer);
-    const main=document.createElement('div');
-    main.className='doc-cover-main-v162';
-    [...cover.childNodes].forEach(node=>main.appendChild(node));
-
-    const table=document.createElement('table');
-    table.className='doc-cover-layout-v162';
-    table.setAttribute('role','presentation');
-    table.style.cssText='width:100%;height:247mm;border:0;border-collapse:collapse;table-layout:fixed;margin:0;padding:0;mso-table-lspace:0pt;mso-table-rspace:0pt;';
-    const tbody=document.createElement('tbody');
-    const mainRow=document.createElement('tr');
-    mainRow.style.cssText='height:210mm;mso-height-source:userset;mso-height-rule:exactly;';
-    const mainCell=document.createElement('td');
-    mainCell.className='doc-cover-main-cell-v162';
-    mainCell.style.cssText='height:210mm;vertical-align:top;border:0;padding:0;mso-height-source:userset;mso-height-rule:exactly;';
-    mainCell.appendChild(main);
-    mainRow.appendChild(mainCell);
-
-    const footerRow=document.createElement('tr');
-    footerRow.style.cssText='height:37mm;mso-height-source:userset;mso-height-rule:exactly;';
-    const footerCell=document.createElement('td');
-    footerCell.className='doc-cover-footer-cell-v162';
-    footerCell.style.cssText='height:37mm;vertical-align:bottom;border:0;padding:0;mso-height-source:userset;mso-height-rule:exactly;';
-    footer.style.setProperty('position','static','important');
-    footer.style.setProperty('left','auto','important');
-    footer.style.setProperty('right','auto','important');
-    footer.style.setProperty('bottom','auto','important');
-    footer.style.setProperty('width','100%','important');
-    footer.style.setProperty('margin','0','important');
-    footerCell.appendChild(footer);
-    footerRow.appendChild(footerCell);
-
-    tbody.appendChild(mainRow);
-    tbody.appendChild(footerRow);
-    table.appendChild(tbody);
-    cover.replaceChildren(table);
-    cover.classList.add('cover-table-ready-v162');
-    cover.style.setProperty('height','247mm','important');
-    cover.style.setProperty('min-height','247mm','important');
-    cover.style.setProperty('max-height','247mm','important');
-    cover.style.setProperty('padding','0','important');
-  });
-  return root;
-}
 window.buildCoverTableLayoutV162=buildCoverTableLayoutV162;
 document.addEventListener('DOMContentLoaded',()=>{
   ['output-plan-container','output-result-container','output-external-v146'].forEach(id=>{
@@ -7651,30 +7614,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       item.appendChild(blank);
     });
   }
-  function anchor(root){
-    const scope=root&&root.querySelectorAll?root:document;
-    scope.querySelectorAll('.doc-cover-page').forEach(cover=>{
-      cover.style.setProperty('position','relative','important');
-      cover.style.setProperty('height','933px','important');
-      cover.style.setProperty('min-height','933px','important');
-      cover.style.setProperty('max-height','933px','important');
-      cover.style.setProperty('padding-bottom','0','important');
-      const footer=cover.querySelector('.doc-fixed-footer');
-      if(!footer)return;
-      if(footer.parentElement!==cover)cover.appendChild(footer);
-      footer.classList.add('doc-footer-anchor-v164');
-      footer.style.setProperty('position','absolute','important');
-      footer.style.setProperty('left','0','important');
-      footer.style.setProperty('right','0','important');
-      footer.style.setProperty('bottom','0','important');
-      footer.style.setProperty('top','auto','important');
-      footer.style.setProperty('width','100%','important');
-      footer.style.setProperty('margin','0','important');
-      footer.style.setProperty('box-sizing','border-box','important');
-    });
-    addSignatureSpace(scope);
-    return root;
-  }
+  function anchor(root){const scope=root&&root.querySelectorAll?root:document;normalizeCoverV166(scope);addSignatureSpace(scope);return root;}
   window.anchorDocumentFootersV164=anchor;
 
   const startNewBase=startNewDocument;
@@ -7706,7 +7646,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){
   'use strict';
   function purposeLinesV165(value){
-    return String(value||'').replace(/\r\n?/g,'\n').split(/\n+/)
+    return paragraphGeneratedTextV164(value).split(/\n+/)
       .map(line=>line.replace(/^\s*[-–—•·○◦]\s*/, '').trim()).filter(Boolean);
   }
   function renderPurposeLinesV165(valueBox,lines){
@@ -7721,7 +7661,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     valueBox.appendChild(list);
   }
   function alignListItemV165(item){
-    if(!item||item.classList.contains('doc-list-aligned-v165'))return item;
+    if(!item)return item;
+    ['display','margin','padding-left','text-indent','white-space'].forEach(key=>item.style.removeProperty(key));
+    if(item.classList.contains('doc-list-aligned-v165')){
+      if(item.querySelector('.doc-list-label-v165')&&item.querySelector('.doc-list-value-v165'))return item;
+      item.classList.remove('doc-list-aligned-v165');
+    }
     const raw=String(item.innerText||item.textContent||'').replace(/\u00a0/g,' ').trim();
     const match=raw.match(/^([가-하]|\d+)\.\s*([^:\n]+?)\s*:\s*([\s\S]*)$/);
     if(!match)return item;
@@ -7731,8 +7676,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     const label=document.createElement('span');label.className='doc-list-label-v165';label.append(order,name,colon);
     const value=document.createElement('span');value.className='doc-list-value-v165';
     const lines=purposeLinesV165(match[3]);
-    if(name.textContent==='사업목적'&&lines.length>1)renderPurposeLinesV165(value,lines);
-    else value.textContent=match[3].trim();
+    if(name.textContent==='사업목적'&&lines.length>1){renderPurposeLinesV165(value,lines);item.classList.add('doc-multiline-v166');}
+    else {value.textContent=match[3].trim();if(/\n/.test(value.textContent))item.classList.add('doc-multiline-v166');}
     item.textContent='';item.append(label,value);item.classList.add('doc-list-aligned-v165');
     return item;
   }
@@ -7740,11 +7685,13 @@ document.addEventListener('DOMContentLoaded',()=>{
     scope.querySelectorAll('.doc-list-aligned-v165').forEach(item=>{
       if(item.querySelector('.doc-list-name-v165')?.textContent.trim()!=='사업목적')return;
       const value=item.querySelector('.doc-list-value-v165');if(!value)return;
-      const lines=purposeLinesV165(value.innerText||value.textContent),remove=[];
+      const existing=[...value.querySelectorAll('.doc-purpose-line-v165')];
+      const lines=existing.length?existing.map(row=>row.lastElementChild.textContent.trim()).filter(Boolean):purposeLinesV165(value.innerText||value.textContent),remove=[];
       let next=item.nextElementSibling;
       while(next&&/^\s*[-–—•·○◦]\s+/.test(next.textContent||'')){
         lines.push(...purposeLinesV165(next.textContent));remove.push(next);next=next.nextElementSibling;
       }
+      item.classList.toggle('doc-multiline-v166',lines.length>1);
       if(lines.length>1){renderPurposeLinesV165(value,lines);remove.forEach(el=>el.remove());}
     });
   }
@@ -7761,7 +7708,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.formatOfficialDocumentV165=formatOfficialDocumentV165;
   function wrapGeneratorV165(name,targetId){
     const base=window[name];if(typeof base!=='function')return;
-    window[name]=function(){const result=base.apply(this,arguments);formatOfficialDocumentV165(document.getElementById(targetId)||document);return result;};
+    window[name]=function(){const result=base.apply(this,arguments);window.formatOfficialDocumentV165(document.getElementById(targetId)||document);return result;};
   }
   wrapGeneratorV165('generatePlanDocs','output-plan-container');
   wrapGeneratorV165('generateResultDocs','output-result-container');
@@ -7771,5 +7718,136 @@ document.addEventListener('DOMContentLoaded',()=>{
 })();
 </script>
 
+<script>
+// ===== v16.6: single document stylesheet and measured print pagination =====
+const DOCUMENT_OUTPUT_CSS_V166 = `
+@page{size:A4 portrait;margin:30mm 20mm 20mm}
+body .doc-sheet{box-sizing:border-box;width:210mm;max-width:none;margin:20px auto;background:white;padding:30mm 20mm 20mm;color:#000;font-family:Gulim,'굴림',sans-serif!important;font-size:10.4pt!important;line-height:1.6!important}
+body .doc-sheet *{box-sizing:border-box;font-family:Gulim,'굴림',sans-serif!important}
+body .doc-sheet :is(p,td,th,.doc-body-text,.doc-list-item,.doc-meta-table,.out-table,.doc-fixed-footer,.doc-approval-container,.doc-approval-row,.doc-app-item,.doc-app-label,.doc-app-value,.doc-footer-address,.doc-footer-address *,[id^="out_p_budget_total"],h4){font-size:10.4pt!important;line-height:1.6!important}
+body .doc-sheet .doc-cover-page{display:flex!important;flex-direction:column!important;position:relative!important;height:auto!important;min-height:247mm!important;max-height:none!important;padding:0!important;overflow:visible!important;break-after:page;page-break-after:always}
+.doc-cover-main-v166{flex:0 0 auto;min-width:0}
+body .doc-sheet .doc-cover-page>.doc-fixed-footer{position:static!important;inset:auto!important;margin:6mm 0 0!important;margin-top:auto!important;padding-top:6mm!important;width:100%!important;flex:0 0 auto;break-inside:avoid;page-break-inside:avoid;background:white}
+body .doc-sheet .doc-cover-page.doc-print-page-v166{height:246.5mm!important;min-height:246.5mm!important;max-height:246.5mm!important;display:block!important}
+.doc-print-page-v166>.doc-print-main-v166{display:flow-root;height:auto;overflow:visible}
+body .doc-sheet .doc-print-page-v166>.doc-fixed-footer{position:absolute!important;bottom:0!important;left:0!important;right:0!important;top:auto!important;margin:0!important;padding:0!important}
+.doc-letterhead{width:100%;table-layout:fixed;border-collapse:collapse;margin:0 0 8mm}
+body .doc-sheet .doc-letterhead td{border:0!important;padding:0 2mm!important;vertical-align:middle}
+body .doc-sheet .doc-letterhead td:first-child,body .doc-sheet .doc-letterhead td:last-child{width:25mm!important}
+.doc-center-logo{display:block;width:18mm;height:auto;max-width:100%;margin:auto}.doc-city-logo{display:block;width:25mm;height:auto;max-width:100%;margin:auto}
+body .doc-sheet .doc-org-header{font-family:'Malgun Gothic','맑은 고딕',sans-serif!important;font-size:19.2pt!important;font-weight:700!important;letter-spacing:-1px;white-space:nowrap;text-align:center}
+.doc-sub-header,.tag-plan,.tag-result{display:none!important}
+.doc-meta-table{width:100%;border-collapse:collapse;margin:0 0 4mm}.doc-meta-table td{padding:1mm 0;vertical-align:top}.doc-meta-label{width:17mm;letter-spacing:normal!important;white-space:nowrap}.doc-title-row td{font-weight:700!important;border-bottom:1px solid black;padding-bottom:2mm}
+.doc-body-text{text-align:left!important;margin:0;line-height:1.6}.doc-body-text p{margin:1.3mm 0;white-space:pre-line;overflow-wrap:anywhere}
+body .doc-sheet .doc-official-intro-v165{margin:1.3mm 0 1.3mm 5mm!important;padding-left:5mm!important;text-indent:-5mm!important;text-align:left!important}
+.doc-divider{text-align:center!important;font-weight:bold;letter-spacing:.8em;margin:5mm 0!important;padding:0!important;text-indent:0!important}
+body .doc-sheet .doc-list-item.doc-list-aligned-v165{display:grid!important;grid-template-columns:27mm minmax(0,1fr)!important;column-gap:2mm!important;align-items:start;margin:1.2mm 0 1.2mm 5mm!important;padding:0!important;text-indent:0!important;text-align:left!important;white-space:normal!important}
+.doc-list-label-v165{display:grid;grid-template-columns:5mm minmax(0,1fr) 2mm;column-gap:.5mm;white-space:nowrap}.doc-list-name-v165{text-align:justify;text-align-last:justify}.doc-list-colon-v165{text-align:center}.doc-list-value-v165{min-width:0;white-space:pre-line;overflow-wrap:anywhere}
+body .doc-sheet .doc-list-item.doc-multiline-v166{grid-template-columns:minmax(0,1fr)!important}.doc-multiline-v166 .doc-list-label-v165{width:27mm}.doc-multiline-v166>.doc-list-value-v165{display:block;margin-left:5.5mm;margin-top:1mm}
+.doc-purpose-lines-v165{display:block}.doc-purpose-line-v165{display:grid;grid-template-columns:3mm minmax(0,1fr);column-gap:1mm;margin:0 0 .5mm}.doc-purpose-bullet-v165{text-align:center}
+body .doc-sheet .doc-attachment-title{font-size:16pt!important;line-height:1.4!important;font-weight:700;text-align:center;border-top:3px solid #000;border-bottom:3px solid #000;padding:3mm 2mm;margin:0 0 6mm;break-before:page;page-break-before:always;word-break:keep-all}
+body .doc-sheet h3{font-size:12pt!important;line-height:1.5!important;border-bottom:1px solid #000;padding-bottom:1.5mm;margin:5mm 0 3mm}body .doc-sheet h4{font-weight:bold;margin:3mm 0 1.5mm}h3,h4{break-after:avoid;page-break-after:avoid}
+.out-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:3mm 0 5mm}.out-table th,.out-table td{border:1px solid #000;padding:1.5mm 2mm;vertical-align:top;white-space:pre-line;overflow-wrap:anywhere}.out-table th{text-align:center;background:#f2f2f2}.td-center{text-align:center}.td-right{text-align:right}
+.out-table thead{display:table-header-group}.out-table tr{break-inside:avoid;page-break-inside:avoid}body .doc-sheet .output-two-col-v159 th:first-child{width:18%!important}body .doc-sheet .output-schedule-v161 th:nth-child(1){width:18%!important}body .doc-sheet .output-schedule-v161 th:nth-child(2){width:18%!important}
+.doc-approval-container{border-top:1.5mm solid #b7b7b7;padding-top:1mm;margin:0}body .doc-sheet .doc-approval-row:not(.doc-routing-row){display:grid;grid-template-columns:32% 28% 40%;column-gap:0;align-items:center;margin:0;min-height:0}
+body .doc-sheet .doc-app-item{display:flex;align-items:center;min-width:0;white-space:nowrap}body .doc-sheet .doc-approval-row:not(.doc-routing-row) .doc-app-item{justify-content:flex-start!important;transform:none!important;gap:2mm}.doc-app-label{margin-right:1.5mm;letter-spacing:normal!important}.doc-app-value{font-weight:normal}.doc-sign-space-v164{display:inline-block;flex:0 0 14mm!important;min-width:14mm!important;height:5mm}
+.doc-routing-row{display:block!important}.doc-routing-row .doc-app-item{display:block!important;white-space:normal}.doc-receipt-label-v159{margin-left:0!important;margin-right:0!important}
+.doc-footer-address{margin-top:1mm!important;white-space:normal!important}.doc-footer-line{display:block!important;width:100%;white-space:normal!important;letter-spacing:.01em!important;word-spacing:.06em;overflow-wrap:anywhere;transform:none!important}.doc-footer-contact-row-v163{display:block!important}.doc-footer-address-row-v163{margin-bottom:.5mm}
+.doc-signature{position:relative;text-align:center;font-weight:700!important;font-size:15.2pt!important;letter-spacing:.02em;margin:4mm 0}.doc-seal{position:absolute;width:17mm;height:17mm;object-fit:contain;margin-left:-5mm;top:-4mm}
+.doc-output-export-v166 .doc-sheet{width:170mm!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
+@media print{body .doc-sheet{width:170mm!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}.no-print{display:none!important}}
+`;
+function normalizeCoverV166(root){
+  root.querySelectorAll('.doc-cover-page').forEach(cover=>{
+    const footer=cover.querySelector('.doc-fixed-footer');if(!footer)return;
+    let main=cover.querySelector(':scope > .doc-cover-main-v166');
+    if(!main){
+      main=document.createElement('div');main.className='doc-cover-main-v166';
+      const cell=cover.querySelector('.doc-cover-static-main-cell-v163,.doc-cover-main-cell-v162');
+      const source=cell||cover.querySelector('.doc-cover-main-v162')||cover;
+      [...source.childNodes].forEach(node=>{if(node!==footer&&!node.contains?.(footer))main.appendChild(node);});
+      footer.remove();cover.replaceChildren(main,footer);
+    }
+    cover.removeAttribute('style');footer.removeAttribute('style');
+    cover.classList.remove('doc-cover-static-v163','cover-table-ready-v162');
+    footer.classList.remove('doc-fixed-footer-static-v163','doc-footer-anchor-v164');
+  });return root;
+}
+// Split text at a safe character boundary while keeping inline markup and line breaks.
+function splitPrintBlockV166(node,offset){
+  const walker=document.createTreeWalker(node,NodeFilter.SHOW_TEXT);let text,remaining=offset;
+  while((text=walker.nextNode())){if(remaining<=text.length)break;remaining-=text.length;}
+  if(!text)return null;
+  const before=document.createRange(),after=document.createRange();before.selectNodeContents(node);before.setEnd(text,remaining);after.selectNodeContents(node);after.setStart(text,remaining);
+  const first=node.cloneNode(false),rest=node.cloneNode(false);first.append(before.cloneContents());rest.append(after.cloneContents());
+  rest.removeAttribute('id');rest.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+  if(rest.classList.contains('doc-list-aligned-v165')&&!rest.classList.contains('doc-multiline-v166')&&!rest.querySelector('.doc-list-label-v165')){
+    const blank=document.createElement('span');blank.className='doc-list-label-v165';blank.setAttribute('aria-hidden','true');rest.prepend(blank);
+  }
+  return [first,rest];
+}
+function paginateDocumentCoversV166(root){
+  root.querySelectorAll('.doc-cover-page').forEach(cover=>{
+    const footer=cover.querySelector('.doc-fixed-footer'),main=cover.querySelector('.doc-cover-main-v166');if(!footer||!main)return;
+    const blocks=[];
+    function flatten(node){
+      if(node.nodeType!==1)return;
+      if(node.matches('.doc-body-text,#out_p_overview_summary,#out_r_overview_summary,#out_ext_body_v146'))[...node.children].forEach(flatten);
+      else blocks.push(node);
+    }
+    [...main.children].forEach(flatten);
+    const pageHeight=246.5*96/25.4,limit=pageHeight-footer.getBoundingClientRect().height-6*96/25.4;
+    if(limit<100)throw new Error('결재란이 너무 큽니다. 하단 입력내용을 확인해 주세요.');
+    const pages=[];let page,body;
+    function next(){page=document.createElement('div');page.className='doc-cover-page doc-print-page-v166';body=document.createElement('div');body.className='doc-print-main-v166 doc-body-text';page.append(body);cover.before(page);pages.push(page);}
+    next();
+    const fits=()=>body.getBoundingClientRect().height<=limit+0.5;
+    for(let node of blocks){
+      body.append(node);if(fits())continue;
+      node.remove();if(body.children.length)next();
+      body.append(node);
+      while(!fits()){
+        node.remove();const length=node.textContent.length;
+        if(length<2||node.matches('table,img'))throw new Error('한 페이지보다 큰 표 또는 이미지가 있습니다. 내용을 줄인 후 출력해 주세요.');
+        let low=1,high=length-1,best=0;
+        while(low<=high){const mid=(low+high)>>1,pair=splitPrintBlockV166(node,mid);if(!pair)break;body.append(pair[0]);const ok=fits();pair[0].remove();if(ok){best=mid;low=mid+1;}else high=mid-1;}
+        if(!best)throw new Error('본문을 페이지에 배치하지 못했습니다. 항목 길이를 확인해 주세요.');
+        // Prefer an existing word or paragraph boundary near the measured fit.
+        const prefix=node.textContent.slice(0,best),boundary=Math.max(prefix.lastIndexOf(' '),prefix.lastIndexOf('\n'));
+        if(boundary>best*.65)best=boundary+1;
+        const pair=splitPrintBlockV166(node,best);body.append(pair[0]);next();node=pair[1];body.append(node);
+      }
+    }
+    page.append(footer);cover.remove();
+    if(!page.nextElementSibling)page.style.setProperty('break-after','auto');
+  });return root;
+}
+function orderedFinancialRowsV166(scope){
+  const selector='#out_p_overview_summary,#out_r_overview_summary';
+  const summaries=[...(scope.matches?.(selector)?[scope]:[]),...scope.querySelectorAll(selector)];
+  summaries.forEach(summary=>{
+    const rows=[...summary.querySelectorAll(':scope > .doc-list-item')];
+    const name=el=>el.querySelector('.doc-list-name-v165')?.textContent.trim()||el.textContent.replace(/^(?:[가-하]|\d+)\.\s*/,'').split(/[:：]/)[0].trim();
+    const budget=rows.find(el=>name(el)==='소요예산'),resource=rows.find(el=>name(el)==='재원');
+    if(budget&&resource)budget.after(resource);
+    const labels=['가','나','다','라','마','바','사','아','자','차','카','타','파','하'];
+    [...summary.children].forEach((el,index)=>{const order=el.querySelector('.doc-list-order-v165');if(order)order.textContent=(labels[index]||index+1)+'.';});
+  });
+}
+(function(){
+  const formStyle=document.createElement('style');formStyle.textContent='#p-program-block .form-table td:last-child,#p-schedule-block .form-table td:last-child{padding:2px} #p-program-block .btn-del,#p-schedule-block .btn-del{min-width:0;padding:3px 1px;font-size:10px;white-space:normal}';document.head.append(formStyle);
+  const style=document.createElement('style');style.id='document-output-style-v166';style.textContent=DOCUMENT_OUTPUT_CSS_V166;document.head.append(style);
+  const original=window.formatOfficialDocumentV165;
+  function clearLegacyInlineFonts(scope){
+    scope.querySelectorAll('.doc-sheet [style]').forEach(el=>{['font-size','font-family','line-height'].forEach(key=>el.style.removeProperty(key));});
+  }
+  window.formatOfficialDocumentV165=function(root){const scope=root&&root.querySelectorAll?root:document;original(scope);orderedFinancialRowsV166(scope);normalizeCoverV166(scope);clearLegacyInlineFonts(scope);return root;};
+  const initialize=()=>window.formatOfficialDocumentV165(document);
+  document.addEventListener('DOMContentLoaded',initialize);if(document.readyState!=='loading')initialize();
+  // Editing remains live; format once on completion so the caret is never reset while typing.
+  ['finishPlanDraftEditV1543','finishResultDraftEditV158'].forEach(name=>{const base=window[name];if(typeof base==='function')window[name]=function(){const result=base.apply(this,arguments);initialize();return result;};});
+})();
+
+</script>
 </body>
 </html>
