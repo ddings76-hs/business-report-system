@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v16.9.0-20260919">
+<html lang="ko" data-build="v17.0.0-20260919">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2291,8 +2291,53 @@ function attachmentRowsV167(values){
     alert('인쇄창을 열 수 없습니다. 브라우저에서 팝업을 허용한 뒤 다시 인쇄해 주세요.');
   }
 
+  function wordCompatibleHTMLV170(sourceHTML,title){
+    const parsed=new DOMParser().parseFromString(sourceHTML,'text/html');
+    const makeTable=(className,rows,widths=[])=>{
+      const table=parsed.createElement('table');table.className=className;table.setAttribute('role','presentation');
+      table.style.cssText='width:100%;border-collapse:collapse;table-layout:fixed;margin:0;';
+      if(widths.length){const cols=parsed.createElement('colgroup');widths.forEach(width=>{const col=parsed.createElement('col');col.style.width=width;cols.append(col);});table.append(cols);}
+      const body=parsed.createElement('tbody');rows.forEach(cells=>{const row=parsed.createElement('tr');cells.forEach(cell=>{const td=parsed.createElement('td');td.style.cssText='border:0;padding:0;vertical-align:top;';if(cell)td.append(cell);row.append(td);});body.append(row);});table.append(body);return table;
+    };
+
+    // Word는 CSS Grid를 안정적으로 처리하지 못하므로 항목 정렬을 실제 표로 변환한다.
+    parsed.querySelectorAll('.doc-list-item.doc-list-aligned-v165').forEach(item=>{
+      const label=item.querySelector(':scope > .doc-list-label-v165'),value=item.querySelector(':scope > .doc-list-value-v165');
+      if(!label||!value)return;
+      const table=makeTable('word-list-row-v170',[[label,value]],['27mm','auto']);
+      table.style.cssText+='margin:1.2mm 0 1.2mm 5mm;width:calc(100% - 5mm);';item.replaceWith(table);
+    });
+    parsed.querySelectorAll('.doc-approval-row:not(.doc-routing-row)').forEach(row=>{
+      const cells=[...row.children];if(cells.length)row.replaceWith(makeTable('doc-approval-row word-approval-v170',[cells],['32%','28%','40%']));
+    });
+    parsed.querySelectorAll('.doc-footer-signature').forEach(signature=>{
+      const sender=signature.querySelector('[id$="_sender_v146"],#out_p_sender,#out_r_sender')||signature.querySelector('span');
+      const seal=signature.querySelector('.doc-seal');if(!sender)return;
+      const wrap=parsed.createElement('div');wrap.style.cssText='position:relative;display:inline-block;padding-right:12mm;font-size:15.2pt;font-weight:700;white-space:nowrap;';
+      sender.replaceWith(wrap);wrap.append(sender);
+      if(seal){seal.remove();seal.style.cssText='position:absolute;width:17mm;height:17mm;object-fit:contain;right:0;top:50%;margin-top:-8.5mm;z-index:2;';wrap.append(seal);}
+      signature.replaceChildren(makeTable('word-signature-v170',[[wrap]],['100%']));signature.querySelector('td').style.textAlign='center';
+    });
+    parsed.querySelectorAll('.doc-purpose-line-v165').forEach(row=>{row.style.display='block';row.style.marginBottom='.5mm';});
+    parsed.querySelectorAll('.doc-purpose-bullet-v165').forEach(bullet=>{bullet.style.display='inline-block';bullet.style.width='4mm';});
+    parsed.querySelectorAll('.doc-cover-page').forEach(page=>{page.style.cssText='position:relative;width:170mm;height:247mm;min-height:247mm;max-height:247mm;overflow:hidden;page-break-after:always;';});
+    parsed.querySelectorAll('.doc-print-main-v166').forEach(main=>{main.style.cssText='display:block;width:100%;';});
+    parsed.querySelectorAll('.doc-print-page-v166>.doc-fixed-footer').forEach(footer=>{footer.style.cssText='position:absolute;left:0;right:0;bottom:0;width:100%;';});
+    const wordStyle=parsed.createElement('style');
+    wordStyle.textContent=`
+      @page WordSection1{size:595.3pt 841.9pt;margin:85.05pt 56.7pt 56.7pt 56.7pt;mso-page-orientation:portrait}
+      div.WordSection1{page:WordSection1}.word-list-row-v170 td{font:10.4pt Gulim,'굴림',sans-serif;line-height:1.6}
+      .word-list-row-v170 td:first-child{white-space:nowrap;padding-right:2mm}.word-approval-v170 td{white-space:nowrap;vertical-align:middle}
+      .doc-sheet{width:170mm!important;margin:0!important;padding:0!important;border:0!important}.doc-seal-anchor-v169{display:inline!important;width:auto!important;min-width:0!important;height:auto!important}
+      table{mso-table-lspace:0pt;mso-table-rspace:0pt}tr{page-break-inside:avoid}img{mso-width-percent:0}
+    `;
+    parsed.head.append(wordStyle);
+    const section=parsed.createElement('div');section.className='WordSection1';while(parsed.body.firstChild)section.append(parsed.body.firstChild);parsed.body.append(section);
+    parsed.title=title||'문서';return '<!DOCTYPE html>\n'+parsed.documentElement.outerHTML;
+  }
+
   function exportDoc(containerId, filename) {
-    let sourceHTML;try{sourceHTML=documentFileHTMLV133(containerId,filename);}catch(error){return alert('출력 준비 오류: '+error.message);}if(!sourceHTML)return alert('저장할 문서를 먼저 생성해 주세요.');
+    let sourceHTML;try{sourceHTML=documentFileHTMLV133(containerId,filename);if(sourceHTML)sourceHTML=wordCompatibleHTMLV170(sourceHTML,filename);}catch(error){return alert('Word 저장 준비 오류: '+error.message);}if(!sourceHTML)return alert('저장할 문서를 먼저 생성해 주세요.');
     try{
       const blob=new Blob(['\ufeff',sourceHTML],{type:'application/msword;charset=utf-8'});
       if(navigator.msSaveOrOpenBlob){navigator.msSaveOrOpenBlob(blob,filename+'.doc');return;}
@@ -7850,8 +7895,8 @@ body .doc-sheet .out-table.result-detail-v168 th:first-child,body .doc-sheet #ou
 body .doc-sheet .doc-footer-signature{display:flex!important;align-items:center;justify-content:center;gap:3mm;position:relative;margin:4mm 0!important;min-height:19mm}
 body .doc-sheet .doc-footer-signature .doc-seal{position:static!important;inset:auto!important;margin:0!important;flex:0 0 17mm;width:17mm!important;height:17mm!important;object-fit:contain;transform:none!important}
 
-body .doc-sheet .doc-footer-signature .doc-seal-anchor-v169{position:relative;display:inline-flex;align-items:center;justify-content:center;width:17mm;min-width:17mm;height:17mm;vertical-align:middle;isolation:isolate}
-body .doc-sheet .doc-footer-signature .doc-seal-anchor-v169 .doc-seal{position:absolute!important;left:0!important;top:0!important;width:17mm!important;height:17mm!important;margin:0!important;z-index:2;mix-blend-mode:multiply;pointer-events:none}
+body .doc-sheet .doc-footer-signature .doc-seal-anchor-v169{position:relative;display:inline-block;width:1em;min-width:1em;height:1.2em;vertical-align:baseline;isolation:isolate}
+body .doc-sheet .doc-footer-signature .doc-seal-anchor-v169 .doc-seal{position:absolute!important;left:-3mm!important;top:50%!important;width:17mm!important;height:17mm!important;margin:-8.5mm 0 0!important;z-index:2;mix-blend-mode:multiply;pointer-events:none}
 `;
 function normalizeCoverV166(root){
   root.querySelectorAll('.doc-cover-page').forEach(cover=>{
