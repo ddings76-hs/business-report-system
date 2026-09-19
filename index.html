@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v16.3-20260918">
+<html lang="ko" data-build="v16.4-20260918">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.3 정적 하단행·13pt 출력)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.4 새 문서·문단·하단 고정)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -125,7 +125,7 @@
   .doc-footer-signature { margin:18px 0 14px;flex:none; }
   .doc-fixed-footer { width:100%;font-family:'Batang',serif;font-size:12pt;line-height:1.5;background:#fff; }
   .doc-approval-container { width:100%;border-top:8px solid #b7b7b7;margin:0;padding-top:6px;font-size:12pt;line-height:1.5;font-family:'Batang',serif; }
-  .doc-approval-row { display:grid;grid-template-columns:0.8fr 1fr 1.3fr;align-items:center;min-height:22px;margin:0;line-height:1.55; }
+  .doc-approval-row { display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;min-height:22px;margin:0;line-height:1.55; }
   .doc-approval-row.doc-routing-row { display:block; }
   .doc-app-item { min-width:0;display:flex;align-items:center;font-size:12pt;line-height:1.5;white-space:nowrap; }
   .doc-app-label { display:inline-block;font-size:12pt;font-weight:normal;margin-right:12px;white-space:nowrap;letter-spacing:.08em; }
@@ -135,7 +135,7 @@
   .doc-footer-address { font-size:12pt;color:#333;margin-top:0;text-align:left;line-height:1.5;font-family:'Batang',serif;white-space:nowrap; }
   .doc-footer-address * { font-size:12pt; }
   .doc-footer-line { display:block; white-space:nowrap; letter-spacing:-.45px; }
-  /* v16.3 출력문서 13pt 통일 및 기안문 정적 하단행 */
+  /* v16.4 출력문서 13pt 통일 및 기안문 하단 절대 고정 */
   .doc-sheet { font-size:13pt !important;line-height:1.62 !important; }
   .doc-meta-table, .doc-meta-table td, .doc-body-text, .doc-body-text p, .doc-list-item,
   .doc-sheet .out-table, .doc-sheet .out-table th, .doc-sheet .out-table td,
@@ -153,7 +153,7 @@
   .doc-cover-static-main-row-v163, .doc-cover-static-main-cell-v163 { height:210mm !important;vertical-align:top !important; }
   .doc-cover-static-footer-row-v163, .doc-cover-static-footer-cell-v163 { height:37mm !important;vertical-align:bottom !important; }
   .doc-cover-static-table-v163 .doc-fixed-footer-static-v163 { position:static !important;left:auto !important;right:auto !important;bottom:auto !important;width:100% !important;margin:0 !important; }
-  .doc-approval-row:not(.doc-routing-row) { column-gap:22px; }
+  .doc-approval-row:not(.doc-routing-row) { column-gap:24px; }
   .doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(2) { justify-content:center; }
   .doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(3) { justify-content:flex-end; }
   .doc-routing-row .doc-app-item { gap:5px; }
@@ -161,7 +161,17 @@
   .doc-footer-address { margin-top:3px !important; }
   .doc-footer-line { width:100%;letter-spacing:.01em;word-spacing:.08em; }
   .doc-footer-address-row-v163 { margin-bottom:2px; }
-  .doc-footer-contact-row-v163 { display:flex !important;justify-content:space-between;align-items:center;gap:10px; }
+  .doc-footer-contact-row-v163 { display:flex !important;justify-content:space-between;align-items:center;gap:14px; }
+  .doc-body-text p { white-space:pre-line; }
+  .doc-cover-page { position:relative !important; }
+  .doc-cover-page .doc-fixed-footer.doc-footer-anchor-v164,
+  .doc-cover-static-v163 .doc-fixed-footer-static-v163 {
+    position:absolute !important;left:0 !important;right:0 !important;bottom:0 !important;top:auto !important;
+    width:100% !important;margin:0 !important;box-sizing:border-box !important;z-index:3;background:#fff !important;
+  }
+  .doc-cover-static-v163 { position:relative !important;height:933px !important;min-height:933px !important;max-height:933px !important; }
+  .doc-sign-space-v164 { display:inline-block;flex:0 0 64px;min-width:64px;height:1.25em; }
+  .doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(3) { justify-content:flex-start !important; }
   .doc-number-input { display:flex;align-items:stretch;border:1px solid #cbd5e1;border-radius:5px;background:#fff;overflow:hidden;margin-top:4px; }
   .doc-number-input span { display:flex;align-items:center;padding:0 8px;background:#f1f5f9;color:#334155;white-space:nowrap;font-size:12px;border-right:1px solid #cbd5e1; }
   .doc-number-input input { border:0 !important;border-radius:0 !important;margin:0 !important;min-width:55px; }
@@ -445,7 +455,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.3 정적 하단행·13pt 출력)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.4 새 문서·문단·하단 고정)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -488,7 +498,7 @@
         <div style="border:1px solid #ddd;border-radius:9px;padding:14px;background:#fff;">
           <h3 style="margin:0 0 10px;">빠른 업무</h3>
           <div style="display:flex;gap:7px;flex-wrap:wrap;">
-            <button class="btn btn-plan" onclick="switchMode('PLAN')">새 사업계획서</button>
+            <button class="btn btn-plan" onclick="startNewDocument('PLAN')">새 사업계획서</button>
             <button class="btn btn-result" onclick="switchMode('RESULT')">결과보고서</button>
             <button class="btn" style="background:#7c3aed;color:#fff" onclick="switchMode('EXTERNAL')">외부공문</button>
             <button class="btn btn-add" onclick="switchModeV831Dashboard()">사업관리</button>
@@ -1511,9 +1521,31 @@
     return [String(source||'').trim(),cleaned].filter(Boolean).join(' / ');
   }
 
-  // 기안문용 운영주제: 여러 줄의 사업목적/주요내용에서 첫 핵심 문장만 한 줄로 정리
+  // v16.4 자동생성 문구 정리: 불릿 제거, 문장별 줄바꿈, 공문서용 출력
+  function cleanGeneratedTextV164(value){
+    return String(value??'')
+      .replace(/\r\n?/g,'\n')
+      .replace(/[ \t]*[○●◦•▪■□◆◇▶▷※][ \t]*/g,'\n')
+      .replace(/(^|\n)[ \t]*[oO][ \t]+(?=[가-힣])/g,'$1')
+      .replace(/[ \t]+/g,' ')
+      .replace(/ *\n */g,'\n')
+      .replace(/\n{3,}/g,'\n\n')
+      .trim();
+  }
+  function paragraphGeneratedTextV164(value){
+    return cleanGeneratedTextV164(value)
+      .replace(/([.!?。])\s+(?=[가-힣A-Za-z「『])/g,'$1\n')
+      .replace(/\n{3,}/g,'\n\n')
+      .trim();
+  }
+  function generatedTextHtmlV164(value){
+    const normalized=paragraphGeneratedTextV164(value)||'-';
+    return esc(normalized).replace(/\n/g,'<br>');
+  }
+
+  // 기안문용 핵심 문구: 여러 줄의 사업목적/주요내용에서 첫 문장만 한 줄로 정리
   function planDraftThemeV1542(purpose,content){
-    const source=String(purpose||'').trim()||String(content||'').trim();
+    const source=cleanGeneratedTextV164(purpose)||cleanGeneratedTextV164(content);
     if(!source)return '';
     const firstMeaningful=source.split(/\r?\n/).map(x=>x.trim()).find(Boolean)||source;
     return firstMeaningful
@@ -1679,36 +1711,39 @@
     const customOverviewRows=(stdPlan.custom_fields||[]).map(x=>[x.label||'',x.value||'']).filter(x=>x[0]&&String(x[1]??'').trim());
     const overviewRows=standardOverviewRows.concat(customOverviewRows);
 
-    tbl='<thead><tr><th style="width:25%;">항목</th><th>내용</th></tr></thead><tbody>'+overviewRows.map(([k,v])=>
-      `<tr><th class="td-center" style="font-size:13px;">${esc(k)}</th><td style="font-size:13px;line-height:1.65;">${esc(String(v??'').trim()||'-').replaceAll('\n','<br>')}</td></tr>`
+    tbl='<thead><tr><th style="width:20%;">항목</th><th>내용</th></tr></thead><tbody>'+overviewRows.map(([k,v])=>
+      `<tr><th class="td-center">${esc(k)}</th><td style="line-height:1.65;">${generatedTextHtmlV164(v)}</td></tr>`
     ).join('')+'</tbody>';
 
     const targetText=[stdPlan.target_group,Number(stdPlan.planned_participants||0)>0?Number(stdPlan.planned_participants)+'명':''].filter(Boolean).join(' ');
     const customDraftRows=(stdPlan.custom_fields||[]).map(x=>[x.label||'',x.value||'']).filter(x=>x[0]&&String(x[1]??'').trim());
-    const draftTheme=planDraftThemeV1542(stdPlan.purpose,stdPlan.content);
     const draftBudget=calcPlanBudget();
     let draftItems = [
-      ['사업명', stdPlan.project_name || ''],
-      ['운영주제', draftTheme],
-      ['운영일시', stdPlan.operation_date || ''],
-      ['대상', targetText],
-      ['장소', stdPlan.location || ''],
-      ['주요내용', stdPlan.content || ''],
+      ['사업명', cleanGeneratedTextV164(stdPlan.project_name)],
+      ['사업목적', paragraphGeneratedTextV164(stdPlan.purpose)],
+      ['운영일시', cleanGeneratedTextV164(stdPlan.operation_date)],
+      ['대상', cleanGeneratedTextV164(targetText)],
+      ['장소', cleanGeneratedTextV164(stdPlan.location)],
+      ['주요내용', paragraphGeneratedTextV164(stdPlan.content)],
       ...customDraftRows,
       ['소요예산', draftBudget>0?koreanMoneyV134(draftBudget):'없음'],
       ...(draftBudget>0?[['재원', officialResourceV1484(document.getElementById('p_budgetSource').value,document.getElementById('p_budgetCategory').value)]]:[])
     ];
     const ga = ['가','나','다','라','마','바','사','아','자','차','카','타','파','하'];
     draftItems.filter(x=>x[1]).forEach((x,i)=>{
-      summary += `<div class="doc-list-item">${ga[i]||String(i+1)}. ${esc(x[0])} : ${esc(x[1]).replaceAll('\n','<br>')}</div>`;
+      summary += `<div class="doc-list-item">${ga[i]||String(i+1)}. ${esc(x[0])} : ${generatedTextHtmlV164(x[1])}</div>`;
     });
     const yearMatch=String(stdPlan.operation_date||'').match(/(?:19|20)\d{2}/),planYear=yearMatch?yearMatch[0]:String(new Date().getFullYear());
     const titledName=/^(?:19|20)\d{2}/.test(firstProjName)?firstProjName:planYear+' '+firstProjName;
     value('out_p_recipient',official.recipient||'내부결재');
     value('out_p_docTitle',official.official_title||titledName+' 운영 계획');
     value('out_p_basis_text','1. 관련 근거 : '+(official.reference||planYear+'년 '+(org||'기관')+' 사업계획서'));
-    const linkedTheme=draftTheme?'「'+draftTheme+'」를 주제로 한 ':'';
-    value('out_p_request_text','2. '+(official.request_text||'위 관련 근거에 따라 '+linkedTheme+'「'+firstProjName+'」 사업을 추진하고자 하오니 결재하여 주시기 바랍니다.'));
+    const enteredRequest=cleanGeneratedTextV164(official.request_text);
+    const useEnteredRequest=enteredRequest&&!/위 관련 근거에 따라.+를 주제로 한/.test(enteredRequest);
+    const formalRequest=useEnteredRequest
+      ? paragraphGeneratedTextV164(enteredRequest)
+      : '위 관련 근거에 따라 「'+firstProjName+'」 사업 운영계획을 수립하여 추진하고자 하오니 검토 후 결재하여 주시기 바랍니다.';
+    value('out_p_request_text','2. '+formalRequest);
     value('out_p_attachment',official.attachment||'사업계획서(안) 1부.');
     value('out_p_docNumber',fullDocumentNumberV146(official.document_number)||DOCUMENT_NUMBER_PREFIX_V146);value('out_p_docDate',officialDateTextV146(official.document_date)||planYear+'.    .    .');
     value('out_p_address',official.address||'우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층');
@@ -1718,7 +1753,7 @@
 
     // 2. 주요 프로그램
     const programRowsV1546=readPlanTableRowsV1546('p_progTbody','p-prog-key','p-prog-val');
-    let pRows=programRowsV1546.map(row=>`<tr><th class="td-center">${esc(row.key||'-')}</th><td>${esc(row.value||'-').replaceAll('\n','<br>')}</td></tr>`).join('');
+    let pRows=programRowsV1546.map(row=>`<tr><th class="td-center">${generatedTextHtmlV164(row.key)}</th><td>${generatedTextHtmlV164(row.value)}</td></tr>`).join('');
     let pTbl='<thead><tr><th style="width:25%;">구분</th><th>내용</th></tr></thead><tbody>'+(pRows||'<tr><td colspan="2" class="td-center">작성된 주요 프로그램이 없습니다.</td></tr>')+'</tbody>';
     document.getElementById('out_p_prog_table').innerHTML = pTbl;
     document.getElementById('out_p_program_block').style.display = window.planProgramVisible === false ? 'none' : 'block';
@@ -1729,7 +1764,7 @@
       group:row.querySelector('.p-sch-group-v161')?.value?.trim()||'',
       content:row.querySelector('.p-sch-val')?.value?.trim()||''
     })).filter(row=>row.schedule||row.group||row.content);
-    let sRows=scheduleRowsV161.map(row=>`<tr><td class="td-center">${esc(row.schedule||'-')}</td><td class="td-center">${esc(row.group||'-')}</td><td>${esc(row.content||'-').replaceAll('\n','<br>')}</td></tr>`).join('');
+    let sRows=scheduleRowsV161.map(row=>`<tr><td class="td-center">${generatedTextHtmlV164(row.schedule)}</td><td class="td-center">${generatedTextHtmlV164(row.group)}</td><td>${generatedTextHtmlV164(row.content)}</td></tr>`).join('');
     const scheduleKeyTitleV15410=document.getElementById('p_schedule_key_title_v15410')?.value.trim()||'일정';
     const scheduleGroupTitleV161=document.getElementById('p_schedule_group_title_v161')?.value.trim()||'구분';
     const scheduleContentTitleV161=document.getElementById('p_schedule_content_title_v161')?.value.trim()||'내용';
@@ -2099,17 +2134,20 @@
 
   function startNewDocument(type) {
     const label = type === 'PLAN' ? '새 사업계획서' : '새 결과보고서';
-    if(!confirm(label + ' 작성을 시작하시겠습니까?\n현재 화면의 입력 내용은 초기화됩니다. 저장하지 않은 내용은 사라집니다.')) return;
+    if(!confirm(label + ' 작성을 시작하시겠습니까?\n현재 화면의 입력 내용은 초기화됩니다. 저장하지 않은 내용은 사라집니다.')) return false;
 
     if(type === 'PLAN') {
       applyPosterV155(null);
       window.currentPlanRecordId = null;
       window.currentCloudPlanProjectId = null;
+      window.currentSourcePlanId = null;
+      if(typeof clearCurrentDraftV102==='function')clearCurrentDraftV102('PLAN');
       window.planProgramVisible = true; window.planScheduleVisible = true;
       document.querySelectorAll('#section-input-plan input[type="text"], #section-input-plan input[type="number"], #section-input-plan textarea').forEach(el=>{
         if(!el.closest('#output-plan-container')) el.value = el.type === 'number' ? '0' : '';
       });
       p_overviewTbody.innerHTML=''; addOverviewRow();
+      if(typeof applyStandardPlanV106==='function')applyStandardPlanV106({});
       customPlanFieldsV106=[]; renderCustomPlanFieldsV106();
       planAIDraftV113=null;
       const aiPreview=document.getElementById('aiPreviewV110'); if(aiPreview) aiPreview.innerHTML='';
@@ -2156,6 +2194,7 @@
       document.getElementById('output-result-container').style.display='none';
       calcResultBudget(); switchSubTab('r',1); switchMode('RESULT');
     }
+    return true;
   }
   function deleteData(id) {
     if(!confirm("해당 사업 데이터를 삭제하시겠습니까?")) return;
@@ -2167,11 +2206,12 @@
     const container=document.getElementById(containerId);if(!container)return null;
     const clone=container.cloneNode(true);clone.style.display='block';clone.classList.remove('print-target');clone.querySelectorAll('.no-print').forEach(el=>el.remove());
     if(typeof buildCoverTableLayoutV162==='function')buildCoverTableLayoutV162(clone);
+    if(typeof anchorDocumentFootersV164==='function')anchorDocumentFootersV164(clone);
     const style=`<style>
       @page{size:A4 portrait;margin:30mm 20mm 20mm}body{font-family:Gulim,'굴림',sans-serif;color:#000;font-size:12pt;line-height:1.55}
       .doc-sheet,.doc-sheet *{font-family:Gulim,'굴림',sans-serif!important}.doc-sheet{width:100%;border:0;padding:0;margin:0;font-size:12pt}.doc-cover-page{height:247mm;min-height:247mm;max-height:247mm;position:relative;box-sizing:border-box;padding-bottom:39mm;overflow:hidden;page-break-after:always;break-after:page}.doc-cover-page .doc-fixed-footer{position:absolute;left:0;right:0;bottom:0;width:100%;margin:0;box-sizing:border-box}.doc-cover-page.cover-table-ready-v162{height:247mm;min-height:247mm;max-height:247mm;padding:0;overflow:hidden}.doc-cover-layout-v162{width:100%;height:247mm;border:0!important;border-collapse:collapse;table-layout:fixed;margin:0;padding:0}.doc-cover-layout-v162>tbody>tr>td{border:0!important;padding:0!important}.doc-cover-layout-v162 .doc-cover-main-cell-v162{height:210mm;vertical-align:top}.doc-cover-layout-v162 .doc-cover-footer-cell-v162{height:37mm;vertical-align:bottom}.doc-cover-layout-v162 .doc-fixed-footer{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;margin:0!important}.doc-letterhead{width:100%;border-collapse:collapse;table-layout:fixed;margin:2px 0 42px}.doc-letterhead td{border:0;padding:0 8px;vertical-align:middle}.doc-letterhead td:first-child,.doc-letterhead td:last-child{width:155px!important}.doc-letterhead img{display:block;max-width:100%;height:auto}.doc-center-logo{width:88px;margin:auto}.doc-city-logo{width:120px;margin-left:auto}.doc-letterhead .doc-sub-header{display:none}
       .doc-org-header{font-family:'Malgun Gothic','맑은 고딕',sans-serif!important;font-size:24pt!important;font-weight:700!important;text-align:center;letter-spacing:-2px;white-space:nowrap}.doc-sub-header{font-size:10px;color:#2563eb;text-align:right;margin-top:3px}.doc-meta-table{width:100%;border-collapse:collapse;margin-bottom:15px;font-size:12pt}
-      .doc-meta-table td{padding:4px 0;vertical-align:top}.doc-meta-label{width:72px;letter-spacing:.22em;white-space:nowrap}.doc-title-row td{border-bottom:1px solid #111;padding-bottom:6px}.doc-body-text{font-size:12pt;text-align:justify;line-height:1.75}.doc-body-text p{margin:5px 0}.doc-divider{text-align:center!important;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px;padding:0;text-indent:0}.doc-list-item{display:block;margin:3px 0 3px 34px!important;padding-left:30px!important;text-indent:-30px!important;font-size:12pt;text-align:left}.doc-signature{position:relative;text-align:center;font-family:Gulim,'굴림',sans-serif!important;font-size:19pt!important;font-weight:700!important;letter-spacing:.02em;margin:55px 0 50px}.doc-seal{position:absolute;width:64px;height:64px;object-fit:contain;margin-left:-20px;top:-18px}.doc-footer-signature{margin:18px 0 14px;flex:none}
+      .doc-meta-table td{padding:4px 0;vertical-align:top}.doc-meta-label{width:72px;letter-spacing:.22em;white-space:nowrap}.doc-title-row td{border-bottom:1px solid #111;padding-bottom:6px}.doc-body-text{font-size:12pt;text-align:justify;line-height:1.75}.doc-body-text p{margin:5px 0;white-space:pre-line}.doc-divider{text-align:center!important;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px;padding:0;text-indent:0}.doc-list-item{display:block;margin:3px 0 3px 34px!important;padding-left:30px!important;text-indent:-30px!important;font-size:12pt;text-align:left}.doc-signature{position:relative;text-align:center;font-family:Gulim,'굴림',sans-serif!important;font-size:19pt!important;font-weight:700!important;letter-spacing:.02em;margin:55px 0 50px}.doc-seal{position:absolute;width:64px;height:64px;object-fit:contain;margin-left:-20px;top:-18px}.doc-footer-signature{margin:18px 0 14px;flex:none}
       .out-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:10px 0 20px;font-size:12pt}.out-table th,.out-table td{border:1px solid #000;padding:6px 8px;overflow-wrap:anywhere;font-size:12pt!important}
       .out-table th{background:#f2f2f2;text-align:center}.td-center{text-align:center}.td-right{text-align:right}
       .doc-fixed-footer{width:100%;font-family:Batang,serif;font-size:12pt;line-height:1.5;background:#fff}.doc-approval-container{border-top:8px solid #b7b7b7;margin:0;padding-top:6px;font-size:12pt;line-height:1.5}.doc-approval-row{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;min-height:22px;margin:0;line-height:1.5}.doc-approval-row.doc-routing-row{display:block}.doc-app-item{display:flex;align-items:center;min-width:0;font-size:12pt;line-height:1.5;white-space:nowrap}
@@ -3839,7 +3879,7 @@
    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??''};
    set('sp_project_name',std.project_name); set('sp_business_area',std.business_area); set('sp_background',std.background); set('sp_purpose',std.purpose);
    set('sp_expected_effect',std.expected_effect); set('sp_operation_date',std.operation_date); set('sp_target_group',std.target_group);
-   set('sp_planned_participants',std.planned_participants||0); set('sp_content',std.content); set('sp_location',std.location);
+   set('sp_planned_participants',std.planned_participants??''); set('sp_content',std.content); set('sp_location',std.location);
    set('sp_operation_method',std.operation_method); set('sp_evaluation_plan',std.evaluation_plan);
    customPlanFieldsV106=Array.isArray(std.custom_fields)?std.custom_fields.map(x=>({id:'cpf_'+Math.random().toString(36).slice(2),label:x.label||'',value:x.value||''})):[];
    renderCustomPlanFieldsV106();
@@ -4150,7 +4190,7 @@ ${centerMissionV1493}
 - 운영방법은 준비·실행·사후관리 단계, 담당 역할, 참여자 관리와 안전 유의사항이 드러나도록 작성한다.
 - 사업개요, 추진방향, 세부 추진내용, 추진절차, 추진일정, 소요예산, 행정사항을 서로 중복되지 않게 작성한다.
 - 확인되지 않은 날짜·인원·단가·금액은 20○○. ○. ○., ○명, ○○원처럼 빈칸 표시하며 임의로 확정하지 않는다.
-- 문장은 공공기관 계획서에 맞게 '~하고자 함', '~함', '~예정임' 형식으로 통일하고 항목별 ○ 기호를 사용한다.
+- 문장은 공공기관 계획서에 맞게 '~하고자 함', '~함', '~예정임' 형식으로 통일한다. 여러 문장은 줄바꿈으로 구분하고 ○·● 등 불릿 기호는 사용하지 않는다.
 - 평가·환류는 산출지표와 성과지표, 만족도·의견수렴, 차기 사업 개선방안을 포함한다.
 - 각 항목은 단순 한두 문장이 아니라 실무자가 검토·보완해 바로 사용할 수 있는 분량으로 작성한다.`;
   function suggestPlanTitleV152(idea,target){
@@ -7516,7 +7556,7 @@ const posterPlanBaseV155=getPlanData;getPlanData=function(){const d=posterPlanBa
 function buildCoverTableLayoutV162(root){
   const scope=root&&root.querySelectorAll?root:document;
   scope.querySelectorAll('.doc-cover-page').forEach(cover=>{
-    if(cover.classList.contains('cover-table-ready-v162'))return;
+    if(cover.classList.contains('cover-table-ready-v162')||cover.classList.contains('doc-cover-static-v163'))return;
     const footer=[...cover.children].find(node=>node.classList&&node.classList.contains('doc-fixed-footer'));
     if(!footer)return;
 
@@ -7570,6 +7610,70 @@ document.addEventListener('DOMContentLoaded',()=>{
     const target=document.getElementById(id);if(target)buildCoverTableLayoutV162(target);
   });
 });
+</script>
+
+<script>
+// ===== v16.4: 새 계획서 완전 초기화·결재영역 하단 고정·수기서명 공간 =====
+(function(){
+  'use strict';
+  function addSignatureSpace(root){
+    const scope=root&&root.querySelectorAll?root:document;
+    scope.querySelectorAll('.doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(3)').forEach(item=>{
+      item.style.setProperty('justify-content','flex-start','important');
+      if(item.querySelector('.doc-sign-space-v164'))return;
+      const blank=document.createElement('span');blank.className='doc-sign-space-v164';blank.setAttribute('aria-label','센터장 수기서명 공간');
+      blank.style.cssText='display:inline-block;flex:0 0 64px;min-width:64px;height:1.25em;';
+      item.appendChild(blank);
+    });
+  }
+  function anchor(root){
+    const scope=root&&root.querySelectorAll?root:document;
+    scope.querySelectorAll('.doc-cover-page').forEach(cover=>{
+      cover.style.setProperty('position','relative','important');
+      cover.style.setProperty('height','933px','important');
+      cover.style.setProperty('min-height','933px','important');
+      cover.style.setProperty('max-height','933px','important');
+      cover.style.setProperty('padding-bottom','0','important');
+      const footer=cover.querySelector('.doc-fixed-footer');
+      if(!footer)return;
+      if(footer.parentElement!==cover)cover.appendChild(footer);
+      footer.classList.add('doc-footer-anchor-v164');
+      footer.style.setProperty('position','absolute','important');
+      footer.style.setProperty('left','0','important');
+      footer.style.setProperty('right','0','important');
+      footer.style.setProperty('bottom','0','important');
+      footer.style.setProperty('top','auto','important');
+      footer.style.setProperty('width','100%','important');
+      footer.style.setProperty('margin','0','important');
+      footer.style.setProperty('box-sizing','border-box','important');
+    });
+    addSignatureSpace(scope);
+    return root;
+  }
+  window.anchorDocumentFootersV164=anchor;
+
+  const startNewBase=startNewDocument;
+  startNewDocument=function(type){
+    if(type==='PLAN'){
+      try{
+        clearTimeout(globalDraftTimerV102);
+        if(typeof clearCurrentDraftV102==='function')clearCurrentDraftV102('PLAN');
+      }catch(_){ }
+    }
+    const result=startNewBase.apply(this,arguments);
+    if(type==='PLAN'&&result!==false){
+      if(typeof applyStandardPlanV106==='function')applyStandardPlanV106({});
+      const businessArea=document.getElementById('sp_business_area');if(businessArea)businessArea.value='';
+      const participants=document.getElementById('sp_planned_participants');if(participants)participants.value='';
+      const output=document.getElementById('output-plan-container');if(output)output.style.display='none';
+      try{if(typeof clearCurrentDraftV102==='function')clearCurrentDraftV102('PLAN');}catch(_){ }
+    }
+    return result;
+  };
+
+  document.addEventListener('DOMContentLoaded',()=>anchor(document));
+  setTimeout(()=>anchor(document),0);
+})();
 </script>
 
 </body>
