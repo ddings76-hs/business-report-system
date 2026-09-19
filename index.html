@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v16.4-20260918">
+<html lang="ko" data-build="v16.4.1-20260919">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.4 새 문서·문단·하단 고정)</title>
+  <title>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.4.1 연락처 표준표기)</title>
 <style>
   body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.5; color: #333333; margin: 0; padding: 20px; background-color: #f4f7f6; }
   .app-container { max-width: 1100px; margin: 0 auto; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -153,7 +153,7 @@
   .doc-cover-static-main-row-v163, .doc-cover-static-main-cell-v163 { height:210mm !important;vertical-align:top !important; }
   .doc-cover-static-footer-row-v163, .doc-cover-static-footer-cell-v163 { height:37mm !important;vertical-align:bottom !important; }
   .doc-cover-static-table-v163 .doc-fixed-footer-static-v163 { position:static !important;left:auto !important;right:auto !important;bottom:auto !important;width:100% !important;margin:0 !important; }
-  .doc-approval-row:not(.doc-routing-row) { column-gap:22px; }
+  .doc-approval-row:not(.doc-routing-row) { column-gap:24px; }
   .doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(2) { justify-content:center; }
   .doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(3) { justify-content:flex-end; }
   .doc-routing-row .doc-app-item { gap:5px; }
@@ -161,7 +161,7 @@
   .doc-footer-address { margin-top:3px !important; }
   .doc-footer-line { width:100%;letter-spacing:.01em;word-spacing:.08em; }
   .doc-footer-address-row-v163 { margin-bottom:2px; }
-  .doc-footer-contact-row-v163 { display:flex !important;justify-content:space-between;align-items:center;gap:10px; }
+  .doc-footer-contact-row-v163 { display:flex !important;justify-content:space-between;align-items:center;gap:14px; }
   .doc-body-text p { white-space:pre-line; }
   .doc-cover-page { position:relative !important; }
   .doc-cover-page .doc-fixed-footer.doc-footer-anchor-v164,
@@ -455,7 +455,7 @@
 </div>
 
 <div class="app-container">
-  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.4 새 문서·문단·하단 고정)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
+  <h1>사업계획서 & 결과보고서 통합 자동 생성 시스템 (v16.4.1 연락처 표준표기)</h1><div class="no-print" style="font-size:11px;color:#64748b;margin-top:4px;">결과보고서 정산내역은 지출원장 기준으로만 작성</div>
 
   <!-- 메인 모드 선택기 -->
   <div class="mode-selector no-print">
@@ -797,7 +797,7 @@
             </div>
             <div class="doc-approval-row doc-routing-row"><div class="doc-app-item"><span class="doc-app-label">시행</span><span id="out_p_docNumber">화성시장기요양-</span>&nbsp;&nbsp;(<span id="out_p_docDate">시행일 미입력</span>)&nbsp;<span class="doc-app-label doc-receipt-label-v159">접수</span></div></div>
           </div>
-          <div class="doc-footer-address"><div class="doc-footer-line doc-footer-address-row-v163"><span id="out_p_address">우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층</span></div><div class="doc-footer-line doc-footer-contact-row-v163"><span>전화 <span id="out_p_phone">(031) 294-1630</span></span><span>전송 <span id="out_p_fax">(031) 294-1633</span></span><span id="out_p_email">hsgoodcare@daum.net</span><span id="out_p_disclosure">공개</span></div></div>
+          <div class="doc-footer-address"><div class="doc-footer-line doc-footer-address-row-v163"><span id="out_p_address">우 18290 경기도 화성시 매송면 매송고색로 375번길 11 천천리다목적회관 3층</span></div><div class="doc-footer-line doc-footer-contact-row-v163"><span>전화 <span id="out_p_phone">(031) 294-1630</span> / 전송 <span id="out_p_fax">(031) 294-1633</span> / 이메일 <span id="out_p_email">hsgoodcare@daum.net</span> / <span id="out_p_disclosure">공개</span></span></div></div>
         </div>
         </td></tr></tbody></table>
         </div>
@@ -1128,7 +1128,7 @@
               </div>
               <div class="doc-approval-row doc-routing-row"><div class="doc-app-item"><span class="doc-app-label">시행</span><span id="out_r_docNumber">화성시장기요양-</span>&nbsp;&nbsp;(<span id="out_r_docDate"></span>)&nbsp;<span class="doc-app-label doc-receipt-label-v159">접수</span></div></div>
             </div>
-            <div class="doc-footer-address"><div class="doc-footer-line doc-footer-address-row-v163"><span id="out_r_address"></span></div><div class="doc-footer-line doc-footer-contact-row-v163"><span>전화 <span id="out_r_phone"></span></span><span>전송 <span id="out_r_fax"></span></span><span id="out_r_email"></span><span id="out_r_disclosure"></span></div></div>
+            <div class="doc-footer-address"><div class="doc-footer-line doc-footer-address-row-v163"><span id="out_r_address"></span></div><div class="doc-footer-line doc-footer-contact-row-v163"><span>전화 <span id="out_r_phone"></span> / 전송 <span id="out_r_fax"></span> / 이메일 <span id="out_r_email"></span> / <span id="out_r_disclosure"></span></span></div></div>
           </div>
           </td></tr></tbody></table>
         </div>
@@ -2214,7 +2214,7 @@
       .doc-meta-table td{padding:4px 0;vertical-align:top}.doc-meta-label{width:72px;letter-spacing:.22em;white-space:nowrap}.doc-title-row td{border-bottom:1px solid #111;padding-bottom:6px}.doc-body-text{font-size:12pt;text-align:justify;line-height:1.75}.doc-body-text p{margin:5px 0;white-space:pre-line}.doc-divider{text-align:center!important;font-weight:bold;letter-spacing:.8em;margin:25px 0 22px;padding:0;text-indent:0}.doc-list-item{display:block;margin:3px 0 3px 34px!important;padding-left:30px!important;text-indent:-30px!important;font-size:12pt;text-align:left}.doc-signature{position:relative;text-align:center;font-family:Gulim,'굴림',sans-serif!important;font-size:19pt!important;font-weight:700!important;letter-spacing:.02em;margin:55px 0 50px}.doc-seal{position:absolute;width:64px;height:64px;object-fit:contain;margin-left:-20px;top:-18px}.doc-footer-signature{margin:18px 0 14px;flex:none}
       .out-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:10px 0 20px;font-size:12pt}.out-table th,.out-table td{border:1px solid #000;padding:6px 8px;overflow-wrap:anywhere;font-size:12pt!important}
       .out-table th{background:#f2f2f2;text-align:center}.td-center{text-align:center}.td-right{text-align:right}
-      .doc-fixed-footer{width:100%;font-family:Batang,serif;font-size:12pt;line-height:1.5;background:#fff}.doc-approval-container{border-top:8px solid #b7b7b7;margin:0;padding-top:6px;font-size:12pt;line-height:1.5}.doc-approval-row{display:grid;grid-template-columns:0.8fr 1fr 1.3fr;align-items:center;min-height:22px;margin:0;line-height:1.5}.doc-approval-row.doc-routing-row{display:block}.doc-app-item{display:flex;align-items:center;min-width:0;font-size:12pt;line-height:1.5;white-space:nowrap}
+      .doc-fixed-footer{width:100%;font-family:Batang,serif;font-size:12pt;line-height:1.5;background:#fff}.doc-approval-container{border-top:8px solid #b7b7b7;margin:0;padding-top:6px;font-size:12pt;line-height:1.5}.doc-approval-row{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;min-height:22px;margin:0;line-height:1.5}.doc-approval-row.doc-routing-row{display:block}.doc-app-item{display:flex;align-items:center;min-width:0;font-size:12pt;line-height:1.5;white-space:nowrap}
       .doc-app-label{font-size:12pt;margin-right:12px;letter-spacing:.08em}.doc-app-value{font-size:12pt;font-weight:normal;white-space:nowrap}.doc-receipt-label-v159{margin-right:0}.doc-footer-address,.doc-footer-address *{font-size:12pt}.doc-footer-address{margin-top:0;line-height:1.5;white-space:nowrap}.doc-footer-line{display:block;white-space:nowrap;letter-spacing:-.45px}
       .doc-attachment-title{page-break-before:always;text-align:center;font-size:20pt!important;line-height:1.35;font-weight:700;margin:0 0 24px;padding:12px 8px;border-top:3px solid #000;border-bottom:3px solid #000;word-break:keep-all}.doc-subsection-title{font-size:13pt!important;margin:12px 0 5px}h3{font-size:15pt!important}h4{font-size:13pt!important}.output-two-col-v159 th:first-child{width:20%!important}.output-schedule-v161 th:nth-child(1){width:20%!important}.output-schedule-v161 th:nth-child(2){width:24%!important}#out_p_budget_total_line_v161,#out_p_budget_total_line_v161 strong{font-size:13pt!important}.doc-sheet p[id^="out_p_"],.doc-sheet p[id^="out_r_"],.doc-sheet div[id^="out_p_attach"],.doc-sheet div[id^="out_r_tbl_attach"]{font-size:13pt!important}
       .doc-sheet{font-size:13pt!important;line-height:1.62!important}.doc-meta-table,.doc-meta-table td,.doc-body-text,.doc-body-text p,.doc-list-item,.doc-sheet .out-table,.doc-sheet .out-table th,.doc-sheet .out-table td,.doc-subsection-title,.doc-sheet h4,.doc-fixed-footer,.doc-approval-container,.doc-approval-row,.doc-app-item,.doc-app-label,.doc-app-value,.doc-footer-address,.doc-footer-address *{font-size:13pt!important}.doc-sheet h3{font-size:15pt!important}.doc-cover-static-v163{height:247mm!important;min-height:247mm!important;max-height:247mm!important;padding:0!important;overflow:hidden!important}.doc-cover-static-table-v163{width:100%!important;height:247mm!important;border:0!important;border-collapse:collapse!important;table-layout:fixed!important;margin:0!important;padding:0!important}.doc-cover-static-table-v163>tbody>tr>td{border:0!important;padding:0!important}.doc-cover-static-main-row-v163,.doc-cover-static-main-cell-v163{height:210mm!important;vertical-align:top!important}.doc-cover-static-footer-row-v163,.doc-cover-static-footer-cell-v163{height:37mm!important;vertical-align:bottom!important}.doc-cover-static-table-v163 .doc-fixed-footer-static-v163{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;margin:0!important}.doc-approval-row:not(.doc-routing-row){column-gap:24px}.doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(2){justify-content:center}.doc-approval-row:not(.doc-routing-row) .doc-app-item:nth-child(3){justify-content:flex-end}.doc-routing-row .doc-app-item{gap:5px}.doc-receipt-label-v159{margin-left:16px!important;margin-right:0!important}.doc-footer-address{margin-top:3px!important}.doc-footer-line{width:100%;letter-spacing:.01em;word-spacing:.08em}.doc-footer-address-row-v163{margin-bottom:2px}.doc-footer-contact-row-v163{display:flex!important;justify-content:space-between;align-items:center;gap:14px}
@@ -7460,7 +7460,7 @@ const posterPlanBaseV155=getPlanData;getPlanData=function(){const d=posterPlanBa
   const externalAddress=document.getElementById('out_ext_address_v146'),externalFooter=externalAddress?.closest('.doc-footer-address');
   if(externalFooter&&externalFooter.children.length===1){
     const values={address:externalAddress?.innerText||'',phone:document.getElementById('out_ext_phone_v146')?.innerText||'',fax:document.getElementById('out_ext_fax_v146')?.innerText||'',email:document.getElementById('out_ext_email_v146')?.innerText||'',disclosure:document.getElementById('out_ext_disclosure_v146')?.innerText||''};
-    externalFooter.innerHTML='<div class="doc-footer-line"><span id="out_ext_address_v146"></span> /</div><div class="doc-footer-line">전화 <span id="out_ext_phone_v146"></span> / 전송 <span id="out_ext_fax_v146"></span> / <span id="out_ext_email_v146"></span> / <span id="out_ext_disclosure_v146"></span></div>';
+    externalFooter.innerHTML='<div class="doc-footer-line"><span id="out_ext_address_v146"></span></div><div class="doc-footer-line">전화 <span id="out_ext_phone_v146"></span> / 전송 <span id="out_ext_fax_v146"></span> / 이메일 <span id="out_ext_email_v146"></span> / <span id="out_ext_disclosure_v146"></span></div>';
     Object.entries(values).forEach(([key,value])=>{const id={address:'out_ext_address_v146',phone:'out_ext_phone_v146',fax:'out_ext_fax_v146',email:'out_ext_email_v146',disclosure:'out_ext_disclosure_v146'}[key],el=document.getElementById(id);if(el)el.innerText=value;});
   }
 
