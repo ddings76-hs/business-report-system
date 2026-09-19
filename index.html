@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v16.8.0-20260919">
+<html lang="ko" data-build="v16.9.0-20260919">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -550,6 +550,12 @@
           <label style="font-size:12px">시행일<input type="date" id="ext_date_v146"></label>
           <label style="font-size:12px">공개 여부<input id="ext_disclosure_v146" value="공개"></label>
           <label style="font-size:12px">발신기관장<input id="ext_sender_v146" value="화성시장기요양지원센터장"></label>
+        </div>
+        <div class="no-print" style="margin-top:12px;padding:10px;border:1px solid #cbd5e1;border-radius:6px">
+          <label for="ext_seal_input_v169"><strong>직인 직접 등록</strong> · 투명 배경 PNG, 최대 2MB</label>
+          <input type="file" id="ext_seal_input_v169" accept="image/png" onchange="registerOfficialSealV169(this)">
+          <button type="button" class="btn btn-add" onclick="resetOfficialSealV169()">기본 직인으로 복원</button>
+          <div id="ext_seal_status_v169" style="font-size:12px;margin-top:5px">등록한 직인은 이 브라우저의 로그인 계정별로 보관됩니다. 다른 PC에서는 다시 등록해 주세요.</div>
         </div>
         <label style="display:block;font-size:12px;margin-top:9px">제목<input id="ext_title_v146" placeholder="공문 제목"></label>
         <label style="display:block;font-size:12px;margin-top:9px">관련 근거<textarea id="ext_reference_v146" placeholder="예: 화성시장기요양-00(2026. 9. 1.)"></textarea></label>
@@ -1164,7 +1170,7 @@
         <div id="out_r_surveySectionV136">
         <h3 id="out_r_surveyTitleV136" style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅲ. 설문 결과</h3>
         <h4 style="font-size:13px; font-family:'Batang', serif; margin:5px 0;">1. 만족도 조사 요약</h4>
-        <table class="out-table output-two-col-v159">
+        <table class="out-table output-two-col-v159 result-detail-v168" id="out_r_survey_table_v169">
           <tr><th style="width:25%;">분석 기준</th><td id="out_r_tbl_surveyInfo"></td></tr>
           <tr><th style="width:25%;">전반적 만족도</th><td id="out_r_tbl_score"></td></tr>
           <tr><th>주요 항목별 만족도</th><td id="out_r_tbl_surveyItems"></td></tr>
@@ -2407,16 +2413,19 @@ function attachmentRowsV167(values){
         if(error) throw error; doc=created;
       }
 
-      await sb.from('project_history').insert({
+      try{
+      const history=await sb.from('project_history').insert({
         project_id:projectId, document_id:doc.id,
         action: existing ? 'UPDATE_'+type : 'CREATE_'+type,
         snapshot:data, changed_by:v8User.id
       });
+      if(history.error)console.warn('문서는 저장되었으나 이력 기록 실패:',history.error);
+      }catch(error){console.warn('문서는 저장되었으나 이력 기록 실패:',error);}
 
       if(type==='PLAN') window.currentCloudPlanProjectId=projectId;
       else window.currentCloudResultProjectId=projectId;
       alert('공동 DB에 저장되었습니다.');
-      await renderCloudDB();
+      try{await renderCloudDB();}catch(error){console.warn('문서는 저장되었으나 목록 갱신 실패:',error);}
       return {ok:true,projectId,documentId:doc.id,type};
     } catch(e) {
       console.error(e); alert('공동 DB 저장 오류: '+e.message);
@@ -2508,6 +2517,9 @@ function attachmentRowsV167(values){
   }
 
   async function cloudPlanToResult(projectId) {
+    const existingResult=await sb.from('project_documents').select('id').eq('project_id',projectId).eq('doc_type','RESULT').maybeSingle();
+    if(existingResult.error)throw existingResult.error;
+    if(existingResult.data){await loadCloudDocument(existingResult.data.id);return;}
     const {data:x,error}=await sb.from('project_documents')
       .select('*').eq('project_id',projectId).eq('doc_type','PLAN').single();
     if(error) return alert(error.message);
@@ -4190,7 +4202,7 @@ function attachmentRowsV167(values){
         satisfaction_score:extractFirstNumber(d.surveyScore)||0,
         achievements:d.evalGood||'',improvements:d.evalBad||'',evaluation_result:'',follow_up_plan:d.evalPlan||''
       });
-      await inheritPlanToStandardResultV107(q.data.project_id);
+      if(!d.standard)await inheritPlanToStandardResultV107(q.data.project_id);
       if(typeof calcResultBudget==='function')calcResultBudget();
       await new Promise(resolve=>setTimeout(resolve,50));
       if(typeof generateResultDocs==='function')generateResultDocs();
@@ -5892,13 +5904,7 @@ ${centerMissionV1493}
     }
     const projectId=window.currentCloudResultProjectId||window.currentSourcePlanId;
     if(!projectId)return {ok:false,message:'먼저 저장된 사업계획서를 불러온 후 결과보고서를 저장해 주세요.',field:'r_projName'};
-    if(typeof window.checkResultCompletionV121==='function'){
-      const check=window.checkResultCompletionV121(false);
-      if(!check.ok){
-        const ids={'사업명':'r_projName','실시 일시':'r_actualDate','실시 장소':'r_actualLocation','참여대상':'r_targetGroup','실제 참석인원':'r_actualParticipants','주요 추진내용':'r_summaryContent','주요성과':'r_evalGood','문제점·개선사항':'r_evalBad','종합 평가결과':'r_evaluationResult','차년도 환류계획':'r_evalPlan'};
-        return {ok:false,message:check.message,field:ids[check.missing[0]]||'r_projName'};
-      }
-    }
+    if(!document.getElementById('r_projName')?.value.trim())return {ok:false,message:'사업명을 입력해 주세요.',field:'r_projName'};
     return {ok:true};
   }
   async function syncResultMetrics(projectId){
@@ -5923,6 +5929,7 @@ ${centerMissionV1493}
     type=type==='RESULT'?'RESULT':'PLAN';
     if(saving){setStatus(type,'저장이 진행 중입니다. 잠시 기다려 주세요.','#b45309');return {ok:false,busy:true};}
     if(!v8User){alert('먼저 로그인하세요.');setStatus(type,'로그인 후 저장할 수 있습니다.','#b91c1c');return {ok:false,auth:true};}
+    if(type==='RESULT'&&typeof window.finishResultDraftEditV158==='function')window.finishResultDraftEditV158();
     const validation=validateBeforeSave(type);
     if(!validation.ok){setStatus(type,validation.message,'#b91c1c');alert(validation.message);focusField(type,validation.field);return {ok:false,validation:true};}
     const button=document.getElementById(type==='PLAN'?'savePlanBtnV130':'saveResultBtnV130');
@@ -6508,11 +6515,14 @@ ${centerMissionV1493}
   };
   window.generateExternalDocV146=function(){
     const d=formData();if(!d.title)return alert('공문 제목을 입력해 주세요.');if(!d.recipient)return alert('수신처를 입력해 주세요.');if(!d.body_text)return alert('공문 본문을 입력해 주세요.');if(!d.contact_name)return alert('문의 담당자를 입력해 주세요.');if(!d.contact_phone)return alert('문의 전화번호를 입력해 주세요.');
+    const existingSeal=document.getElementById('out_ext_seal_v146'),existingSender=document.getElementById('out_ext_sender_v146');
+    if(existingSeal&&existingSender?.contains(existingSeal))existingSender.after(existingSeal);
     const text=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||'';};
     const center=document.getElementById('out_p_center_logo'),city=document.getElementById('out_p_city_logo');if(center)document.getElementById('out_ext_center_logo_v146').src=center.src;if(city)document.getElementById('out_ext_city_logo_v146').src=city.src;
     text('out_ext_org_v146',d.organization_name);text('out_ext_recipient_v146',d.recipient);text('out_ext_via_v146',d.via);text('out_ext_title_v146',d.title);text('out_ext_sender_v146',d.sender_name);text('out_ext_staff_v146',String(d.staff_name||'').replace(/^담당\s*/,''));text('out_ext_reviewer_v146',String(d.reviewer_name||'').replace(/^(검토자|대리)\s*/,''));text('out_ext_approver_v146',String(d.approver_name||'').replace(/^(결재자|센터장)\s*/,''));text('out_ext_number_v146',fullDocumentNumberV146(d.document_number)||DOCUMENT_NUMBER_PREFIX_V146);text('out_ext_date_v146',officialDateTextV146(d.document_date)||'시행일 미입력');text('out_ext_address_v146',d.address);text('out_ext_phone_v146',d.phone);text('out_ext_fax_v146',d.fax);text('out_ext_email_v146',d.email);text('out_ext_disclosure_v146',d.disclosure);
     const body=document.getElementById('out_ext_body_v146'),parts=[];parts.push(externalBodyV168(d.body_text,d.reference_text).split(/\r?\n/).map(line=>{const trimmed=line.trim();if(!trimmed)return '<div style="height:8px"></div>';if(trimmed.replace(/\s/g,'')==='-아래-')return '<p class="doc-divider" style="text-align:center !important;margin:25px 0 22px;padding:0;text-indent:0;letter-spacing:.8em;white-space:nowrap">- 아 래 -</p>';if(/^[가나다라마바사아자차카타파하]\.\s*/.test(trimmed))return '<p class="doc-list-item" style="display:block;margin:3px 0 3px 34px !important;padding-left:30px !important;text-indent:-30px !important;text-align:left;white-space:pre-wrap">'+esc(trimmed)+'</p>';return '<p style="white-space:pre-wrap">'+esc(trimmed)+'</p>';}).join(''));body.innerHTML=parts.join('');text('out_ext_contact_v146',nextKoreanItemLabel(d.body_text)+'. 문의 : '+d.contact_name+' / '+d.contact_phone);
     const allAttachments=[...d.attachment_labels,...uploadedFiles.map(file=>String(file.original_name||'').replace(/\.[^.]+$/,'')+' 1부.')].filter((x,i,a)=>x&&a.indexOf(x)===i),att=document.getElementById('out_ext_attachments_v146');att.innerHTML=allAttachments.length?allAttachments.map((x,i)=>'<div style="padding-left:58px;text-indent:-58px">'+(i===0?'붙임&nbsp;&nbsp;':'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;')+(i+1)+'. '+esc(x)+(i===allAttachments.length-1?'&nbsp;&nbsp;끝.':'')+'</div>').join(''):'<div>붙임&nbsp;&nbsp;없음.&nbsp;&nbsp;끝.</div>';
+    applyOfficialSealV169();
     document.getElementById('output-external-v146').style.display='block';document.getElementById('output-external-v146').scrollIntoView({behavior:'smooth',block:'start'});
   };
   window.saveExternalDocV146=async function(status){
@@ -7088,7 +7098,7 @@ getResultData=function(){const data=getResultDataBaseV1481();const noBudget=!!do
 const fillResultBaseV1481=fillResult;
 fillResult=function(data){fillResultBaseV1481(data);const noBudget=!!data?.noBudget||data?.budgetOrigin==='no_budget';document.getElementById('resultNoBudgetV1481').checked=noBudget;window.resultBudgetLedgerLoadedV1481=data?.budgetOrigin==='ledger';const notice=document.getElementById('resultBudgetLockNoticeV1481');if(notice)notice.innerHTML=noBudget?'✅ 저장된 무예산 사업 결과보고서입니다.':window.resultBudgetLedgerLoadedV1481?'✅ 지출원장에서 불러온 저장 정산내역입니다.':'⚠ 기존 저장자료입니다. 최신 지출원장을 다시 불러오거나 무예산 사업을 선택해 주세요.';lockResultBudgetV1481();};
 if(typeof generateCheckedResultV121==='function'){const generateResultBaseV1481=generateCheckedResultV121;generateCheckedResultV121=function(){if(!validateResultBudgetSourceV1481(true)){switchSubTab('r',3);return;}return generateResultBaseV1481();};}
-if(typeof saveCloudDocument==='function'){const saveCloudDocumentBaseV1481=saveCloudDocument;saveCloudDocument=async function(type){if(type==='RESULT'&&!validateResultBudgetSourceV1481(true)){switchSubTab('r',3);return;}return saveCloudDocumentBaseV1481(type);};}
+// v16.9: 작성중 저장은 허용하고 예산 검증은 최종 생성 단계에서 유지합니다.
 document.addEventListener('DOMContentLoaded',()=>{lockResultBudgetV1481();const body=document.getElementById('r_budgetTbody');if(body)new MutationObserver(lockResultBudgetV1481).observe(body,{childList:true,subtree:true});});
 
 // ===== v14.9.4: 설문 그래프 문항 선택·결과보고서 출력 =====
@@ -7776,7 +7786,7 @@ const posterPlanBaseV155=getPlanData;getPlanData=function(){const d=posterPlanBa
   function formatOfficialDocumentV165(root){
     const scope=root&&root.querySelectorAll?root:document;
     scope.querySelectorAll('.doc-body-text p').forEach(p=>{
-      if(/^\s*[12]\.\s*/.test(p.textContent||''))p.classList.add('doc-official-intro-v165');
+      if(/^\s*\d{1,2}\.\s*/.test(p.textContent||''))p.classList.add('doc-official-intro-v165');
     });
     scope.querySelectorAll('.doc-list-item').forEach(alignListItemV165);
     mergePurposeSubLinesV165(scope);
@@ -7818,7 +7828,7 @@ body .doc-sheet .doc-org-header{font-family:'Malgun Gothic','맑은 고딕',sans
 .doc-sub-header,.tag-plan,.tag-result{display:none!important}
 .doc-meta-table{width:100%;border-collapse:collapse;margin:0 0 4mm}.doc-meta-table td{padding:1mm 0;vertical-align:top}.doc-meta-label{width:17mm;letter-spacing:normal!important;white-space:nowrap}.doc-title-row td{font-weight:700!important;border-bottom:1px solid black;padding-bottom:2mm}
 .doc-body-text{text-align:left!important;margin:0;line-height:1.6}.doc-body-text p{margin:1.3mm 0;white-space:pre-line;overflow-wrap:anywhere}
-body .doc-sheet .doc-official-intro-v165{margin:1.3mm 0 1.3mm 5mm!important;padding-left:5mm!important;text-indent:-5mm!important;text-align:left!important}
+body .doc-sheet .doc-official-intro-v165{margin:1.3mm 0!important;padding-left:5mm!important;text-indent:-5mm!important;text-align:left!important}
 .doc-divider{text-align:center!important;font-weight:bold;letter-spacing:.8em;margin:5mm 0!important;padding:0!important;text-indent:0!important}
 body .doc-sheet .doc-list-item.doc-list-aligned-v165{display:grid!important;grid-template-columns:27mm minmax(0,1fr)!important;column-gap:2mm!important;align-items:start;margin:1.2mm 0 1.2mm 5mm!important;padding:0!important;text-indent:0!important;text-align:left!important;white-space:normal!important}
 .doc-list-label-v165{display:grid;grid-template-columns:5mm minmax(0,1fr) 2mm;column-gap:.5mm;white-space:nowrap}.doc-list-name-v165{text-align:justify;text-align-last:justify}.doc-list-colon-v165{text-align:center}.doc-list-value-v165{min-width:0;white-space:pre-line;overflow-wrap:anywhere}
@@ -7839,6 +7849,9 @@ body .doc-sheet .doc-app-item{display:flex;align-items:center;min-width:0;white-
 body .doc-sheet .out-table.result-detail-v168 th:first-child,body .doc-sheet #out_r_planCompareV136 th:first-child{width:25%!important}
 body .doc-sheet .doc-footer-signature{display:flex!important;align-items:center;justify-content:center;gap:3mm;position:relative;margin:4mm 0!important;min-height:19mm}
 body .doc-sheet .doc-footer-signature .doc-seal{position:static!important;inset:auto!important;margin:0!important;flex:0 0 17mm;width:17mm!important;height:17mm!important;object-fit:contain;transform:none!important}
+
+body .doc-sheet .doc-footer-signature .doc-seal-anchor-v169{position:relative;display:inline-flex;align-items:center;justify-content:center;width:17mm;min-width:17mm;height:17mm;vertical-align:middle;isolation:isolate}
+body .doc-sheet .doc-footer-signature .doc-seal-anchor-v169 .doc-seal{position:absolute!important;left:0!important;top:0!important;width:17mm!important;height:17mm!important;margin:0!important;z-index:2;mix-blend-mode:multiply;pointer-events:none}
 `;
 function normalizeCoverV166(root){
   root.querySelectorAll('.doc-cover-page').forEach(cover=>{
@@ -7930,6 +7943,35 @@ function orderedFinancialRowsV166(scope){
   ['finishPlanDraftEditV1543','finishResultDraftEditV158'].forEach(name=>{const base=window[name];if(typeof base==='function')window[name]=function(){const result=base.apply(this,arguments);initialize();return result;};});
 })();
 
+</script>
+<script>
+// v16.9 official seal: original image bytes are preserved; only placement changes.
+let defaultOfficialSealV169=null;
+function officialSealKeyV169(){return 'official-seal-v169:'+(typeof v8User!=='undefined'&&v8User?.id||'local');}
+function applyOfficialSealV169(){
+  const image=document.getElementById('out_ext_seal_v146'),sender=document.getElementById('out_ext_sender_v146');if(!image||!sender)return;
+  if(defaultOfficialSealV169===null)defaultOfficialSealV169=image.getAttribute('src')||'';
+  let registered=null;try{registered=localStorage.getItem(officialSealKeyV169());}catch(_){}
+  image.src=registered||defaultOfficialSealV169;
+  const name=sender.textContent.trim();image.remove();sender.textContent='';
+  const prefix=name.endsWith('장')?name.slice(0,-1):name,last=name.endsWith('장')?'장':'';
+  sender.append(document.createTextNode(prefix));
+  const anchor=document.createElement('span');anchor.className='doc-seal-anchor-v169';anchor.append(document.createTextNode(last),image);sender.append(anchor);
+}
+async function registerOfficialSealV169(input){
+  const file=input.files?.[0],status=document.getElementById('ext_seal_status_v169');if(!file)return;
+  try{
+    if(file.type!=='image/png'||file.size>2*1024*1024||file.size===0)throw new Error('2MB 이하의 PNG 파일을 선택해 주세요.');
+    const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('파일을 읽을 수 없습니다.'));reader.readAsDataURL(file);});
+    const check=new Image();await new Promise((resolve,reject)=>{check.onload=resolve;check.onerror=()=>reject(new Error('정상적인 PNG 이미지가 아닙니다.'));check.src=data;});
+    localStorage.setItem(officialSealKeyV169(),data);applyOfficialSealV169();
+    status.textContent='직인을 등록했습니다. 이 브라우저에서 발신명 마지막 ‘장’ 위에 적용됩니다.';status.style.color='#166534';
+  }catch(error){status.textContent='직인 등록 실패: '+error.message;status.style.color='#b91c1c';}finally{input.value='';}
+}
+function resetOfficialSealV169(){
+  try{localStorage.removeItem(officialSealKeyV169());applyOfficialSealV169();document.getElementById('ext_seal_status_v169').textContent='기본 직인으로 복원했습니다.';}catch(error){alert('직인 복원 오류: '+error.message);}
+}
+document.addEventListener('DOMContentLoaded',applyOfficialSealV169);
 </script>
 </body>
 </html>
