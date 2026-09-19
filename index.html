@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v16.7.0-20260919">
+<html lang="ko" data-build="v16.8.0-20260919">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1146,7 +1146,8 @@
         
         <h2 class="doc-attachment-title" id="out_r_mainTitleV159">사업 결과보고서</h2>
         <h3 style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px;">Ⅰ. 사업 개요 및 추진 결과</h3>
-        <table class="out-table output-two-col-v159" id="out_r_overview_table_v159">
+        <table class="out-table output-two-col-v159 result-detail-v168" id="out_r_overview_table_v159">
+          <colgroup><col style="width:25%"><col style="width:75%"></colgroup><thead><tr><th scope="col">구분</th><th scope="col">내용</th></tr></thead><tbody>
           <tr><th style="width:25%;">사업명</th><td id="out_r_tbl_pName"></td></tr>
           <tr><th>사업유형</th><td id="out_r_typeV136"></td></tr>
           <tr><th>일시 및 장소</th><td id="out_r_tbl_dateLoc"></td></tr>
@@ -1155,7 +1156,7 @@
           <tr id="out_r_leadRowV136"><th id="out_r_leadLabelV136">교육운영</th><td id="out_r_leadV136"></td></tr>
           <tr><th>주요 추진 내용</th><td id="out_r_tbl_summary"></td></tr>
           <tr><th id="out_r_performanceLabelV136">교육 운영실적</th><td id="out_r_performanceV136"></td></tr>
-        </table>
+        </tbody></table>
 
         <h3 id="out_r_compareTitleV136" style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅱ. 계획 대비 추진 실적</h3>
         <table class="out-table" id="out_r_planCompareV136"></table>
@@ -1174,12 +1175,13 @@
         </div>
 
         <h3 id="out_r_evalTitleV136" style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅳ. 운영평가 및 환류</h3>
-        <table class="out-table output-two-col-v159">
+        <table class="out-table output-two-col-v159 result-detail-v168" id="out_r_evaluation_table_v168">
+          <colgroup><col style="width:25%"><col style="width:75%"></colgroup><thead><tr><th scope="col">구분</th><th scope="col">내용</th></tr></thead><tbody>
           <tr><th style="width:25%;">주요성과</th><td id="out_r_evalGoodV136"></td></tr>
           <tr><th>문제점·개선사항</th><td id="out_r_evalBadV136"></td></tr>
           <tr><th>종합 평가결과</th><td id="out_r_evalResultV136"></td></tr>
           <tr><th>차년도 환류계획</th><td id="out_r_evalPlanV136"></td></tr>
-        </table>
+        </tbody></table>
 
         <h3 id="out_r_budgetTitleV136" style="font-size:15px; font-family:'Batang', serif; border-bottom:1px solid #000; padding-bottom:5px; margin-top:25px;">Ⅴ. 예산 집행내역</h3>
         <p style="font-size:13px; font-family:'Batang', serif;" id="out_r_budget_meta"></p>
@@ -1532,6 +1534,28 @@
   }
 
   // v16.4 자동생성 문구 정리: 불릿 제거, 문장별 줄바꿈, 공문서용 출력
+const EXTERNAL_GREETING_V168='지역사회 장기요양기관의 발전과 원활한 사업 추진을 위한 귀 기관의 협조에 감사드립니다.';
+function externalBodyV168(body,reference=''){
+  const lines=String(body||'').replace(/\r\n?/g,'\n').split('\n');
+  const referenceText=String(reference||'').trim();
+  const remaining=lines.filter(line=>{
+    const plain=line.trim().replace(/^\d{1,2}\.\s*/, '');
+    return plain!==EXTERNAL_GREETING_V168&&(!referenceText||plain!=='관련 근거 : '+referenceText);
+  });
+  let number=1;
+  const result=['1. '+EXTERNAL_GREETING_V168];
+  if(referenceText)result.push((++number)+'. 관련 근거 : '+referenceText);
+  let first=true;
+  for(const line of remaining){
+    const trimmed=line.trim();if(!trimmed){result.push('');continue;}
+    if(/^\d{1,2}\.\s*/.test(trimmed))result.push((++number)+'. '+trimmed.replace(/^\d{1,2}\.\s*/,''));
+    else if(first&&!/^[가-하]\.\s*|^-\s*아/.test(trimmed))result.push((++number)+'. '+trimmed);
+    else result.push(line);
+    first=false;
+  }
+  return result.join('\n').trim();
+}
+
 function documentTextV167(element){
   if(!element)return '';
   const copy=element.cloneNode(true);
@@ -1868,10 +1892,10 @@ function attachmentRowsV167(values){
     const balance=Math.max(0,approvedBudget-totalBudget);
     const participation='총 '+Number(stdResult.actual_participants||0).toLocaleString()+'명'+(stdResult.actual_target_group?' ('+stdResult.actual_target_group+')':'');
     const resource=officialResourceV1484(document.getElementById('r_budgetSource').value,document.getElementById('r_budgetCategory').value);
-    const budgetOutline=koreanMoneyV134(approvedBudget>0?approvedBudget:totalBudget);
+    const budgetOutline=koreanMoneyV134(approvedBudget);
     const draftItems=[
       ['사업명',pName],['교육주제',official.operation_theme],['참여인원',participation],['교육운영',official.operation_lead],
-      ['교육내용',summaryContent],['소요예산',budgetOutline],['재원',resource||'해당 없음'],['집행예산',koreanMoneyV134(totalBudget)]
+      ['교육내용',summaryContent],['계획예산',budgetOutline],['집행예산',koreanMoneyV134(totalBudget)],['재원',resource||'해당 없음']
     ];
     const ga=['가','나','다','라','마','바','사','아'];
     document.getElementById('out_r_overview_summary').innerHTML=draftItems.filter(x=>String(x[1]??'').trim()).map((x,i)=>`<div class="doc-list-item">${ga[i]||String(i+1)}. ${esc(x[0])} : ${esc(x[1]).replaceAll('\n','<br>')}</div>`).join('');
@@ -6075,8 +6099,8 @@ ${centerMissionV1493}
     const includeSurvey=document.getElementById('r_includeSurveyV136')?.checked!==false&&hasSurvey;
     const section=document.getElementById('out_r_surveySectionV136'),appendix=document.getElementById('out_r_surveyAppendixV122');if(section)section.style.display=includeSurvey?'block':'none';if(appendix&&!includeSurvey)appendix.style.display='none';
     setText('out_r_evalTitleV136',(includeSurvey?'Ⅳ':'Ⅲ')+'. 운영평가 및 환류');setText('out_r_budgetTitleV136',(includeSurvey?'Ⅴ':'Ⅳ')+'. 예산 집행내역');setText('out_r_attachTitleV136',(includeSurvey?'Ⅵ':'Ⅴ')+'. 붙임 서류');
-    const ga=['가','나','다','라','마','바','사','아'],participation='총 '+actualPeople.toLocaleString()+'명'+(std.actual_target_group?' ('+std.actual_target_group+')':''),resource=officialResourceV1484(val('r_budgetSource'),val('r_budgetCategory')),budgetOutline=koreanMoneyV134(plannedBudget||actualBudget);
-    const cover=[['사업명',std.project_name],[meta.theme,official.operation_theme],['참여인원',participation],[meta.lead,official.operation_lead],[meta.content,std.actual_content],['소요예산',budgetOutline],['재원',resource||'해당 없음'],['집행예산',koreanMoneyV134(actualBudget)]].filter(x=>String(x[1]??'').trim());
+    const ga=['가','나','다','라','마','바','사','아'],participation='총 '+actualPeople.toLocaleString()+'명'+(std.actual_target_group?' ('+std.actual_target_group+')':''),resource=officialResourceV1484(val('r_budgetSource'),val('r_budgetCategory')),budgetOutline=koreanMoneyV134(plannedBudget);
+    const cover=[['사업명',std.project_name],[meta.theme,official.operation_theme],['참여인원',participation],[meta.lead,official.operation_lead],[meta.content,std.actual_content],['계획예산',budgetOutline],['집행예산',koreanMoneyV134(actualBudget)],['재원',resource||'해당 없음']].filter(x=>String(x[1]??'').trim());
     const coverBox=document.getElementById('out_r_overview_summary');if(coverBox)coverBox.innerHTML=cover.map((x,i)=>'<div class="doc-list-item">'+(ga[i]||String(i+1))+'. '+esc(x[0])+' : '+esc(x[1]).replaceAll('\n','<br>')+'</div>').join('');
     const attachBox=document.getElementById('out_r_tbl_attachList');if(attachBox){const values=Array.from(document.querySelectorAll('.r-attach-val')).map(x=>x.value.trim()).filter(Boolean).filter(x=>includeSurvey||!/설문/.test(x));attachBox.innerHTML=attachmentRowsV167(values)||'<div>별도 붙임 없음</div>';}
   }
@@ -6460,7 +6484,7 @@ ${centerMissionV1493}
     if(value('ext_mode_v146')!=='linked')return;
     const doc=sourceData();if(!doc)return;
     const n=normalized(doc),type=value('ext_type_v146');
-    set('ext_title_v146',defaultTitle(type,n.project_name));set('ext_reference_v146',n.reference);set('ext_body_v146',templateText(type,n));
+    set('ext_title_v146',defaultTitle(type,n.project_name));set('ext_reference_v146',n.reference);set('ext_body_v146',externalBodyV168(templateText(type,n)));
     if(!value('ext_attachments_v146'))set('ext_attachments_v146',n.attachment);
     const info=document.getElementById('ext_link_status_v146');if(info)info.textContent=`${n.project_name||'선택 사업'} · ${doc.doc_type==='PLAN'?'계획서':'결과보고서'}에서 예산을 제외하고 반영했습니다.`;
   };
@@ -6487,7 +6511,7 @@ ${centerMissionV1493}
     const text=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||'';};
     const center=document.getElementById('out_p_center_logo'),city=document.getElementById('out_p_city_logo');if(center)document.getElementById('out_ext_center_logo_v146').src=center.src;if(city)document.getElementById('out_ext_city_logo_v146').src=city.src;
     text('out_ext_org_v146',d.organization_name);text('out_ext_recipient_v146',d.recipient);text('out_ext_via_v146',d.via);text('out_ext_title_v146',d.title);text('out_ext_sender_v146',d.sender_name);text('out_ext_staff_v146',String(d.staff_name||'').replace(/^담당\s*/,''));text('out_ext_reviewer_v146',String(d.reviewer_name||'').replace(/^(검토자|대리)\s*/,''));text('out_ext_approver_v146',String(d.approver_name||'').replace(/^(결재자|센터장)\s*/,''));text('out_ext_number_v146',fullDocumentNumberV146(d.document_number)||DOCUMENT_NUMBER_PREFIX_V146);text('out_ext_date_v146',officialDateTextV146(d.document_date)||'시행일 미입력');text('out_ext_address_v146',d.address);text('out_ext_phone_v146',d.phone);text('out_ext_fax_v146',d.fax);text('out_ext_email_v146',d.email);text('out_ext_disclosure_v146',d.disclosure);
-    const body=document.getElementById('out_ext_body_v146'),parts=[];if(d.reference_text)parts.push('<p>1. 관련 근거 : '+esc(d.reference_text)+'</p>');parts.push(d.body_text.split(/\r?\n/).map(line=>{const trimmed=line.trim();if(!trimmed)return '<div style="height:8px"></div>';if(trimmed.replace(/\s/g,'')==='-아래-')return '<p class="doc-divider" style="text-align:center !important;margin:25px 0 22px;padding:0;text-indent:0;letter-spacing:.8em;white-space:nowrap">- 아 래 -</p>';if(/^[가나다라마바사아자차카타파하]\.\s*/.test(trimmed))return '<p class="doc-list-item" style="display:block;margin:3px 0 3px 34px !important;padding-left:30px !important;text-indent:-30px !important;text-align:left;white-space:pre-wrap">'+esc(trimmed)+'</p>';return '<p style="white-space:pre-wrap">'+esc(trimmed)+'</p>';}).join(''));body.innerHTML=parts.join('');text('out_ext_contact_v146',nextKoreanItemLabel(d.body_text)+'. 문의 : '+d.contact_name+' / '+d.contact_phone);
+    const body=document.getElementById('out_ext_body_v146'),parts=[];parts.push(externalBodyV168(d.body_text,d.reference_text).split(/\r?\n/).map(line=>{const trimmed=line.trim();if(!trimmed)return '<div style="height:8px"></div>';if(trimmed.replace(/\s/g,'')==='-아래-')return '<p class="doc-divider" style="text-align:center !important;margin:25px 0 22px;padding:0;text-indent:0;letter-spacing:.8em;white-space:nowrap">- 아 래 -</p>';if(/^[가나다라마바사아자차카타파하]\.\s*/.test(trimmed))return '<p class="doc-list-item" style="display:block;margin:3px 0 3px 34px !important;padding-left:30px !important;text-indent:-30px !important;text-align:left;white-space:pre-wrap">'+esc(trimmed)+'</p>';return '<p style="white-space:pre-wrap">'+esc(trimmed)+'</p>';}).join(''));body.innerHTML=parts.join('');text('out_ext_contact_v146',nextKoreanItemLabel(d.body_text)+'. 문의 : '+d.contact_name+' / '+d.contact_phone);
     const allAttachments=[...d.attachment_labels,...uploadedFiles.map(file=>String(file.original_name||'').replace(/\.[^.]+$/,'')+' 1부.')].filter((x,i,a)=>x&&a.indexOf(x)===i),att=document.getElementById('out_ext_attachments_v146');att.innerHTML=allAttachments.length?allAttachments.map((x,i)=>'<div style="padding-left:58px;text-indent:-58px">'+(i===0?'붙임&nbsp;&nbsp;':'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;')+(i+1)+'. '+esc(x)+(i===allAttachments.length-1?'&nbsp;&nbsp;끝.':'')+'</div>').join(''):'<div>붙임&nbsp;&nbsp;없음.&nbsp;&nbsp;끝.</div>';
     document.getElementById('output-external-v146').style.display='block';document.getElementById('output-external-v146').scrollIntoView({behavior:'smooth',block:'start'});
   };
@@ -7438,8 +7462,8 @@ const posterPlanBaseV155=getPlanData;getPlanData=function(){const d=posterPlanBa
   const status=(kind,message,color='#166534')=>{const box=document.getElementById(kind==='p'?'savePlanStatusV130':'saveResultStatusV130');if(box){box.textContent=message;box.style.color=color;}};
   // Financial fields always come from generated form/ledger data, never a saved prose override.
   function financialKeyV1651(text){
-    const match=String(text??'').replace(/\s+/g,' ').trim().match(/^(?:[가-하]|\d+)\.\s*(소요예산|집행예산|재원)\s*[:：]/);
-    return match?match[1]:null;
+    const match=String(text??'').replace(/\s+/g,' ').trim().match(/^(?:[가-하]|\d+)\.\s*(소요예산|계획예산|집행예산|재원)\s*[:：]/);
+    return match?(match[1]==='계획예산'?'소요예산':match[1]):null;
   }
   function summaryTextV1651(el){
     const order=el.querySelector('.doc-list-order-v165')?.textContent?.trim();
@@ -7811,6 +7835,10 @@ body .doc-sheet .doc-app-item{display:flex;align-items:center;min-width:0;white-
 .doc-signature{position:relative;text-align:center;font-weight:700!important;font-size:15.2pt!important;letter-spacing:.02em;margin:4mm 0}.doc-seal{position:absolute;width:17mm;height:17mm;object-fit:contain;margin-left:-5mm;top:-4mm}
 .doc-output-export-v166 .doc-sheet{width:170mm!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
 @media print{body .doc-sheet{width:170mm!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}.no-print{display:none!important}}
+
+body .doc-sheet .out-table.result-detail-v168 th:first-child,body .doc-sheet #out_r_planCompareV136 th:first-child{width:25%!important}
+body .doc-sheet .doc-footer-signature{display:flex!important;align-items:center;justify-content:center;gap:3mm;position:relative;margin:4mm 0!important;min-height:19mm}
+body .doc-sheet .doc-footer-signature .doc-seal{position:static!important;inset:auto!important;margin:0!important;flex:0 0 17mm;width:17mm!important;height:17mm!important;object-fit:contain;transform:none!important}
 `;
 function normalizeCoverV166(root){
   root.querySelectorAll('.doc-cover-page').forEach(cover=>{
@@ -7883,8 +7911,12 @@ function orderedFinancialRowsV166(scope){
   summaries.forEach(summary=>{
     const rows=[...summary.querySelectorAll(':scope > .doc-list-item')];
     const name=el=>el.querySelector('.doc-list-name-v165')?.textContent.trim()||el.textContent.replace(/^(?:[가-하]|\d+)\.\s*/,'').split(/[:：]/)[0].trim();
-    const budget=rows.find(el=>name(el)==='소요예산'),resource=rows.find(el=>name(el)==='재원');
-    if(budget&&resource)budget.after(resource);
+    const budget=rows.find(el=>['소요예산','계획예산'].includes(name(el))),actual=rows.find(el=>name(el)==='집행예산'),resource=rows.find(el=>name(el)==='재원');
+    if(summary.id==='out_r_overview_summary'){
+      if(budget){const label=budget.querySelector('.doc-list-name-v165');if(label)label.textContent='계획예산';summary.append(budget);}
+      if(actual)summary.append(actual);
+      if(resource)summary.append(resource);
+    }else if(budget&&resource)budget.after(resource);
     const labels=['가','나','다','라','마','바','사','아','자','차','카','타','파','하'];
     [...summary.children].forEach((el,index)=>{const order=el.querySelector('.doc-list-order-v165');if(order)order.textContent=(labels[index]||index+1)+'.';});
   });
