@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v16.6.0-20260919">
+<html lang="ko" data-build="v16.7.0-20260919">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1532,6 +1532,26 @@
   }
 
   // v16.4 자동생성 문구 정리: 불릿 제거, 문장별 줄바꿈, 공문서용 출력
+function documentTextV167(element){
+  if(!element)return '';
+  const copy=element.cloneNode(true);
+  copy.querySelectorAll('br').forEach(br=>br.replaceWith(document.createTextNode('\n')));
+  copy.querySelectorAll('div,p').forEach(block=>block.append(document.createTextNode('\n')));
+  return (copy.textContent||'').replace(/\u00a0/g,' ').trim();
+}
+function purposeItemsV167(value){
+  return String(value??'').replace(/\r\n?/g,'\n')
+    .replace(/(?:^|\s)[○●◦•▪][ \t]*/g,'\n')
+    .replace(/(?:^|\s)[oO][ \t]+(?=[가-힣])/g,'\n')
+    .replace(/(?:^|\s)[-–—][ \t]+(?=[가-힣A-Za-z])/g,'\n')
+    .replace(/(?:^|\n|[ \t]+)\d{1,2}[.)][ \t]+(?=[가-힣])/g,'\n')
+    .replace(/([.!?。])[ \t]+(?=[가-힣A-Za-z「『])/g,'$1\n')
+    .split(/\n+/).map(line=>line.replace(/^\s*[-–—•·○◦]\s*/,'').trim()).filter(Boolean);
+}
+function attachmentRowsV167(values){
+  return values.filter(value=>String(value??'').trim()).map((value,index)=>'<div style="margin:3px 0">붙임'+(index+1)+'. '+esc(value)+'</div>').join('');
+}
+
   function cleanGeneratedTextV164(value){
     return String(value??'')
       .replace(/\r\n?/g,'\n')
@@ -1891,7 +1911,7 @@
 
     let attaches = document.querySelectorAll('.r-attach-val');
     let attachHTML = '';
-    for(let i=0; i<attaches.length; i++) if(attaches[i].value) attachHTML += `<div style="margin:3px 0;">붙임 ${i+1}. ${esc(attaches[i].value)}</div>`;
+    attachHTML=attachmentRowsV167([...attaches].map(el=>el.value.trim()));
     document.getElementById('out_r_tbl_attachList').innerHTML = attachHTML;
 
     if(typeof renderSurveyAppendixV122==='function')renderSurveyAppendixV122();
@@ -2217,7 +2237,6 @@
   function documentFileHTMLV133(containerId,title){
     const container=document.getElementById(containerId);if(!container)return null;
     const clone=container.cloneNode(true);clone.style.display='block';clone.classList.remove('print-target');clone.querySelectorAll('.no-print').forEach(el=>el.remove());
-    if(typeof buildCoverTableLayoutV162==='function')buildCoverTableLayoutV162(clone);
     if(typeof anchorDocumentFootersV164==='function')anchorDocumentFootersV164(clone);
     const style='<style>'+DOCUMENT_OUTPUT_CSS_V166+'</style>';
     window.formatOfficialDocumentV165(clone);
@@ -6059,7 +6078,7 @@ ${centerMissionV1493}
     const ga=['가','나','다','라','마','바','사','아'],participation='총 '+actualPeople.toLocaleString()+'명'+(std.actual_target_group?' ('+std.actual_target_group+')':''),resource=officialResourceV1484(val('r_budgetSource'),val('r_budgetCategory')),budgetOutline=koreanMoneyV134(plannedBudget||actualBudget);
     const cover=[['사업명',std.project_name],[meta.theme,official.operation_theme],['참여인원',participation],[meta.lead,official.operation_lead],[meta.content,std.actual_content],['소요예산',budgetOutline],['재원',resource||'해당 없음'],['집행예산',koreanMoneyV134(actualBudget)]].filter(x=>String(x[1]??'').trim());
     const coverBox=document.getElementById('out_r_overview_summary');if(coverBox)coverBox.innerHTML=cover.map((x,i)=>'<div class="doc-list-item">'+(ga[i]||String(i+1))+'. '+esc(x[0])+' : '+esc(x[1]).replaceAll('\n','<br>')+'</div>').join('');
-    const attachBox=document.getElementById('out_r_tbl_attachList');if(attachBox){const values=Array.from(document.querySelectorAll('.r-attach-val')).map(x=>x.value.trim()).filter(Boolean).filter(x=>includeSurvey||!/설문/.test(x));attachBox.innerHTML=values.map((x,i)=>'<div style="margin:3px 0">붙임 '+(i+1)+'. '+esc(x)+'</div>').join('')||'<div>별도 붙임 없음</div>';}
+    const attachBox=document.getElementById('out_r_tbl_attachList');if(attachBox){const values=Array.from(document.querySelectorAll('.r-attach-val')).map(x=>x.value.trim()).filter(Boolean).filter(x=>includeSurvey||!/설문/.test(x));attachBox.innerHTML=attachmentRowsV167(values)||'<div>별도 붙임 없음</div>';}
   }
   const generateResultDocsBaseV136=generateResultDocs;
   generateResultDocs=function(){
@@ -6148,12 +6167,11 @@ ${centerMissionV1493}
   const displayValues=type=>files[key(type)].map(x=>normalizeLabel(x.display_name||fileLabel(x.original_name))).filter(Boolean);
   const sizeText=n=>{const v=Number(n)||0;return v>=1048576?(v/1048576).toFixed(1)+' MB':Math.max(1,Math.round(v/1024))+' KB';};
   const status=(type,message,error=false)=>{const el=document.getElementById(prefix(type)+'_fileStatusV142');if(el){el.textContent=message||'';el.style.color=error?'#b91c1c':'#166534';}};
-  const attachmentNumber=type=>(key(type)==='PLAN'?0:1)+manualValues(type).length;
   function render(type){
     type=key(type);const box=document.getElementById(prefix(type)+'_uploadedFilesV142');if(!box)return;
-    const start=attachmentNumber(type);
+    const labels=unique([...manualValues(type),...displayValues(type)]);
     if(!files[type].length){box.innerHTML='<div class="file-empty-v142">업로드된 실제 파일이 없습니다.</div>';return;}
-    box.innerHTML=files[type].map((f,i)=>'<div class="file-row-v142"><div class="td-center"><strong>붙임 '+(start+i+1)+'.</strong></div><div><div style="font-weight:bold;overflow-wrap:anywhere">'+esc(f.display_name||fileLabel(f.original_name))+'</div><div style="font-size:11px;color:#64748b;overflow-wrap:anywhere">'+esc(f.original_name||'')+'</div></div><div class="td-center">'+sizeText(f.size_bytes)+'</div><div class="file-actions-v142"><button type="button" class="btn-add" onclick="openUploadedAttachmentV142(\''+type+'\',\''+f.id+'\')">열기/저장</button><button type="button" class="btn-add" onclick="renameUploadedAttachmentV142(\''+type+'\',\''+f.id+'\')">표시명</button><button type="button" class="btn-add" onclick="moveUploadedAttachmentV142(\''+type+'\',\''+f.id+'\',-1)" '+(i===0?'disabled':'')+'>↑</button><button type="button" class="btn-add" onclick="moveUploadedAttachmentV142(\''+type+'\',\''+f.id+'\',1)" '+(i===files[type].length-1?'disabled':'')+'>↓</button><button type="button" class="btn-del" onclick="deleteUploadedAttachmentV142(\''+type+'\',\''+f.id+'\')">삭제</button></div></div>').join('');
+    box.innerHTML=files[type].map((f,i)=>'<div class="file-row-v142"><div class="td-center"><strong>붙임'+(labels.indexOf(normalizeLabel(f.display_name||fileLabel(f.original_name)))+1)+'.</strong></div><div><div style="font-weight:bold;overflow-wrap:anywhere">'+esc(f.display_name||fileLabel(f.original_name))+'</div><div style="font-size:11px;color:#64748b;overflow-wrap:anywhere">'+esc(f.original_name||'')+'</div></div><div class="td-center">'+sizeText(f.size_bytes)+'</div><div class="file-actions-v142"><button type="button" class="btn-add" onclick="openUploadedAttachmentV142(\''+type+'\',\''+f.id+'\')">열기/저장</button><button type="button" class="btn-add" onclick="renameUploadedAttachmentV142(\''+type+'\',\''+f.id+'\')">표시명</button><button type="button" class="btn-add" onclick="moveUploadedAttachmentV142(\''+type+'\',\''+f.id+'\',-1)" '+(i===0?'disabled':'')+'>↑</button><button type="button" class="btn-add" onclick="moveUploadedAttachmentV142(\''+type+'\',\''+f.id+'\',1)" '+(i===files[type].length-1?'disabled':'')+'>↓</button><button type="button" class="btn-del" onclick="deleteUploadedAttachmentV142(\''+type+'\',\''+f.id+'\')">삭제</button></div></div>').join('');
   }
   function renderOutput(type){
     type=key(type);const primary=primaryValue(type),manual=manualValues(type),uploaded=displayValues(type),all=unique([primary,...manual,...uploaded]);
@@ -6162,7 +6180,7 @@ ${centerMissionV1493}
       const section=document.getElementById('out_p_attachmentSectionV137'),list=document.getElementById('out_p_attachListV137'),extras=unique([...manual,...uploaded]);if(section)section.style.display=extras.length?'block':'none';if(list)list.innerHTML=extras.map((item,i)=>'<div style="margin:4px 0">붙임 '+(i+1)+'. '+esc(item)+'</div>').join('');
     }else{
       const cover=document.getElementById('out_r_coverAttachmentListV142');if(cover)cover.innerHTML=all.length?all.map((item,i)=>'<div style="padding-left:60px;text-indent:-60px">'+(i===0?'붙임&nbsp;&nbsp;':'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;')+(i+1)+'. '+esc(item)+(i===all.length-1?'&nbsp;&nbsp;끝.':'')+'</div>').join(''):'<div>붙임&nbsp;&nbsp;없음</div>';
-      const list=document.getElementById('out_r_tbl_attachList'),extras=unique([...manual,...uploaded]),offset=primary?1:0;if(list)list.innerHTML=extras.map((item,i)=>'<div style="margin:3px 0">붙임 '+(i+offset+1)+'. '+esc(item)+'</div>').join('')||'<div>별도 붙임 없음</div>';
+      const list=document.getElementById('out_r_tbl_attachList'),extras=unique([...manual,...uploaded]);if(list)list.innerHTML=attachmentRowsV167(extras)||'<div>별도 붙임 없음</div>';
     }
   }
   async function persist(type,action){
@@ -6496,14 +6514,43 @@ ${centerMissionV1493}
   };
   function drawExternalList(rows){
     const box=document.getElementById('ext_list_v146');if(!box)return;
-    box.innerHTML=rows.length?'<div style="overflow:auto"><table style="width:100%;min-width:980px;border-collapse:collapse;font-size:12px"><tr><th style="border:1px solid #ddd;padding:7px">제목</th><th style="border:1px solid #ddd;padding:7px">수신자</th><th style="border:1px solid #ddd;padding:7px">구분</th><th style="border:1px solid #ddd;padding:7px">상태</th><th style="border:1px solid #ddd;padding:7px">시행번호</th><th style="border:1px solid #ddd;padding:7px">최종수정</th><th style="border:1px solid #ddd;padding:7px">관리</th></tr>'+rows.map(row=>{const safe=String(row.title||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");return '<tr><td style="border:1px solid #ddd;padding:7px;font-weight:bold">'+esc(row.title||'-')+'</td><td style="border:1px solid #ddd;padding:7px">'+esc(row.recipient||'-')+'</td><td style="border:1px solid #ddd;padding:7px">'+(row.document_mode==='linked'?'사업 연계':'일반')+' · '+esc(typeLabels[row.document_type]||row.document_type)+'</td><td style="border:1px solid #ddd;padding:7px">'+esc(statusLabels[row.status]||row.status)+'</td><td style="border:1px solid #ddd;padding:7px">'+esc(row.document_number||'-')+'</td><td style="border:1px solid #ddd;padding:7px">'+new Date(row.updated_at).toLocaleString('ko-KR')+'</td><td style="border:1px solid #ddd;padding:7px;white-space:nowrap"><button class="btn btn-add" onclick="loadExternalDocV146(\''+row.id+'\')">열기</button> <button class="btn btn-add" onclick="showExternalHistoryV146(\''+row.id+'\')">이력</button> <button class="btn btn-del" onclick="deleteExternalDocV146(\''+row.id+'\',\''+safe+'\')">삭제</button></td></tr>';}).join('')+'</table></div>':'<div style="color:#64748b">조건에 맞는 외부공문이 없습니다.</div>';
+    box.innerHTML=rows.length?'<div style="overflow:auto"><table style="width:100%;min-width:980px;border-collapse:collapse;font-size:12px"><tr><th style="border:1px solid #ddd;padding:7px">제목</th><th style="border:1px solid #ddd;padding:7px">수신자</th><th style="border:1px solid #ddd;padding:7px">구분</th><th style="border:1px solid #ddd;padding:7px">상태</th><th style="border:1px solid #ddd;padding:7px">시행번호</th><th style="border:1px solid #ddd;padding:7px">최종수정</th><th style="border:1px solid #ddd;padding:7px">관리</th></tr>'+rows.map(row=>{const safe=String(row.title||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");return '<tr><td style="border:1px solid #ddd;padding:7px;font-weight:bold">'+esc(row.title||'-')+'</td><td style="border:1px solid #ddd;padding:7px">'+esc(row.recipient||'-')+'</td><td style="border:1px solid #ddd;padding:7px">'+(row.document_mode==='linked'?'사업 연계':'일반')+' · '+esc(typeLabels[row.document_type]||row.document_type)+'</td><td style="border:1px solid #ddd;padding:7px">'+esc(statusLabels[row.status]||row.status)+'</td><td style="border:1px solid #ddd;padding:7px">'+esc(row.document_number||'-')+'</td><td style="border:1px solid #ddd;padding:7px">'+new Date(row.updated_at).toLocaleString('ko-KR')+'</td><td style="border:1px solid #ddd;padding:7px;white-space:nowrap"><button class="btn btn-add" onclick="loadExternalDocV146(\''+row.id+'\')">열기</button> <button class="btn btn-add" onclick="showExternalHistoryV146(\''+row.id+'\')">이력</button> <button class="btn btn-del" onclick="deleteExternalDocV146(\''+row.id+'\',\''+esc(safe)+'\')">삭제</button></td></tr>';}).join('')+'</table></div>':'<div style="color:#64748b">조건에 맞는 외부공문이 없습니다.</div>';
   }
-  window.filterExternalListV146=function(){const query=value('ext_search_v146').toLowerCase(),status=value('ext_status_filter_v146');drawExternalList(officialRows.filter(row=>(!status||row.status===status)&&(!query||[row.title,row.recipient,row.document_number].some(v=>String(v||'').toLowerCase().includes(query)))));};
+  const externalPageSizeV167=50;
+  let externalRequestV167=0,externalTimerV167=null;
+  function externalSearchPatternV167(query){
+    const literal=String(query).replace(/[\\%_]/g,ch=>'\\'+ch);
+    const pattern=JSON.stringify('%'+literal+'%');
+    return ['title','recipient','document_number'].map(field=>field+'.ilike.'+pattern).join(',');
+  }
+  window.filterExternalListV146=function(){
+    clearTimeout(externalTimerV167);externalRequestV167++;
+    externalTimerV167=setTimeout(()=>window.loadExternalListV146(0),300);
+  };
   window.showExternalHistoryV146=async function(id){const q=await sb.from('official_document_history').select('action,status,snapshot,changed_at').eq('official_document_id',id).order('changed_at',{ascending:false}).limit(20);if(q.error)return alert('공문 이력 조회 오류: '+q.error.message);alert(q.data?.length?q.data.map(x=>new Date(x.changed_at).toLocaleString('ko-KR')+' · '+(statusLabels[x.status]||x.status)+' · '+x.action).join('\n'):'저장된 수정이력이 없습니다.');};
-  window.loadExternalListV146=async function(){
-    const box=document.getElementById('ext_list_v146');if(!box||!v8User)return;box.textContent='외부공문을 불러오는 중...';
-    const q=await sb.from(TABLE).select('*').order('updated_at',{ascending:false}).limit(100);if(q.error){box.innerHTML=missingTable(q.error)?'<div style="color:#b45309">외부공문 저장공간이 아직 설정되지 않았습니다. v14.6 SQL을 실행하면 저장·검토·시행 기능이 활성화됩니다.</div>':'<div style="color:#b91c1c">'+esc(q.error.message)+'</div>';return;}
-    officialRows=q.data||[];window.filterExternalListV146();
+  window.loadExternalListV146=async function(page=0){
+    clearTimeout(externalTimerV167);
+    const box=document.getElementById('ext_list_v146');if(!box||!v8User)return;
+    const request=++externalRequestV167,index=Math.max(0,Math.floor(Number(page)||0));
+    const query=value('ext_search_v146').trim(),status=value('ext_status_filter_v146');
+    box.textContent='외부공문을 검색하는 중...';
+    try{
+      let builder=sb.from(TABLE).select('id,title,recipient,document_number,document_mode,document_type,status,updated_at',{count:'exact'});
+      if(status)builder=builder.eq('status',status);
+      if(query)builder=builder.or(externalSearchPatternV167(query));
+      const q=await builder.order('updated_at',{ascending:false}).order('id',{ascending:true}).range(index*externalPageSizeV167,(index+1)*externalPageSizeV167-1);
+      if(request!==externalRequestV167)return;
+      if(q.error)throw q.error;
+      const total=q.count||0,pages=Math.max(1,Math.ceil(total/externalPageSizeV167));
+      if(index>=pages)return window.loadExternalListV146(pages-1);
+      officialRows=q.data||[];drawExternalList(officialRows);
+      const pager=document.createElement('div');pager.style.cssText='display:flex;align-items:center;gap:10px;margin-top:10px';
+      const info=document.createElement('span');info.textContent='총 '+total.toLocaleString()+'건 · '+(index+1)+' / '+pages+'페이지';
+      for(const [label,next,disabled] of [['이전',index-1,index===0],['다음',index+1,index+1>=pages]]){
+        const button=document.createElement('button');button.type='button';button.className='btn btn-add';button.textContent=label;button.disabled=disabled;button.onclick=()=>window.loadExternalListV146(next);pager.append(button);
+      }
+      pager.prepend(info);box.append(pager);
+    }catch(error){if(request===externalRequestV167)box.innerHTML='<div style="color:#b91c1c">'+(missingTable(error)?'외부공문 저장공간 설정을 확인해 주세요.':esc('검색 실패: '+(error.message||error)))+'</div>';}
   };
   async function loadSources(){
     const [pq,dq]=await Promise.all([sb.from('projects').select('id,project_name,status,owner_id,updated_at').order('updated_at',{ascending:false}),sb.from('project_documents').select('id,project_id,doc_type,data,updated_at').in('doc_type',['PLAN','RESULT'])]);
@@ -6891,9 +6938,6 @@ function resetExpenseFormV1476(){
 function editExpenseV1476(id){
   const row=expenseRowsV1474.find(item=>item.id===id);if(!row||row.transaction_status==='cancelled')return;expenseEditingIdV1476=id;document.getElementById('expenseDateV1474').value=row.transaction_date||'';document.getElementById('expenseItemV1474').value=row.budget_item_id||'';document.getElementById('expenseStatusV1474').value=row.transaction_status;document.getElementById('expenseAmountV1474').value=budgetNumberV1471(row.amount);document.getElementById('expenseDescriptionV1474').value=row.description||'';document.getElementById('expenseVendorV1474').value=row.vendor||'';document.getElementById('expensePaymentV1474').value=row.payment_method||'other';document.getElementById('expenseEvidenceV1474').value=row.evidence_type||'other';document.getElementById('expenseEvidenceNoV1474').value=row.evidence_number||'';document.getElementById('expenseNoteV1474').value=row.note||'';document.getElementById('expenseSaveV1474').textContent='수정내용 저장';document.getElementById('expenseEditCancelV1476').style.display='inline-block';renderExpenseFilesV1480(id);expenseMessageV1474('선택한 지출내역을 수정 중입니다. 파일을 추가하거나 기존 증빙을 확인할 수 있습니다.');document.getElementById('expenseDateV1474').scrollIntoView({behavior:'smooth',block:'center'});
 }
-function downloadExpenseCsvV1476(){
-  if(!expenseFilteredRowsV1476.length)return alert('다운로드할 지출내역이 없습니다.');const itemMap=Object.fromEntries(expenseItemsV1474.map(item=>[item.id,item.item_name])),quote=value=>'"'+String(value??'').replace(/"/g,'""')+'"',lines=[['일자','예산항목','지출내용','거래처','금액','상태','지급수단','증빙유형','증빙번호','비고'],...expenseFilteredRowsV1476.map(row=>[row.transaction_date,itemMap[row.budget_item_id]||'미연결',row.description,row.vendor||'',Math.round(budgetNumberV1471(row.amount)),expenseStatusLabelV1474(row.transaction_status),row.payment_method||'',row.evidence_type||'',row.evidence_number||'',row.note||''])];const blob=new Blob(['\ufeff'+lines.map(line=>line.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='사업별_지출원장_'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
-}
 async function migrateLegacyExpenseV1474(userId){
   if(expenseRowsV1474.length)return true;const legacy=expenseItemsV1474.filter(item=>budgetNumberV1471(item.actual_amount)>0);if(!legacy.length)return true;
   if(!confirm('기존 실제집행액 '+budgetMoneyV1471(legacy.reduce((sum,item)=>sum+budgetNumberV1471(item.actual_amount),0))+'이 있습니다.\n기존 금액을 지출원장에 이월한 후 새 지출을 등록하시겠습니까?'))return false;
@@ -6901,11 +6945,6 @@ async function migrateLegacyExpenseV1474(userId){
 }
 async function syncExpenseActualV1474(){
   const query=await sb.from('budget_transactions').select('budget_item_id,amount,transaction_status').eq('project_id',expenseProjectIdV1474);if(query.error)throw query.error;const totals={};(query.data||[]).forEach(row=>{if(!row.budget_item_id)return;totals[row.budget_item_id]=(totals[row.budget_item_id]||0)+(row.transaction_status==='paid'?budgetNumberV1471(row.amount):row.transaction_status==='refund'?-budgetNumberV1471(row.amount):0);});for(const item of expenseItemsV1474){const update=await sb.from('project_budget_items').update({actual_amount:totals[item.id]||0}).eq('id',item.id).eq('project_id',expenseProjectIdV1474);if(update.error)throw update.error;}
-}
-async function saveExpenseV1474(){
-  if(!expenseProjectIdV1474)return alert('사업을 선택해 주세요.');const itemId=document.getElementById('expenseItemV1474').value,date=document.getElementById('expenseDateV1474').value,status=document.getElementById('expenseStatusV1474').value,amount=annualMasterValueV1473('expenseAmountV1474'),description=document.getElementById('expenseDescriptionV1474').value.trim();if(!itemId)return alert('예산항목을 선택해 주세요.');if(!date)return alert('지출일자를 입력해 주세요.');if(!description)return alert('지출내용을 입력해 주세요.');if(amount<=0)return alert('지출금액을 입력해 주세요.');
-  const item=expenseItemsV1474.find(row=>row.id===itemId),current=expenseTotalsV1474(),availableAfter=current.available-(status==='pending'||status==='paid'?amount:status==='refund'?-amount:0);if(availableAfter<0&&!confirm('등록 후 가용잔액이 '+budgetMoneyV1471(availableAfter)+'으로 초과됩니다. 계속하시겠습니까?'))return;
-  const button=document.getElementById('expenseSaveV1474');button.disabled=true;expenseMessageV1474(expenseEditingIdV1476?'수정내용을 저장하는 중...':'지출내역을 저장하는 중...');try{const userId=v81Profile?.id||(await sb.auth.getUser()).data.user?.id;if(!expenseEditingIdV1476&&!(await migrateLegacyExpenseV1474(userId)))return;const payload={project_id:expenseProjectIdV1474,budget_item_id:itemId,transaction_date:date,description,vendor:document.getElementById('expenseVendorV1474').value.trim()||null,evidence_type:document.getElementById('expenseEvidenceV1474').value,evidence_number:document.getElementById('expenseEvidenceNoV1474').value.trim()||null,amount,transaction_status:status,payment_method:document.getElementById('expensePaymentV1474').value,note:document.getElementById('expenseNoteV1474').value.trim()||null,updated_by:userId,updated_at:new Date().toISOString()};const saved=expenseEditingIdV1476?await sb.from('budget_transactions').update(payload).eq('id',expenseEditingIdV1476).eq('project_id',expenseProjectIdV1474):await sb.from('budget_transactions').insert({...payload,created_by:userId});if(saved.error)throw saved.error;await syncExpenseActualV1474();await syncExpenseDocumentsV1477(true);resetExpenseFormV1476();await loadExpenseLedgerV1474(expenseProjectIdV1474);await renderAnnualBudgetV1471();expenseMessageV1474('지출내역을 저장하고 문서 예산에 반영했습니다.');}catch(error){expenseMessageV1474('지출 저장 오류: '+(error.message||error),true);}finally{button.disabled=false;}
 }
 async function cancelExpenseV1474(id){if(!confirm('선택한 지출내역을 취소 처리하시겠습니까?\n기록은 삭제되지 않고 취소 상태로 보존됩니다.'))return;const userId=v81Profile?.id||(await sb.auth.getUser()).data.user?.id,query=await sb.from('budget_transactions').update({transaction_status:'cancelled',updated_by:userId,updated_at:new Date().toISOString()}).eq('id',id).eq('project_id',expenseProjectIdV1474);if(query.error)return expenseMessageV1474('취소 처리 오류: '+query.error.message,true);try{await syncExpenseActualV1474();await syncExpenseDocumentsV1477(true);await loadExpenseLedgerV1474(expenseProjectIdV1474);await renderAnnualBudgetV1471();expenseMessageV1474('지출내역을 취소하고 문서 예산을 갱신했습니다.');}catch(error){expenseMessageV1474('집행액 재계산 오류: '+error.message,true);}}
 
@@ -6941,9 +6980,34 @@ function renderExpenseFilesV1480(transactionId){
   const box=document.getElementById('expenseFileListV1480');if(!box)return;const files=transactionId?(expenseFilesByTransactionV1480[transactionId]||[]):[];
   box.innerHTML=files.length?files.map(file=>'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #e2e8f0"><span>'+budgetEscapeV1471(file.original_name)+' · '+Math.ceil(budgetNumberV1471(file.size_bytes)/1024).toLocaleString()+'KB</span><span><button type="button" class="btn btn-add" style="padding:3px 6px;font-size:10px" onclick="openExpenseFileV1480(\''+file.id+'\')">열기</button> <button type="button" class="btn btn-del" style="padding:3px 6px;font-size:10px" onclick="deleteExpenseFileV1480(\''+file.id+'\')">삭제</button></span></div>').join(''):'선택된 지출내역의 기존 증빙파일이 없습니다. 신규 파일을 선택하면 저장 시 업로드됩니다.';
 }
+function validateExpenseFilesV167(selected){
+  const allowed=new Set(['pdf','hwp','hwpx','doc','docx','xls','xlsx','jpg','jpeg','png']);
+  for(const file of selected){
+    if(!allowed.has(file.name.split('.').pop().toLowerCase()))throw new Error('지원하지 않는 파일 형식입니다: '+file.name);
+    if(file.size<=0)throw new Error('비어 있는 파일입니다: '+file.name);
+    if(file.size>20*1024*1024)throw new Error('20MB를 초과했습니다: '+file.name);
+  }
+}
 async function uploadExpenseFilesV1480(transactionId,userId){
-  const input=document.getElementById('expenseFilesV1480'),selected=Array.from(input?.files||[]);if(!selected.length)return 0;const allowed=new Set(['pdf','hwp','hwpx','doc','docx','xls','xlsx','jpg','jpeg','png']),uploaded=[];
-  try{for(const file of selected){const ext=(file.name.split('.').pop()||'').toLowerCase();if(!allowed.has(ext))throw new Error('지원하지 않는 파일 형식입니다: '+file.name);if(file.size>20*1024*1024)throw new Error('20MB를 초과했습니다: '+file.name);const id=crypto.randomUUID(),path=expenseProjectIdV1474+'/'+transactionId+'/'+id+'.'+ext,result=await sb.storage.from('budget-evidence').upload(path,file,{upsert:false,contentType:file.type||undefined});if(result.error)throw result.error;uploaded.push(path);const meta=await sb.from('budget_transaction_files').insert({transaction_id:transactionId,project_id:expenseProjectIdV1474,storage_path:path,original_name:file.name,mime_type:file.type||null,size_bytes:file.size,uploaded_by:userId});if(meta.error)throw meta.error;}input.value='';return selected.length;}catch(error){if(uploaded.length)await sb.storage.from('budget-evidence').remove(uploaded);throw error;}
+  const input=document.getElementById('expenseFilesV1480'),selected=Array.from(input?.files||[]);if(!selected.length)return 0;
+  validateExpenseFilesV167(selected);
+  const projectId=expenseProjectIdV1474,paths=[],metadata=[];let metadataAttempted=false;
+  try{
+    for(const file of selected){
+      const ext=file.name.split('.').pop().toLowerCase(),path=projectId+'/'+transactionId+'/'+crypto.randomUUID()+'.'+ext;
+      paths.push(path);
+      const uploaded=await sb.storage.from('budget-evidence').upload(path,file,{upsert:false,contentType:file.type||undefined});if(uploaded.error)throw uploaded.error;
+      metadata.push({transaction_id:transactionId,project_id:projectId,storage_path:path,original_name:file.name,mime_type:file.type||null,size_bytes:file.size,uploaded_by:userId});
+    }
+    metadataAttempted=true;const saved=await sb.from('budget_transaction_files').insert(metadata);if(saved.error)throw saved.error;
+    input.value='';return selected.length;
+  }catch(error){
+    try{
+      if(metadataAttempted){const removed=await sb.from('budget_transaction_files').delete().eq('project_id',projectId).eq('transaction_id',transactionId).in('storage_path',paths);if(removed.error)throw removed.error;}
+      if(paths.length){const removed=await sb.storage.from('budget-evidence').remove(paths);if(removed.error)throw removed.error;}
+    }catch(cleanup){throw new Error((error.message||error)+' / 일부 증빙 정리가 완료되지 않았습니다. 저장된 증빙 목록을 확인한 후 재시도해 주세요. ('+(cleanup.message||cleanup)+')');}
+    throw new Error((error.message||error)+' / 이번 업로드의 파일과 파일정보를 정리했습니다. 파일을 다시 선택해 주세요.');
+  }
 }
 async function openExpenseFileV1480(fileId){
   const files=Object.values(expenseFilesByTransactionV1480).flat(),file=files.find(item=>item.id===fileId);if(!file)return;const result=await sb.storage.from('budget-evidence').createSignedUrl(file.storage_path,120);if(result.error)return alert('증빙파일 열기 오류: '+result.error.message);window.open(result.data.signedUrl,'_blank','noopener');
@@ -6951,24 +7015,33 @@ async function openExpenseFileV1480(fileId){
 async function deleteExpenseFileV1480(fileId){
   const files=Object.values(expenseFilesByTransactionV1480).flat(),file=files.find(item=>item.id===fileId);if(!file||!confirm('「'+file.original_name+'」 증빙파일을 삭제하시겠습니까?'))return;const userId=v81Profile?.id||(await sb.auth.getUser()).data.user?.id,meta=await sb.from('budget_transaction_files').delete().eq('id',fileId).eq('project_id',expenseProjectIdV1474);if(meta.error)return alert('증빙정보 삭제 오류: '+meta.error.message);const removed=await sb.storage.from('budget-evidence').remove([file.storage_path]);if(removed.error)alert('파일 저장소 정리 경고: '+removed.error.message);await sb.from('project_history').insert({project_id:expenseProjectIdV1474,action:'BUDGET_EVIDENCE_REMOVED',snapshot:{transaction_id:file.transaction_id,file_name:file.original_name},changed_by:userId});await loadExpenseLedgerV1474(expenseProjectIdV1474);editExpenseV1476(file.transaction_id);expenseMessageV1474('증빙파일을 삭제했습니다.');
 }
-saveExpenseV1474=async function(){
+async function saveExpenseV1474(){
+  if(document.getElementById('expenseSaveV1474')?.disabled)return;
+  try{validateExpenseFilesV167(Array.from(document.getElementById('expenseFilesV1480')?.files||[]));}catch(error){return expenseMessageV1474(error.message,true);}
   if(!expenseProjectIdV1474)return alert('사업을 선택해 주세요.');const itemId=document.getElementById('expenseItemV1474').value,date=document.getElementById('expenseDateV1474').value,status=document.getElementById('expenseStatusV1474').value,amount=annualMasterValueV1473('expenseAmountV1474'),description=document.getElementById('expenseDescriptionV1474').value.trim();if(!itemId)return alert('예산항목을 선택해 주세요.');if(!date)return alert('지출일자를 입력해 주세요.');if(!description)return alert('지출내용을 입력해 주세요.');if(amount<=0)return alert('지출금액을 입력해 주세요.');
+  const area=document.getElementById('expenseAreaV1548')?.value;if(!area)return alert('사업분야를 선택해 주세요. 사업계획서에 저장된 분야가 자동 적용됩니다.');
+  const areaEditing=expenseRowsV1474.find(row=>row.id===expenseEditingIdV1476),allocation=budgetNumberV1471(expenseAreaBudgetsV1548.find(x=>x.area===area)?.amount),totals=expenseAreaTotalsV1548(area),oldArea=areaEditing?expenseRowAreaV1548(areaEditing):'',areaOldEffect=areaEditing&&oldArea===area?(areaEditing.transaction_status==='paid'||areaEditing.transaction_status==='pending'?budgetNumberV1471(areaEditing.amount):areaEditing.transaction_status==='refund'?-budgetNumberV1471(areaEditing.amount):0):0,areaNewEffect=status==='paid'||status==='pending'?amount:status==='refund'?-amount:0,areaAvailable=allocation-totals.paid-totals.pending+areaOldEffect-areaNewEffect;
+  if(allocation>0&&areaAvailable<0&&!confirm(`「${area}」 분야 편성예산을 ${budgetMoneyV1471(Math.abs(areaAvailable))} 초과합니다. 계속 저장하시겠습니까?`))return;
+  if(!allocation&&!confirm(`「${area}」 분야에 저장된 편성예산이 없습니다. 지출내역을 계속 저장하시겠습니까?`))return;
   const current=expenseTotalsV1474(),editing=expenseRowsV1474.find(row=>row.id===expenseEditingIdV1476),oldEffect=editing?(editing.transaction_status==='paid'||editing.transaction_status==='pending'?budgetNumberV1471(editing.amount):editing.transaction_status==='refund'?-budgetNumberV1471(editing.amount):0):0,newEffect=status==='paid'||status==='pending'?amount:status==='refund'?-amount:0,availableAfter=current.available+oldEffect-newEffect;if(availableAfter<0&&!confirm('등록 후 가용잔액이 '+budgetMoneyV1471(availableAfter)+'으로 초과됩니다. 계속하시겠습니까?'))return;
   const button=document.getElementById('expenseSaveV1474'),editingId=expenseEditingIdV1476;button.disabled=true;expenseMessageV1474(editingId?'수정내용과 증빙을 저장하는 중...':'지출내역과 증빙을 저장하는 중...');
+  let savedTransactionId=null;
   try{
     const userId=v81Profile?.id||(await sb.auth.getUser()).data.user?.id;if(!userId)throw new Error('로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.');
     if(!editingId&&!(await migrateLegacyExpenseV1474(userId)))return;
-    const payload={project_id:expenseProjectIdV1474,budget_item_id:itemId,transaction_date:date,description,vendor:document.getElementById('expenseVendorV1474').value.trim()||null,evidence_type:document.getElementById('expenseEvidenceV1474').value,evidence_number:document.getElementById('expenseEvidenceNoV1474').value.trim()||null,amount,transaction_status:status,payment_method:document.getElementById('expensePaymentV1474').value,note:document.getElementById('expenseNoteV1474').value.trim()||null,updated_by:userId,updated_at:new Date().toISOString()};
+    const payload={project_id:expenseProjectIdV1474,budget_item_id:itemId,transaction_date:date,description,vendor:document.getElementById('expenseVendorV1474').value.trim()||null,evidence_type:document.getElementById('expenseEvidenceV1474').value,evidence_number:document.getElementById('expenseEvidenceNoV1474').value.trim()||null,amount,transaction_status:status,payment_method:document.getElementById('expensePaymentV1474').value,note:expenseCombinedNoteV1548(expensePlainNoteV1548(document.getElementById('expenseNoteV1474').value),area)||null,updated_by:userId,updated_at:new Date().toISOString()};
     const saved=editingId?await sb.from('budget_transactions').update(payload).eq('id',editingId).eq('project_id',expenseProjectIdV1474).select('id').single():await sb.from('budget_transactions').insert({...payload,created_by:userId}).select('id').single();
     if(saved.error)throw new Error('DB 저장 실패: '+saved.error.message);
-    const warnings=[];let uploaded=0;
-    try{uploaded=await uploadExpenseFilesV1480(saved.data.id,userId);}catch(error){warnings.push('증빙 업로드 실패: '+(error.message||error));}
+    savedTransactionId=saved.data.id;
+    const warnings=[];let uploaded=0,uploadFailed=false;
+    try{uploaded=await uploadExpenseFilesV1480(saved.data.id,userId);}catch(error){uploadFailed=true;warnings.push('증빙 업로드 실패: '+(error.message||error));}
     try{await syncExpenseActualV1474();}catch(error){warnings.push('집행액 합계 갱신 실패: '+(error.message||error));}
     try{await syncExpenseDocumentsV1477(true);}catch(error){warnings.push('계획서·결과보고서 연동 실패: '+(error.message||error));}
     resetExpenseFormV1476();await loadExpenseLedgerV1474(expenseProjectIdV1474);await renderAnnualBudgetV1471();
+    if(uploadFailed){editExpenseV1476(saved.data.id);warnings.push('저장된 지출을 수정 상태로 열었습니다. 증빙파일을 다시 선택한 뒤 저장해 주세요.');}
     if(warnings.length)expenseMessageV1474('지출내역은 저장되었습니다. '+warnings.join(' / '),true);else expenseMessageV1474((editingId?'지출내역을 수정했습니다.':'지출내역을 저장했습니다.')+(uploaded?' 증빙 '+uploaded+'개를 업로드했습니다.':'')+' 결과보고서 예산에도 반영했습니다.');
-  }catch(error){expenseMessageV1474('지출 저장 오류: '+(error.message||error),true);}finally{button.disabled=false;}
-};
+  }catch(error){if(savedTransactionId){editExpenseV1476(savedTransactionId);expenseEditingIdV1476=savedTransactionId;expenseMessageV1474('지출내역은 저장되었습니다. 후속 처리 오류: '+(error.message||error)+' / 새로 등록하지 말고 저장된 내역을 확인해 주세요.',true);}else expenseMessageV1474('지출 저장 오류: '+(error.message||error),true);}finally{button.disabled=false;}
+}
 
 // ===== v14.8.1: 결과보고서 예산 직접입력 잠금 =====
 window.resultBudgetLedgerLoadedV1481=false;
@@ -7177,15 +7250,7 @@ const resetExpenseFormBaseV1548=resetExpenseFormV1476;
 resetExpenseFormV1476=function(){resetExpenseFormBaseV1548();setExpenseAreaOptionsV1548(expenseBusinessAreaV1548);renderExpenseAreaSummaryV1548();};
 const editExpenseBaseV1548=editExpenseV1476;
 editExpenseV1476=function(id){editExpenseBaseV1548(id);const row=expenseRowsV1474.find(item=>item.id===id);if(!row)return;setExpenseAreaOptionsV1548(expenseRowAreaV1548(row)==='미지정'?'':expenseRowAreaV1548(row));const note=document.getElementById('expenseNoteV1474');if(note)note.value=expensePlainNoteV1548(row.note);renderExpenseAreaSummaryV1548();};
-const saveExpenseBaseV1548=saveExpenseV1474;
-saveExpenseV1474=async function(){
-  const area=document.getElementById('expenseAreaV1548')?.value;if(!area)return alert('사업분야를 선택해 주세요. 사업계획서에 저장된 분야가 자동 적용됩니다.');
-  const amount=annualMasterValueV1473('expenseAmountV1474'),status=document.getElementById('expenseStatusV1474')?.value,editing=expenseRowsV1474.find(row=>row.id===expenseEditingIdV1476),allocation=budgetNumberV1471(expenseAreaBudgetsV1548.find(x=>x.area===area)?.amount),totals=expenseAreaTotalsV1548(area),oldArea=editing?expenseRowAreaV1548(editing):'',oldEffect=editing&&oldArea===area?(editing.transaction_status==='paid'||editing.transaction_status==='pending'?budgetNumberV1471(editing.amount):editing.transaction_status==='refund'?-budgetNumberV1471(editing.amount):0):0,newEffect=status==='paid'||status==='pending'?amount:status==='refund'?-amount:0,areaAvailable=allocation-totals.paid-totals.pending+oldEffect-newEffect;
-  if(allocation>0&&areaAvailable<0&&!confirm(`「${area}」 분야 편성예산을 ${budgetMoneyV1471(Math.abs(areaAvailable))} 초과합니다. 계속 저장하시겠습니까?`))return;
-  if(!allocation&&!confirm(`「${area}」 분야에 저장된 편성예산이 없습니다. 지출내역을 계속 저장하시겠습니까?`))return;
-  const note=document.getElementById('expenseNoteV1474'),plain=expensePlainNoteV1548(note?.value);if(note)note.value=expenseCombinedNoteV1548(plain,area);await saveExpenseBaseV1548();
-};
-downloadExpenseCsvV1476=function(){
+function downloadExpenseCsvV1476(){
   if(!expenseFilteredRowsV1476.length)return alert('다운로드할 지출내역이 없습니다.');const itemMap=Object.fromEntries(expenseItemsV1474.map(item=>[item.id,item.item_name])),quote=value=>'"'+String(value??'').replace(/"/g,'""')+'"',lines=[['일자','사업분야','예산항목','지출내용','거래처','금액','상태','지급수단','증빙유형','증빙번호','비고'],...expenseFilteredRowsV1476.map(row=>[row.transaction_date,expenseRowAreaV1548(row),itemMap[row.budget_item_id]||'미연결',row.description,row.vendor||'',Math.round(budgetNumberV1471(row.amount)),expenseStatusLabelV1474(row.transaction_status),row.payment_method||'',row.evidence_type||'',row.evidence_number||'',expensePlainNoteV1548(row.note)])];const blob=new Blob(['\ufeff'+lines.map(line=>line.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='사업분야별_지출원장_'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
 };
 const resultLedgerRowsBaseV1548=resultLedgerRowsV1479;
@@ -7381,8 +7446,8 @@ const posterPlanBaseV155=getPlanData;getPlanData=function(){const d=posterPlanBa
     const name=el.querySelector('.doc-list-name-v165')?.textContent?.trim();
     const box=el.querySelector('.doc-list-value-v165');
     const purpose=box?.querySelectorAll('.doc-purpose-line-v165');
-    const value=purpose?.length?[...purpose].map(row=>row.lastElementChild.textContent.trim()).join('\n'):box?.innerText?.trim();
-    return order&&name?order+' '+name+' : '+(value||''):el.innerText;
+    const value=purpose?.length?[...purpose].map(row=>row.lastElementChild.textContent.trim()).join('\n'):documentTextV167(box);
+    return order&&name?order+' '+name+' : '+(value||''):documentTextV167(el);
   }
   function mergeFinancialItemsV1651(saved,current){
     const financial=new Map(current.map(text=>[financialKeyV1651(text),text]).filter(([key])=>key));
@@ -7589,15 +7654,7 @@ const posterPlanBaseV155=getPlanData;getPlanData=function(){const d=posterPlanBa
 </script>
 
 <script>
-// ===== v16.2: 브라우저·PDF·Word 공통 기안문 하단 고정 =====
-function buildCoverTableLayoutV162(root){return normalizeCoverV166(root&&root.querySelectorAll?root:document);}
-
-window.buildCoverTableLayoutV162=buildCoverTableLayoutV162;
-document.addEventListener('DOMContentLoaded',()=>{
-  ['output-plan-container','output-result-container','output-external-v146'].forEach(id=>{
-    const target=document.getElementById(id);if(target)buildCoverTableLayoutV162(target);
-  });
-});
+// v16.7: legacy cover table initializer removed; normalizeCoverV166 owns layout.
 </script>
 
 <script>
@@ -7645,10 +7702,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ===== v16.5: 기안문·공문 들여쓰기, 항목 정렬, 사업목적 복수항목 표시 =====
 (function(){
   'use strict';
-  function purposeLinesV165(value){
-    return paragraphGeneratedTextV164(value).split(/\n+/)
-      .map(line=>line.replace(/^\s*[-–—•·○◦]\s*/, '').trim()).filter(Boolean);
-  }
+  const purposeLinesV165=purposeItemsV167;
   function renderPurposeLinesV165(valueBox,lines){
     valueBox.textContent='';
     const list=document.createElement('span');list.className='doc-purpose-lines-v165';
@@ -7667,7 +7721,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(item.querySelector('.doc-list-label-v165')&&item.querySelector('.doc-list-value-v165'))return item;
       item.classList.remove('doc-list-aligned-v165');
     }
-    const raw=String(item.innerText||item.textContent||'').replace(/\u00a0/g,' ').trim();
+    const raw=documentTextV167(item);
     const match=raw.match(/^([가-하]|\d+)\.\s*([^:\n]+?)\s*:\s*([\s\S]*)$/);
     if(!match)return item;
     const order=document.createElement('span');order.className='doc-list-order-v165';order.textContent=match[1]+'.';
@@ -7686,7 +7740,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(item.querySelector('.doc-list-name-v165')?.textContent.trim()!=='사업목적')return;
       const value=item.querySelector('.doc-list-value-v165');if(!value)return;
       const existing=[...value.querySelectorAll('.doc-purpose-line-v165')];
-      const lines=existing.length?existing.map(row=>row.lastElementChild.textContent.trim()).filter(Boolean):purposeLinesV165(value.innerText||value.textContent),remove=[];
+      const lines=existing.length?existing.flatMap(row=>purposeItemsV167(documentTextV167(row.lastElementChild))):purposeLinesV165(documentTextV167(value)),remove=[];
       let next=item.nextElementSibling;
       while(next&&/^\s*[-–—•·○◦]\s+/.test(next.textContent||'')){
         lines.push(...purposeLinesV165(next.textContent));remove.push(next);next=next.nextElementSibling;
@@ -7703,6 +7757,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     scope.querySelectorAll('.doc-list-item').forEach(alignListItemV165);
     mergePurposeSubLinesV165(scope);
     scope.querySelectorAll('.doc-title-row td').forEach(td=>td.style.setProperty('font-weight','700','important'));
+    orderedFinancialRowsV166(scope);normalizeCoverV166(scope);
+    scope.querySelectorAll('.doc-sheet [style]').forEach(el=>{['font-size','font-family','line-height'].forEach(key=>el.style.removeProperty(key));});
     return root;
   }
   window.formatOfficialDocumentV165=formatOfficialDocumentV165;
@@ -7713,8 +7769,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   wrapGeneratorV165('generatePlanDocs','output-plan-container');
   wrapGeneratorV165('generateResultDocs','output-result-container');
   wrapGeneratorV165('generateExternalDocV146','output-external-v146');
-  document.addEventListener('DOMContentLoaded',()=>formatOfficialDocumentV165(document));
-  setTimeout(()=>formatOfficialDocumentV165(document),0);
+
 })();
 </script>
 
@@ -7837,11 +7892,6 @@ function orderedFinancialRowsV166(scope){
 (function(){
   const formStyle=document.createElement('style');formStyle.textContent='#p-program-block .form-table td:last-child,#p-schedule-block .form-table td:last-child{padding:2px} #p-program-block .btn-del,#p-schedule-block .btn-del{min-width:0;padding:3px 1px;font-size:10px;white-space:normal}';document.head.append(formStyle);
   const style=document.createElement('style');style.id='document-output-style-v166';style.textContent=DOCUMENT_OUTPUT_CSS_V166;document.head.append(style);
-  const original=window.formatOfficialDocumentV165;
-  function clearLegacyInlineFonts(scope){
-    scope.querySelectorAll('.doc-sheet [style]').forEach(el=>{['font-size','font-family','line-height'].forEach(key=>el.style.removeProperty(key));});
-  }
-  window.formatOfficialDocumentV165=function(root){const scope=root&&root.querySelectorAll?root:document;original(scope);orderedFinancialRowsV166(scope);normalizeCoverV166(scope);clearLegacyInlineFonts(scope);return root;};
   const initialize=()=>window.formatOfficialDocumentV165(document);
   document.addEventListener('DOMContentLoaded',initialize);if(document.readyState!=='loading')initialize();
   // Editing remains live; format once on completion so the caret is never reset while typing.
