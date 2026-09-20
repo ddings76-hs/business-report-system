@@ -450,11 +450,14 @@
         <tbody id="budgetRowsV101"></tbody>
       </table>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-      <button class="btn btn-add" onclick="addBudgetRowV101()">+ 예산항목</button>
-      <button class="btn btn-save" onclick="saveBudgetManagerV101()">☁ 예산·정산 저장</button>
-      <button class="btn btn-add" onclick="syncBudgetToDocumentsV102()">↔ 계획서·결과보고서 반영</button>
-      <button class="btn" onclick="clearBudgetDraftV101()">임시저장 삭제</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px">
+      <div style="display:flex;gap:8px">
+        <button type="button" class="btn btn-plan" onclick="goToBudgetPlanModalV101()">⚙ 예산 편성·수정하기</button>
+        <button type="button" class="btn btn-add" onclick="openBudgetManagerV101(budgetProjectIdV101)">↻ 최신내역 불러오기</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="btn btn-result" onclick="syncBudgetToDocumentsV102()">↔ 계획서·결과보고서 반영</button>
+      </div>
     </div>
     <div id="budgetSummaryV101" style="margin-top:14px"></div>
   </div>
@@ -3346,22 +3349,43 @@ function attachmentRowsV167(values){
     }
   }
 
+  // [1단계 최종안] 예산·정산 상세관리는 깔끔한 조회/집계 전용으로 전환하고, 편성은 정식 예산창으로 유도
   function renderBudgetRowsV101(){
-    const tb=document.getElementById('budgetRowsV101'); if(!tb) return;
-    if(!budgetRowsDataV101.length) budgetRowsDataV101=[{id:'',item:'',basis:'',planned:0,actual:0,note:''}];
-    tb.innerHTML=budgetRowsDataV101.map((r,i)=>{
-      const remain=numV101(r.planned)-numV101(r.actual);
-      return `<tr>
-        <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.item)}" oninput="updateBudgetCellV101(${i},'item',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.basis)}" placeholder="예: 10000 x 1" oninput="onBasisInputV101(${i},this)"></td>
-        <td style="border:1px solid #ddd;padding:5px"><input type="number" style="width:120px" value="${numV101(r.planned)}" oninput="updateBudgetCellV101(${i},'planned',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:5px"><input type="number" style="width:120px" value="${numV101(r.actual)}" oninput="updateBudgetCellV101(${i},'actual',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:7px;text-align:right">${moneyV10(remain)}</td>
-        <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.note)}" oninput="updateBudgetCellV101(${i},'note',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:5px"><button class="btn btn-del" onclick="removeBudgetRowV101(${i})">삭제</button></td>
+    const tb = document.getElementById('budgetRowsV101'); 
+    if(!tb) return;
+    
+    if(!budgetRowsDataV101.length) {
+      tb.innerHTML = '<tr><td colspan="6" style="border:1px solid #cbd5e1;padding:16px;text-align:center;color:#64748b">등록된 예산 항목이 없습니다. 아래 [⚙ 예산 편성·수정하기] 버튼을 눌러 예산을 등록해주세요.</td></tr>';
+      renderBudgetSummaryV101();
+      return;
+    }
+
+    tb.innerHTML = budgetRowsDataV101.map((r, i) => {
+      const p = numV101(r.planned);
+      const a = numV101(r.actual);
+      const remain = p - a;
+      return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'}">
+        <td style="border:1px solid #cbd5e1;padding:10px;font-weight:bold;color:#334155">${esc(r.item || '-')}</td>
+        <td style="border:1px solid #cbd5e1;padding:10px;color:#475569">${esc(r.basis || '-')}</td>
+        <td style="border:1px solid #cbd5e1;padding:10px;text-align:right;font-weight:600">${moneyV10(p)}</td>
+        <td style="border:1px solid #cbd5e1;padding:10px;text-align:right;color:#059669;font-weight:600">${moneyV10(a)}</td>
+        <td style="border:1px solid #cbd5e1;padding:10px;text-align:right;font-weight:bold;color:${remain < 0 ? '#dc2626' : '#2563eb'}">${moneyV10(remain)}</td>
+        <td style="border:1px solid #cbd5e1;padding:10px;color:#64748b">${esc(r.note || '-')}</td>
       </tr>`;
     }).join('');
+    
     renderBudgetSummaryV101();
+  }
+
+  // [신규] 예산 편성 화면으로 즉시 전환하는 연결 함수
+  function goToBudgetPlanModalV101() {
+    const pid = budgetProjectIdV101;
+    closeBudgetManagerV101();
+    if (typeof openBudgetPlanV1472 === 'function') {
+      openBudgetPlanV1472(pid);
+    } else {
+      alert('예산 편성 모듈을 불러올 수 없습니다.');
+    }
   }
   function addBudgetRowV101(){ budgetRowsDataV101.push({item:'',basis:'',planned:0,actual:0,note:''}); renderBudgetRowsV101(); scheduleBudgetDraftV101(); }
   function removeBudgetRowV101(i){ budgetRowsDataV101.splice(i,1); renderBudgetRowsV101(); scheduleBudgetDraftV101(); }
