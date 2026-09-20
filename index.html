@@ -261,6 +261,8 @@
     <label>이메일</label><input id="loginEmail" type="email" style="width:100%;padding:10px;margin:5px 0 12px;box-sizing:border-box;">
     <label>비밀번호</label><input id="loginPassword" type="password" style="width:100%;padding:10px;margin:5px 0 14px;box-sizing:border-box;">
     <button class="btn btn-plan" style="width:100%;" onclick="loginV8()">로그인</button>
+    <button type="button" class="btn btn-add" style="width:100%;margin-top:8px;" onclick="resetPasswordV180()">비밀번호 재설정 메일 보내기</button>
+    <div style="margin-top:7px;font-size:11px;color:#64748b;text-align:center;">위 이메일 칸에 직원 이메일을 입력한 뒤 재설정 버튼을 눌러 주세요.</div>
     <div style="margin-top:10px;padding:9px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#475569;text-align:center;">신규 직원 계정과 임시비밀번호는 관리자가 발급합니다.</div>
     <div id="authMsg" style="margin-top:12px;font-size:12px;color:#b91c1c;"></div>
   </div>
@@ -919,6 +921,53 @@
         <tr><th>참여대상</th><td><input type="text" id="r_targetGroup" placeholder="계획서 연동 후 실제 대상으로 수정"></td></tr>
         <tr><th>계획인원</th><td><input type="number" id="r_plannedParticipants" min="0" readonly style="width:160px"> 명 <span style="font-size:11px;color:#64748b">계획서 자동연동</span></td></tr>
         <tr><th>실제 참석인원</th><td><input type="number" id="r_actualParticipants" min="0" style="width:160px"> 명</td></tr>
+        <tr>
+          <th>참여자 현황 <span style="font-size:11px;color:#64748b">(예시 화면)</span></th>
+          <td>
+            <div class="no-print" style="padding:12px;border:1px solid #bfdbfe;border-radius:8px;background:#f8fbff;">
+              <div style="font-size:12px;color:#475569;margin-bottom:10px;">
+                실제 참석인원을 기준으로 직무분야와 기관구분을 입력합니다. 현재 버전은 화면 확인용이며 저장·연간통계에는 아직 연계되지 않습니다.
+              </div>
+
+              <div style="font-weight:bold;color:#1d4ed8;margin-bottom:7px;">① 직무분야별 참여인원</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px;">
+                <label style="font-size:12px;">요양보호사<input class="r-part-job-v180" data-label="요양보호사" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></label>
+                <label style="font-size:12px;">사회복지사<input class="r-part-job-v180" data-label="사회복지사" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></label>
+                <label style="font-size:12px;">간호(조무)사<input class="r-part-job-v180" data-label="간호(조무)사" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></label>
+                <label style="font-size:12px;">물리·작업치료사<input class="r-part-job-v180" data-label="물리·작업치료사" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></label>
+                <label style="font-size:12px;">시설장·관리자<input class="r-part-job-v180" data-label="시설장·관리자" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></label>
+                <label style="font-size:12px;">기타<input class="r-part-job-v180" data-label="기타" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></label>
+              </div>
+              <div id="r_partJobSummaryV180" style="margin-top:7px;font-size:12px;font-weight:bold;color:#334155;">직무분야 합계: 0명</div>
+
+              <div style="height:1px;background:#dbeafe;margin:13px 0;"></div>
+              <div style="font-weight:bold;color:#1d4ed8;margin-bottom:7px;">② 기관구분별 참여현황</div>
+              <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                  <thead>
+                    <tr style="background:#eff6ff;">
+                      <th style="border:1px solid #cbd5e1;padding:6px;">기관구분</th>
+                      <th style="border:1px solid #cbd5e1;padding:6px;width:120px;">기관 수</th>
+                      <th style="border:1px solid #cbd5e1;padding:6px;width:140px;">참여인원</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td style="border:1px solid #cbd5e1;padding:6px;">노인요양시설</td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgcount-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgpeople-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:6px;">공동생활가정</td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgcount-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgpeople-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:6px;">주야간보호</td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgcount-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgpeople-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:6px;">방문요양</td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgcount-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgpeople-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:6px;">방문목욕</td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgcount-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgpeople-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:6px;">방문간호</td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgcount-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgpeople-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:6px;">기타</td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgcount-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td><td style="border:1px solid #cbd5e1;padding:5px;"><input class="r-part-orgpeople-v180" type="number" min="0" value="0" oninput="updateParticipantPreviewV180()"></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div id="r_partOrgSummaryV180" style="margin-top:7px;font-size:12px;font-weight:bold;color:#334155;">기관 합계: 0개소 / 참여인원 합계: 0명</div>
+              <div id="r_partValidationV180" style="margin-top:9px;padding:8px 10px;border-radius:6px;background:#f1f5f9;color:#475569;font-size:12px;">실제 참석인원을 입력하면 분류 합계를 비교합니다.</div>
+            </div>
+          </td>
+        </tr>
+
         <tr><th>주요 추진내용</th><td><textarea id="r_summaryContent" placeholder="계획서 연동 후 실제 추진내용으로 수정"></textarea></td></tr>
         <tr><th id="r_performanceLabelV136">교육 운영실적</th><td><textarea id="r_actualPerformanceV136" placeholder="진행 횟수, 이수 인원, 홍보 인원 등 실제 운영실적을 입력하세요"></textarea></td></tr>
         <tr><th>주요성과</th><td><textarea id="r_evalGood" placeholder="직접 입력하거나 AI 결과를 적용하세요"></textarea></td></tr>
@@ -2298,7 +2347,42 @@ function attachmentRowsV167(values){
     const host=document.createElement('div');host.className='doc-output-export-v166';host.style.cssText='position:fixed;left:-10000px;top:0;width:170mm;visibility:hidden;';host.append(clone);document.body.append(host);
     let content;
     try{paginateDocumentCoversV166(clone);content=clone.innerHTML;}finally{host.remove();}
-    return "<!doctype html><html lang='ko' xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><title>"+esc(title||'문서')+"</title>"+style+"</head><body class='doc-output-export-v166'>"+content+"</body></html>";
+    return "<!doctype html><html lang='ko' xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><title>"+esc(title||'문서')+"</title>"+style+"</head><body class='doc-output-export-v166'>"+content+"<script>
+/* v18.0 참여자 분류 예시 화면: 저장/DB/연간통계 미연계 */
+function updateParticipantPreviewV180(){
+  const actualEl=document.getElementById('r_actualParticipants');
+  const actual=Math.max(0,Number(actualEl&&actualEl.value||0));
+  const sum=(selector)=>Array.from(document.querySelectorAll(selector)).reduce((s,el)=>s+Math.max(0,Number(el.value||0)),0);
+  const job=sum('.r-part-job-v180');
+  const orgCount=sum('.r-part-orgcount-v180');
+  const orgPeople=sum('.r-part-orgpeople-v180');
+  const js=document.getElementById('r_partJobSummaryV180');
+  const os=document.getElementById('r_partOrgSummaryV180');
+  const vb=document.getElementById('r_partValidationV180');
+  if(js)js.textContent='직무분야 합계: '+job.toLocaleString()+'명';
+  if(os)os.textContent='기관 합계: '+orgCount.toLocaleString()+'개소 / 참여인원 합계: '+orgPeople.toLocaleString()+'명';
+  if(!vb)return;
+  if(!actual){
+    vb.style.background='#f1f5f9'; vb.style.color='#475569';
+    vb.textContent='실제 참석인원을 입력하면 분류 합계를 비교합니다.';
+    return;
+  }
+  const msgs=[];
+  if(job!==actual) msgs.push('직무분야 합계 '+job.toLocaleString()+'명');
+  if(orgPeople!==actual) msgs.push('기관구분 참여인원 합계 '+orgPeople.toLocaleString()+'명');
+  if(!msgs.length){
+    vb.style.background='#ecfdf5'; vb.style.color='#166534';
+    vb.textContent='✓ 실제 참석인원 '+actual.toLocaleString()+'명과 직무·기관구분 참여인원 합계가 일치합니다.';
+  }else{
+    vb.style.background='#fff7ed'; vb.style.color='#9a3412';
+    vb.textContent='⚠ 실제 참석인원 '+actual.toLocaleString()+'명과 '+msgs.join(', ')+'이(가) 일치하지 않습니다.';
+  }
+}
+document.addEventListener('input',function(e){
+  if(e.target&&e.target.id==='r_actualParticipants') updateParticipantPreviewV180();
+});
+</script>
+</body></html>";
   }
 
   function printDoc(targetId) {
@@ -2389,6 +2473,12 @@ function attachmentRowsV167(values){
     const {data:{session}} = await sb.auth.getSession();
     if(session?.user) await enterV8(session.user);
     sb.auth.onAuthStateChange(async (_event, session) => {
+      if(_event==='PASSWORD_RECOVERY'){
+        document.getElementById('authOverlay').style.display='flex';
+        document.getElementById('collabBar').style.display='none';
+        setTimeout(applyRecoveryPasswordV180,150);
+        return;
+      }
       if(session?.user) await enterV8(session.user);
     });
   }
@@ -2401,6 +2491,44 @@ function attachmentRowsV167(values){
     if(error) { document.getElementById('authMsg').textContent = error.message; return; }
     document.getElementById('authMsg').textContent = '';
     await enterV8(data.user);
+  }
+
+  async function resetPasswordV180() {
+    const msg=document.getElementById('authMsg');
+    const email=(document.getElementById('loginEmail')?.value||'').trim();
+    msg.style.color='#b91c1c';
+    if(!email){ msg.textContent='비밀번호를 재설정할 직원 이메일을 먼저 입력해 주세요.'; return; }
+    msg.style.color='#475569';
+    msg.textContent='비밀번호 재설정 메일을 보내는 중...';
+    try{
+      const redirectTo=window.location.href.split('#')[0];
+      const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
+      if(error) throw error;
+      msg.style.color='#166534';
+      msg.textContent='비밀번호 재설정 메일을 보냈습니다. 받은편지함과 스팸함을 확인해 주세요.';
+    }catch(e){
+      console.error('비밀번호 재설정 메일 오류:',e);
+      msg.style.color='#b91c1c';
+      msg.textContent='재설정 메일 발송 실패: '+(e?.message||e);
+    }
+  }
+
+  async function applyRecoveryPasswordV180() {
+    const msg=document.getElementById('authMsg');
+    const p1=prompt('새 비밀번호를 입력하세요. (6자 이상)');
+    if(p1===null)return;
+    if(p1.length<6){ alert('비밀번호는 6자 이상으로 입력해 주세요.'); return; }
+    const p2=prompt('새 비밀번호를 한 번 더 입력하세요.');
+    if(p2===null)return;
+    if(p1!==p2){ alert('두 비밀번호가 일치하지 않습니다.'); return; }
+    const {error}=await sb.auth.updateUser({password:p1});
+    if(error){ alert('비밀번호 변경 실패: '+error.message); return; }
+    alert('비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요.');
+    try{ await sb.auth.signOut(); }catch(_){}
+    v8User=null;
+    document.getElementById('authOverlay').style.display='flex';
+    document.getElementById('collabBar').style.display='none';
+    if(msg){msg.style.color='#166534';msg.textContent='비밀번호 변경 완료. 새 비밀번호로 로그인해 주세요.';}
   }
 
   async function signupV8() {
