@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v18.2-20260920-participant-status-report">
+<html lang="ko" data-build="v18.4-20260921-participant-persist-order">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -256,7 +256,7 @@
 <body>
 <div id="authOverlay" style="position:fixed;inset:0;background:#f5f7fa;z-index:99999;display:flex;align-items:center;justify-content:center;">
   <div style="width:min(430px,92vw);background:#fff;border:1px solid #ddd;border-radius:14px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.12);">
-    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v18.2 · 참여자현황 출력</h2>
+    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v18.4 · 참여자저장복원·출력순서</h2>
     <p style="font-size:13px;color:#666;margin:0 0 20px;">직원 계정으로 로그인하면 공동 사업 DB를 사용할 수 있습니다.</p>
     <label>이메일</label><input id="loginEmail" type="email" style="width:100%;padding:10px;margin:5px 0 12px;box-sizing:border-box;">
     <label>비밀번호</label><input id="loginPassword" type="password" style="width:100%;padding:10px;margin:5px 0 14px;box-sizing:border-box;">
@@ -8434,10 +8434,37 @@ document.addEventListener('input',function(e){
    try{
      const pid=window.currentCloudResultProjectId||window.currentSourcePlanId||window.currentProjectId||window.v10CurrentProjectId;
      if(!pid||!window.sb)return;
-     const {data,error}=await sb.from('project_documents').select('content').eq('project_id',pid).eq('doc_type','RESULT').maybeSingle();
+     const {data,error}=await sb.from('project_documents').select('id,data').eq('project_id',pid).eq('doc_type','RESULT').maybeSingle();
      if(error||!data)return;
-     let c=data.content;if(typeof c==='string'){try{c=JSON.parse(c)}catch(_){return}}
-     if(c?.participant_status_v181)window.setParticipantStatusV181(c.participant_status_v181);
+     let c=data.data;if(typeof c==='string'){try{c=JSON.parse(c)}catch(_){c={}}}
+     let saved=c?.participant_status_v181||null;
+
+     // 현재 RESULT에 값이 없거나 0으로 덮인 경우, 수정이력에서 마지막 정상 참여자 현황을 복구한다.
+     const hasSaved=saved && (
+       Number(saved.actual_participants||0)>0 ||
+       Object.values(saved.jobs||{}).some(v=>Number(v||0)>0) ||
+       Object.values(saved.organizations||{}).some(v=>Number(v?.count||0)>0||Number(v?.people||0)>0)
+     );
+     if(!hasSaved){
+       const h=await sb.from('project_history')
+         .select('snapshot,created_at')
+         .eq('project_id',pid)
+         .order('created_at',{ascending:false})
+         .limit(30);
+       if(!h.error){
+         for(const row of (h.data||[])){
+           let snap=row.snapshot;
+           if(typeof snap==='string'){try{snap=JSON.parse(snap)}catch(_){snap={}}}
+           const p=snap?.participant_status_v181;
+           if(p && (
+             Number(p.actual_participants||0)>0 ||
+             Object.values(p.jobs||{}).some(v=>Number(v||0)>0) ||
+             Object.values(p.organizations||{}).some(v=>Number(v?.count||0)>0||Number(v?.people||0)>0)
+           )){ saved=p; break; }
+         }
+       }
+     }
+     if(saved)window.setParticipantStatusV181(saved);
    }catch(e){console.warn('참여자 현황 복원 오류',e)}
  };
  function wrapLoad(name){
@@ -8491,7 +8518,7 @@ document.addEventListener('input',function(e){
 
    const box=document.createElement('div'); box.className='participant-report-v182';
    box.innerHTML=
-     '<h4>참여자 현황</h4>'+
+     '<h3 class="participant-main-title-v184">Ⅳ. 참여자 현황</h3>'+
      '<div class="participant-note-v182"><strong>실제 참석인원:</strong> '+actual.toLocaleString()+'명</div>'+
      '<h4>가. 직무분야별 참여인원</h4>'+
      tableV182(JOBS.concat(['합계']),jobVals.concat([jt]),'명')+
@@ -8501,13 +8528,36 @@ document.addEventListener('input',function(e){
      '<tr><th>참여인원</th>'+orgPeople.map(v=>'<td>'+v.toLocaleString()+'명</td>').join('')+'<td>'+op.toLocaleString()+'명</td></tr></tbody></table>'+
      '<div class="participant-note-v182">※ 참여기관 수는 기관 수 기준이며, 참여인원은 연인원 집계 기준입니다.</div>';
 
-   /* 결과보고서 첨부 본문 안에서 사업개요/실적 표 뒤에 배치.
-      정확한 앵커가 없으면 첫 번째 첨부문서 본문에 안전하게 추가. */
-   const candidates=[...root.querySelectorAll('.doc-sheet')];
-   const target=candidates.length>1?candidates[1]:(candidates[0]||root);
-   const tables=[...target.querySelectorAll('.out-table')];
-   const anchor=tables.find(t=>/실시|참여|사업|운영/.test(t.innerText||''))||tables[0];
-   if(anchor)anchor.insertAdjacentElement('afterend',box);else target.appendChild(box);
+   /* v18.4: 결과보고서 본문의 'Ⅲ. 설문결과' 바로 다음에 정확히 배치 */
+   const surveySection=document.getElementById('out_r_surveySectionV136');
+   if(surveySection && surveySection.style.display!=='none'){
+     surveySection.insertAdjacentElement('afterend',box);
+   }else{
+     /* 설문 섹션이 없는 결과보고서에서는 운영평가 바로 앞에 배치 */
+     const evalTitle=document.getElementById('out_r_evalTitleV136');
+     if(evalTitle)evalTitle.insertAdjacentElement('beforebegin',box);
+     else{
+       const candidates=[...root.querySelectorAll('.doc-sheet')];
+       const target=candidates.length>1?candidates[1]:(candidates[0]||root);
+       target.appendChild(box);
+     }
+   }
+
+   /* 참여자 현황이 추가되므로 이후 대단원 번호를 한 칸씩 뒤로 이동 */
+   const surveyVisible=!!(surveySection && surveySection.style.display!=='none');
+   const evalTitle=document.getElementById('out_r_evalTitleV136');
+   const budgetTitle=document.getElementById('out_r_budgetTitleV136');
+   const attachTitle=document.getElementById('out_r_attachTitleV136');
+   if(surveyVisible){
+     if(evalTitle)evalTitle.textContent='Ⅴ. 운영평가 및 환류';
+     if(budgetTitle)budgetTitle.textContent='Ⅵ. 예산 집행내역';
+     if(attachTitle)attachTitle.textContent='Ⅶ. 붙임 서류';
+   }else{
+     box.querySelector('.participant-main-title-v184').textContent='Ⅲ. 참여자 현황';
+     if(evalTitle)evalTitle.textContent='Ⅳ. 운영평가 및 환류';
+     if(budgetTitle)budgetTitle.textContent='Ⅴ. 예산 집행내역';
+     if(attachTitle)attachTitle.textContent='Ⅵ. 붙임 서류';
+   }
  }
  function wrapGenerateV182(){
    if(typeof window.generateResultDocs!=='function'||window.generateResultDocs.__participantReportV182)return;
