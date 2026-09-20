@@ -8099,16 +8099,83 @@ function applyOfficialSealV169(){
   sender.append(document.createTextNode(prefix));
   const anchor=document.createElement('span');anchor.className='doc-seal-anchor-v169';anchor.append(document.createTextNode(last),image);sender.append(anchor);
 }
-async function registerOfficialSealV169(input){
-  const file=input.files?.[0],status=document.getElementById('ext_seal_status_v169');if(!file)return;
-  try{
-    if(file.type!=='image/png'||file.size>2*1024*1024||file.size===0)throw new Error('2MB 이하의 PNG 파일을 선택해 주세요.');
-    const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('파일을 읽을 수 없습니다.'));reader.readAsDataURL(file);});
-    const check=new Image();await new Promise((resolve,reject)=>{check.onload=resolve;check.onerror=()=>reject(new Error('정상적인 PNG 이미지가 아닙니다.'));check.src=data;});
-    localStorage.setItem(officialSealKeyV169(),data);applyOfficialSealV169();
-    status.textContent='직인을 등록했습니다. 이 브라우저에서 발신명 마지막 ‘장’ 위에 적용됩니다.';status.style.color='#166534';
-  }catch(error){status.textContent='직인 등록 실패: '+error.message;status.style.color='#b91c1c';}finally{input.value='';}
-}
+// [2단계 개선] 직인 이미지를 브라우저 로컬이 아닌 Supabase 클라우드 스토리지에 영구 보관
+  async function registerOfficialSealV169(input) {
+    if (!v8User) return alert('먼저 로그인해주세요.');
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('직인 이미지는 2MB 이하만 등록 가능합니다.');
+      input.value = '';
+      return;
+    }
+    if (file.type !== 'image/png') {
+      alert('배경이 투명한 PNG 파일만 지원합니다.');
+      input.value = '';
+      return;
+    }
+
+    const statusEl = document.getElementById('ext_seal_status_v169');
+    if (statusEl) statusEl.textContent = '직인 업로드 중...';
+
+    try {
+      // 계정별 고유 파일명으로 클라우드 스토리지에 업로드
+      const filePath = `seals/${v8User.id}_seal.png`;
+      const { error: uploadErr } = await sb.storage
+        .from('official-assets')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadErr) throw uploadErr;
+
+      // 공개 URL 추출
+      const { data: { publicUrl } } = sb.storage
+        .from('official-assets')
+        .getPublicUrl(filePath);
+
+      // 캐시 방지를 위해 타임스탬프 추가
+      const finalSealUrl = `${publicUrl}?t=${Date.now()}`;
+
+      // 외부공문 서식 이미지에 즉시 반영
+      const sealImg = document.getElementById('out_ext_seal_v146');
+      if (sealImg) sealImg.src = finalSealUrl;
+
+      // 프로필 메타데이터에 직인 URL 저장
+      await sb.from('profiles').update({ custom_seal_url: finalSealUrl }).eq('id', v8User.id);
+
+      if (statusEl) {
+        statusEl.style.color = '#166534';
+        statusEl.textContent = '✅ 직인이 클라우드에 영구 등록되었습니다. 다른 PC에서도 유지됩니다.';
+      }
+      alert('직인이 성공적으로 클라우드에 등록되었습니다.');
+    } catch (e) {
+      console.error('직인 업로드 오류:', e);
+      if (statusEl) {
+        statusEl.style.color = '#dc2626';
+        statusEl.textContent = '직인 등록 실패: ' + (e.message || e);
+      }
+      alert('직인 등록 실패: ' + (e.message || e));
+    }
+  }
+
+  // [2단계 신규] 로그인 시 사용자의 클라우드 등록 직인을 자동 복원하는 함수
+  async function loadCloudOfficialSealV169() {
+    if (!v8User) return;
+    try {
+      const { data, error } = await sb.from('profiles').select('custom_seal_url').eq('id', v8User.id).maybeSingle();
+      if (!error && data?.custom_seal_url) {
+        const sealImg = document.getElementById('out_ext_seal_v146');
+        if (sealImg) sealImg.src = data.custom_seal_url;
+        const statusEl = document.getElementById('ext_seal_status_v169');
+        if (statusEl) {
+          statusEl.style.color = '#166534';
+          statusEl.textContent = '✅ 클라우드 직인이 동기화되어 활성화되었습니다.';
+        }
+      }
+    } catch (e) {
+      console.warn('직인 동기화 경고:', e);
+    }
+  }
 function resetOfficialSealV169(){
   try{localStorage.removeItem(officialSealKeyV169());applyOfficialSealV169();document.getElementById('ext_seal_status_v169').textContent='기본 직인으로 복원했습니다.';}catch(error){alert('직인 복원 오류: '+error.message);}
 }
