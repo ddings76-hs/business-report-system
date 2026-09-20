@@ -2434,7 +2434,76 @@ function attachmentRowsV167(values){
     document.getElementById('authOverlay').style.display='flex';
     document.getElementById('collabBar').style.display='none';
   }
+// [2단계 보완] 직인 이미지를 Supabase 클라우드 스토리지에 영구 보관
+  async function registerOfficialSealV169(input) {
+    if (!v8User) return alert('먼저 로그인해주세요.');
+    const file = input.files?.[0];
+    if (!file) return;
 
+    if (file.size > 2 * 1024 * 1024) {
+      alert('직인 이미지는 2MB 이하만 등록 가능합니다.');
+      input.value = '';
+      return;
+    }
+    if (file.type !== 'image/png') {
+      alert('배경이 투명한 PNG 파일만 지원합니다.');
+      input.value = '';
+      return;
+    }
+
+    const statusEl = document.getElementById('ext_seal_status_v169');
+    if (statusEl) statusEl.textContent = '직인 업로드 중...';
+
+    try {
+      const filePath = `seals/${v8User.id}_seal.png`;
+      const { error: uploadErr } = await sb.storage
+        .from('official-assets')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadErr) throw uploadErr;
+
+      const { data: { publicUrl } } = sb.storage
+        .from('official-assets')
+        .getPublicUrl(filePath);
+
+      const finalSealUrl = `${publicUrl}?t=${Date.now()}`;
+
+      const sealImg = document.getElementById('out_ext_seal_v146');
+      if (sealImg) sealImg.src = finalSealUrl;
+
+      await sb.from('profiles').update({ custom_seal_url: finalSealUrl }).eq('id', v8User.id);
+
+      if (statusEl) {
+        statusEl.style.color = '#166534';
+        statusEl.textContent = '✅ 직인이 클라우드에 영구 등록되었습니다.';
+      }
+      alert('직인이 성공적으로 클라우드에 등록되었습니다.');
+    } catch (e) {
+      console.error('직인 업로드 오류:', e);
+      if (statusEl) statusEl.textContent = '직인 등록 실패: ' + (e.message || e);
+      alert('직인 등록 실패: ' + (e.message || e));
+    }
+  }
+
+  // [2단계 보완] 로그인 시 클라우드 직인 자동 로드 (로그인 에러 방지)
+  async function loadCloudOfficialSealV169() {
+    if (!v8User) return;
+    try {
+      const { data, error } = await sb.from('profiles').select('custom_seal_url').eq('id', v8User.id).maybeSingle();
+      if (!error && data?.custom_seal_url) {
+        const sealImg = document.getElementById('out_ext_seal_v146');
+        if (sealImg) sealImg.src = data.custom_seal_url;
+        const statusEl = document.getElementById('ext_seal_status_v169');
+        if (statusEl) {
+          statusEl.style.color = '#166534';
+          statusEl.textContent = '✅ 클라우드 직인이 동기화되었습니다.';
+        }
+      }
+    } catch (e) {
+      console.warn('직인 동기화 경고:', e);
+    }
+  }
+  
   async function enterV8(user) {
     v8User = user;[cite: 3]
     document.getElementById('authOverlay').style.display = 'none';[cite: 3]
