@@ -120,7 +120,17 @@
 
   /* 2단 고정 결재/시행선 스타일 */
   .doc-signature { position:relative;text-align:center;font-family:'Gulim','굴림',sans-serif !important;font-size:19pt !important;font-weight:700 !important;letter-spacing:.02em;margin:55px 0 50px; }
-  .doc-seal { position:absolute;width:64px;height:64px;object-fit:contain;margin-left:-20px;top:-18px; }
+  /* 직인이 '터'를 가리지 않고 '장' 글자 우측에 걸치도록 좌표 및 블렌딩 보정 */
+  .doc-seal { 
+    position: absolute; 
+    width: 62px; 
+    height: 62px; 
+    object-fit: contain; 
+    margin-left: -12px; /* '터' 글자를 침범하지 않도록 우측으로 8px 이동 */
+    top: -15px; 
+    mix-blend-mode: multiply; /* 흰색 잔여물이 남아있어도 100% 투명화되어 글자가 아래에 투영됨 */
+    pointer-events: none; 
+  }
   .doc-seal-text { display:inline-block;margin-left:10px;color:#b91c1c;font-size:17px;font-weight:bold;letter-spacing:0;vertical-align:middle;white-space:nowrap; }
   .doc-footer-signature { margin:18px 0 14px;flex:none; }
   .doc-fixed-footer { width:100%;font-family:'Batang',serif;font-size:12pt;line-height:1.5;background:#fff; }
