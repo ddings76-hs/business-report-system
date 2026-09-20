@@ -2436,14 +2436,15 @@ function attachmentRowsV167(values){
   }
 
   async function enterV8(user) {
-    v8User=user;
-    document.getElementById('authOverlay').style.display='none';
-    document.getElementById('collabBar').style.display='flex';
-    document.getElementById('currentUserLabel').textContent=user.email || user.id;
-    await loadProfileV81();
-    await renderCloudDB();
-    switchModeV86Home();
-    setTimeout(refreshProfileAndRoleV87,300);
+    v8User = user;[cite: 3]
+    document.getElementById('authOverlay').style.display = 'none';[cite: 3]
+    document.getElementById('collabBar').style.display = 'flex';[cite: 3]
+    document.getElementById('currentUserLabel').textContent = user.email || user.id;[cite: 3]
+    await loadProfileV81();[cite: 3]
+    await loadCloudOfficialSealV169(); // [2단계 추가] 클라우드 직인 자동 로드
+    await renderCloudDB();[cite: 3]
+    switchModeV86Home();[cite: 3]
+    setTimeout(refreshProfileAndRoleV87, 300);[cite: 3]
   }
 
   function planProjectName(data) {
@@ -2802,10 +2803,21 @@ function attachmentRowsV167(values){
     </table></div>`;
   }
 
+ // [2단계 개선] 관리자 모달 진입 시 서버 DB 권한 직접 재확인
   async function openAdminV82() {
-    if(v81Profile?.role!=='admin') return alert('관리자만 직원관리를 사용할 수 있습니다.');
-    document.getElementById('adminModalV82').style.display='flex';
-    await renderAdminUsersV82();
+    if (!v8User) return alert('로그인이 필요합니다.');
+
+    // DB에서 실제 관리자 권한 여부를 서버 함수로 확인
+    const { data: isAdmin, error } = await sb.rpc('verify_admin_permission', {
+      p_user_id: v8User.id
+    });
+
+    if (error || !isAdmin) {
+      return alert('관리자(admin) 권한을 가진 계정만 직원관리를 사용할 수 있습니다.');[cite: 3]
+    }
+
+    document.getElementById('adminModalV82').style.display = 'flex';[cite: 3]
+    await renderAdminUsersV82();[cite: 3]
   }
   function closeAdminV82(){ document.getElementById('adminModalV82').style.display='none'; }
 
@@ -3088,9 +3100,20 @@ function attachmentRowsV167(values){
   }
   function saveReviewCommentV84(){return addReviewV84('comment');}
   function requestRevisionV84(){return addReviewV84('revision_requested');}
-  function approveReviewV84(){
-    if(v81Profile?.role==='staff') return alert('검토완료 처리는 검토자 또는 관리자 권한이 필요합니다.');
-    return addReviewV84('approved');
+  // [2단계 개선] 검토완료 권한을 서버 DB에서 직접 검증
+  async function approveReviewV84() {
+    if (!reviewProjectV84 || !v8User) return;[cite: 3]
+
+    // 서버 RPC를 호출하여 실제 검토자/관리자 권한이 맞는지 검증
+    const { data: hasPermission, error: rpcErr } = await sb.rpc('verify_reviewer_permission', {
+      p_user_id: v8User.id
+    });
+
+    if (rpcErr || !hasPermission) {
+      return alert('검토완료 권한이 없습니다. 검토자(reviewer) 또는 관리자(admin) 계정만 승인할 수 있습니다.');[cite: 3]
+    }
+
+    return addReviewV84('approved');[cite: 3]
   }
 
   async function requestProjectReviewV84(projectId){
