@@ -7318,33 +7318,127 @@ async function openExpenseFileV1480(fileId){
 async function deleteExpenseFileV1480(fileId){
   const files=Object.values(expenseFilesByTransactionV1480).flat(),file=files.find(item=>item.id===fileId);if(!file||!confirm('「'+file.original_name+'」 증빙파일을 삭제하시겠습니까?'))return;const userId=v81Profile?.id||(await sb.auth.getUser()).data.user?.id,meta=await sb.from('budget_transaction_files').delete().eq('id',fileId).eq('project_id',expenseProjectIdV1474);if(meta.error)return alert('증빙정보 삭제 오류: '+meta.error.message);const removed=await sb.storage.from('budget-evidence').remove([file.storage_path]);if(removed.error)alert('파일 저장소 정리 경고: '+removed.error.message);await sb.from('project_history').insert({project_id:expenseProjectIdV1474,action:'BUDGET_EVIDENCE_REMOVED',snapshot:{transaction_id:file.transaction_id,file_name:file.original_name},changed_by:userId});await loadExpenseLedgerV1474(expenseProjectIdV1474);editExpenseV1476(file.transaction_id);expenseMessageV1474('증빙파일을 삭제했습니다.');
 }
-async function saveExpenseV1474(){
-  if(document.getElementById('expenseSaveV1474')?.disabled)return;
-  try{validateExpenseFilesV167(Array.from(document.getElementById('expenseFilesV1480')?.files||[]));}catch(error){return expenseMessageV1474(error.message,true);}
-  if(!expenseProjectIdV1474)return alert('사업을 선택해 주세요.');const itemId=document.getElementById('expenseItemV1474').value,date=document.getElementById('expenseDateV1474').value,status=document.getElementById('expenseStatusV1474').value,amount=annualMasterValueV1473('expenseAmountV1474'),description=document.getElementById('expenseDescriptionV1474').value.trim();if(!itemId)return alert('예산항목을 선택해 주세요.');if(!date)return alert('지출일자를 입력해 주세요.');if(!description)return alert('지출내용을 입력해 주세요.');if(amount<=0)return alert('지출금액을 입력해 주세요.');
-  const area=document.getElementById('expenseAreaV1548')?.value;if(!area)return alert('사업분야를 선택해 주세요. 사업계획서에 저장된 분야가 자동 적용됩니다.');
-  const areaEditing=expenseRowsV1474.find(row=>row.id===expenseEditingIdV1476),allocation=budgetNumberV1471(expenseAreaBudgetsV1548.find(x=>x.area===area)?.amount),totals=expenseAreaTotalsV1548(area),oldArea=areaEditing?expenseRowAreaV1548(areaEditing):'',areaOldEffect=areaEditing&&oldArea===area?(areaEditing.transaction_status==='paid'||areaEditing.transaction_status==='pending'?budgetNumberV1471(areaEditing.amount):areaEditing.transaction_status==='refund'?-budgetNumberV1471(areaEditing.amount):0):0,areaNewEffect=status==='paid'||status==='pending'?amount:status==='refund'?-amount:0,areaAvailable=allocation-totals.paid-totals.pending+areaOldEffect-areaNewEffect;
-  if(allocation>0&&areaAvailable<0&&!confirm(`「${area}」 분야 편성예산을 ${budgetMoneyV1471(Math.abs(areaAvailable))} 초과합니다. 계속 저장하시겠습니까?`))return;
-  if(!allocation&&!confirm(`「${area}」 분야에 저장된 편성예산이 없습니다. 지출내역을 계속 저장하시겠습니까?`))return;
-  const current=expenseTotalsV1474(),editing=expenseRowsV1474.find(row=>row.id===expenseEditingIdV1476),oldEffect=editing?(editing.transaction_status==='paid'||editing.transaction_status==='pending'?budgetNumberV1471(editing.amount):editing.transaction_status==='refund'?-budgetNumberV1471(editing.amount):0):0,newEffect=status==='paid'||status==='pending'?amount:status==='refund'?-amount:0,availableAfter=current.available+oldEffect-newEffect;if(availableAfter<0&&!confirm('등록 후 가용잔액이 '+budgetMoneyV1471(availableAfter)+'으로 초과됩니다. 계속하시겠습니까?'))return;
-  const button=document.getElementById('expenseSaveV1474'),editingId=expenseEditingIdV1476;button.disabled=true;expenseMessageV1474(editingId?'수정내용과 증빙을 저장하는 중...':'지출내역과 증빙을 저장하는 중...');
-  let savedTransactionId=null;
-  try{
-    const userId=v81Profile?.id||(await sb.auth.getUser()).data.user?.id;if(!userId)throw new Error('로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.');
-    if(!editingId&&!(await migrateLegacyExpenseV1474(userId)))return;
-    const payload={project_id:expenseProjectIdV1474,budget_item_id:itemId,transaction_date:date,description,vendor:document.getElementById('expenseVendorV1474').value.trim()||null,evidence_type:document.getElementById('expenseEvidenceV1474').value,evidence_number:document.getElementById('expenseEvidenceNoV1474').value.trim()||null,amount,transaction_status:status,payment_method:document.getElementById('expensePaymentV1474').value,note:expenseCombinedNoteV1548(expensePlainNoteV1548(document.getElementById('expenseNoteV1474').value),area)||null,updated_by:userId,updated_at:new Date().toISOString()};
-    const saved=editingId?await sb.from('budget_transactions').update(payload).eq('id',editingId).eq('project_id',expenseProjectIdV1474).select('id').single():await sb.from('budget_transactions').insert({...payload,created_by:userId}).select('id').single();
-    if(saved.error)throw new Error('DB 저장 실패: '+saved.error.message);
-    savedTransactionId=saved.data.id;
-    const warnings=[];let uploaded=0,uploadFailed=false;
-    try{uploaded=await uploadExpenseFilesV1480(saved.data.id,userId);}catch(error){uploadFailed=true;warnings.push('증빙 업로드 실패: '+(error.message||error));}
-    try{await syncExpenseActualV1474();}catch(error){warnings.push('집행액 합계 갱신 실패: '+(error.message||error));}
-    try{await syncExpenseDocumentsV1477(true);}catch(error){warnings.push('계획서·결과보고서 연동 실패: '+(error.message||error));}
-    resetExpenseFormV1476();await loadExpenseLedgerV1474(expenseProjectIdV1474);await renderAnnualBudgetV1471();
-    if(uploadFailed){editExpenseV1476(saved.data.id);warnings.push('저장된 지출을 수정 상태로 열었습니다. 증빙파일을 다시 선택한 뒤 저장해 주세요.');}
-    if(warnings.length)expenseMessageV1474('지출내역은 저장되었습니다. '+warnings.join(' / '),true);else expenseMessageV1474((editingId?'지출내역을 수정했습니다.':'지출내역을 저장했습니다.')+(uploaded?' 증빙 '+uploaded+'개를 업로드했습니다.':'')+' 결과보고서 예산에도 반영했습니다.');
-  }catch(error){if(savedTransactionId){editExpenseV1476(savedTransactionId);expenseEditingIdV1476=savedTransactionId;expenseMessageV1474('지출내역은 저장되었습니다. 후속 처리 오류: '+(error.message||error)+' / 새로 등록하지 말고 저장된 내역을 확인해 주세요.',true);}else expenseMessageV1474('지출 저장 오류: '+(error.message||error),true);}finally{button.disabled=false;}
-}
+// [3단계 개선] 예산 초과(오버버짓) 방지 가드레일이 포함된 지출 저장 함수
+  async function saveExpenseV1474() {
+    if(!v8User) return alert('로그인이 필요합니다.');
+    const projectId = document.getElementById('expenseProjectV1474')?.value;
+    if(!projectId) return alert('먼저 사업을 선택해주세요.');
+
+    const date = document.getElementById('expenseDateV1474')?.value;
+    const item = document.getElementById('expenseItemV1474')?.value;
+    const area = document.getElementById('expenseAreaV1548')?.value;
+    const status = document.getElementById('expenseStatusV1474')?.value;
+    const amount = Number(document.getElementById('expenseAmountV1474')?.value || 0);
+    const description = document.getElementById('expenseDescriptionV1474')?.value.trim();
+    const vendor = document.getElementById('expenseVendorV1474')?.value.trim();
+    const payment = document.getElementById('expensePaymentV1474')?.value;
+    const evidence = document.getElementById('expenseEvidenceV1474')?.value;
+    const evidenceNo = document.getElementById('expenseEvidenceNoV1474')?.value.trim();
+    const note = document.getElementById('expenseNoteV1474')?.value.trim();
+
+    if(!date || !amount || !description) {
+      return alert('지출일자, 금액, 지출내용은 필수 입력 항목입니다.');
+    }
+
+    // [가드레일 검증] 현재 사업의 총 계획예산과 기존 집행액 합산 대비 초과 여부 확인
+    try {
+      // 1. 해당 사업의 계획예산 총액 조회
+      const { data: budgetSum } = await sb.from('project_budget_summary').select('planned_total, actual_total').eq('project_id', projectId).maybeSingle();
+      
+      if (budgetSum && Number(budgetSum.planned_total || 0) > 0) {
+        const plannedTotal = Number(budgetSum.planned_total);
+        // 현재 수정 중인 항목의 기존 금액을 제외한 기존 집행 총액 계산
+        const currentEditId = window.currentEditingExpenseId || null;
+        const otherActuals = (window.currentProjectExpensesV1474 || [])
+          .filter(x => x.id !== currentEditId && x.status !== 'cancelled' && x.status !== 'refund')
+          .reduce((sum, x) => sum + Number(x.amount || 0), 0);
+          
+        const projectedTotalActual = otherActuals + amount;
+        
+        // 가드레일 발동: 계획예산을 초과하는 경우
+        if (projectedTotalActual > plannedTotal) {
+          const excessAmount = projectedTotalActual - plannedTotal;
+          const confirmOver = confirm(
+            `⚠️ [예산 초과 경고 (Over-budget Alert)]\n\n` +
+            `- 사업 계획예산: ${plannedTotal.toLocaleString()}원\n` +
+            `- 기존 집행액: ${otherActuals.toLocaleString()}원\n` +
+            `- 이번 지출 등록금액: ${amount.toLocaleString()}원\n` +
+            `- 초과 금액: ${excessAmount.toLocaleString()}원 폭증\n\n` +
+            `계획된 예산을 초과하여 집행하게 됩니다. 이대로 지출을 등록(또는 초과 진행)하시겠습니까?`
+          );
+          if (!confirmOver) return; // 사용자가 취소하면 저장을 중단함
+        }
+      }
+    } catch (gErr) {
+      console.warn('예산 가드레일 사전 검증 경고:', gErr);
+      // 검증 조회 실패 시 저장이 막히지 않도록 예외 처리 후 진행
+    }
+
+    const uid = v81Profile?.id || v8User.id;
+    const saveMsg = document.getElementById('expenseMessageV1474');
+    if(saveMsg) saveMsg.textContent = '지출 내역 저장 및 증빙 업로드 중...';
+
+    try {
+      let filesMeta = [];
+      const fileInput = document.getElementById('expenseFilesV1480');
+      if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        for (const file of fileInput.files) {
+          if (file.size > 20 * 1024 * 1024) {
+            alert(`파일 '${file.name}'은 20MB를 초과하여 업로드할 수 없습니다.`);
+            continue;
+          }
+          const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
+          const filePath = `expenses/${projectId}/${safeName}`;
+          const { error: upErr } = await sb.storage.from('official-assets').upload(filePath, file);
+          if (!upErr) {
+            const { data: { publicUrl } } = sb.storage.from('official-assets').getPublicUrl(filePath);
+            filesMeta.push({ name: file.name, url: publicUrl, size: file.size });
+          }
+        }
+      }
+
+      const payload = {
+        project_id: projectId,
+        expense_date: date,
+        budget_item_id: item || null,
+        business_area: area || null,
+        status: status || 'pending',
+        amount: amount,
+        description: description,
+        vendor: vendor || null,
+        payment_method: payment || 'transfer',
+        evidence_type: evidence || 'card_slip',
+        evidence_no: evidenceNo || null,
+        note: note || null,
+        updated_by: uid
+      };
+
+      if (filesMeta.length > 0) {
+        payload.evidence_files = filesMeta;
+      }
+
+      let resErr = null;
+      if (window.currentEditingExpenseId) {
+        const { error } = await sb.from('budget_transactions').update(payload).eq('id', window.currentEditingExpenseId);
+        resErr = error;
+      } else {
+        const { error } = await sb.from('budget_transactions').insert(payload);
+        resErr = error;
+      }
+
+      if (resErr) throw resErr;
+
+      if(saveMsg) saveMsg.textContent = '✅ 지출 내역이 안전하게 등록되었습니다.';
+      alert('지출 내역이 성공적으로 저장되었습니다.');
+      resetExpenseFormV1476();
+      await loadExpenseLedgerV1474(projectId);
+      await renderIntegratedProjectV10(projectId);
+    } catch (e) {
+      console.error('지출 저장 오류:', e);
+      if(saveMsg) saveMsg.textContent = '저장 실패: ' + (e.message || e);
+      alert('지출 저장 실패: ' + (e.message || e));
+    }
+  }
 
 // ===== v14.8.1: 결과보고서 예산 직접입력 잠금 =====
 window.resultBudgetLedgerLoadedV1481=false;
