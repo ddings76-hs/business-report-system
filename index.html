@@ -2531,16 +2531,24 @@ function attachmentRowsV167(values){
     }
   }
   
- async function enterV8(user) {
+async function enterV8(user) {
     v8User = user;
     document.getElementById('authOverlay').style.display = 'none';
     document.getElementById('collabBar').style.display = 'flex';
     document.getElementById('currentUserLabel').textContent = user.email || user.id;
+    
     await loadProfileV81();
-    await loadCloudOfficialSealV169(); // [2단계 추가] 클라우드 직인 자동 로드
+    
+    // [안전장치 추가] 직인 로드 중 에러가 나더라도 로그인 흐름이 끊기지 않도록 분리
+    try {
+      await loadCloudOfficialSealV169();
+    } catch (err) {
+      console.warn('클라우드 직인 지연 로드 경고:', err);
+    }
+    
     await renderCloudDB();
     switchModeV86Home();
-    setTimeout(refreshProfileAndRoleV87, 300);
+    setTimeout(refreshRoleUIV87, 300);
   }
 
   function planProjectName(data) {
