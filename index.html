@@ -119,18 +119,28 @@
   #out_p_budget_total_line_v161, #out_p_budget_total_line_v161 strong { font-size:12pt !important; }
 
   /* 2단 고정 결재/시행선 스타일 */
-  .doc-signature { position:relative;text-align:center;font-family:'Gulim','굴림',sans-serif !important;font-size:19pt !important;font-weight:700 !important;letter-spacing:.02em;margin:55px 0 50px; }
-  /* 직인이 '터'를 가리지 않고 '장' 글자 우측에 걸치도록 좌표 및 블렌딩 보정 */
-  .doc-seal { 
-    position: absolute; 
-    width: 62px; 
-    height: 62px; 
-    object-fit: contain; 
-    margin-left: -12px; /* '터' 글자를 침범하지 않도록 우측으로 8px 이동 */
-    top: -15px; 
-    mix-blend-mode: multiply; /* 흰색 잔여물이 남아있어도 100% 투명화되어 글자가 아래에 투영됨 */
-    pointer-events: none; 
-  }
+.doc-signature { 
+  position: relative;
+  text-align: center;
+  font-family: 'Gulim', '굴림', sans-serif !important;
+  font-size: 19pt !important;
+  font-weight: 700 !important;
+  letter-spacing: .02em;
+  margin: 55px 0 50px;
+}
+
+/* 직인이 '터'를 전혀 가리지 않고 '장' 글자 중심에 자연스럽게 걸치도록 좌표 및 투명 블렌딩 강제 적용 */
+.doc-seal { 
+  position: absolute !important;
+  width: 58px !important;
+  height: 58px !important;
+  object-fit: contain !important;
+  margin-left: -5px !important; /* 왼쪽 침범을 멈추고 '장' 글자 우측 1/3 지점에만 걸치도록 이동 */
+  top: -14px !important;
+  mix-blend-mode: multiply !important; /* 흰색 바탕을 투명하게 관통시켜 뒤 글자가 100% 비치게 만듦 */
+  pointer-events: none !important;
+  z-index: 10 !important;
+}
   .doc-seal-text { display:inline-block;margin-left:10px;color:#b91c1c;font-size:17px;font-weight:bold;letter-spacing:0;vertical-align:middle;white-space:nowrap; }
   .doc-footer-signature { margin:18px 0 14px;flex:none; }
   .doc-fixed-footer { width:100%;font-family:'Batang',serif;font-size:12pt;line-height:1.5;background:#fff; }
@@ -2353,7 +2363,7 @@ function attachmentRowsV167(values){
     });
     parsed.querySelectorAll('.doc-footer-signature').forEach(signature=>{
       const sender=signature.querySelector('[id$="_sender_v146"],#out_p_sender,#out_r_sender')||signature.querySelector('span');
-      const seal=signature.querySelector('.doc-seal');if(!sender)return;
+      const seal=signature.querySelector('.doc-seal'margin-left: -5px !important; mix-blend-mode: multiply !important;);if(!sender)return;
       const wrap=parsed.createElement('div');wrap.style.cssText='position:relative;display:inline-block;padding-right:12mm;font-size:15.2pt;font-weight:700;white-space:nowrap;';
       sender.replaceWith(wrap);wrap.append(sender);
       if(seal){seal.remove();seal.style.cssText='position:absolute;width:17mm;height:17mm;object-fit:contain;right:0;top:50%;margin-top:-8.5mm;z-index:2;';wrap.append(seal);}
