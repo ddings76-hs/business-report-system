@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v17.0.2-20260920-expense-edit-delete-fixed">
+<html lang="ko" data-build="v17.0.3-20260920-budget-detail-view-only">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -433,8 +433,8 @@
       <div><h2 style="margin:0">예산·정산 상세관리</h2><div id="budgetProjectNameV101" style="font-size:12px;color:#666;margin-top:4px"></div></div>
       <button class="btn btn-del" onclick="closeBudgetManagerV101()">닫기</button>
     </div>
-    <div style="margin:14px 0;padding:10px;background:#f7f7f7;border-radius:8px;font-size:12px">
-      입력 중 내용은 이 브라우저에 자동 임시저장됩니다. <span id="autosaveStateV101">대기</span>
+    <div style="margin:14px 0;padding:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;color:#1e3a8a">
+      이 화면은 <strong>예산·정산 조회 전용</strong>입니다. 계획예산은 [계획예산 편성·수정], 실제집행은 [지출내역 등록·수정]에서 변경하세요.
     </div>
     <div style="overflow:auto">
       <table style="width:100%;border-collapse:collapse;min-width:820px">
@@ -445,16 +445,13 @@
           <th style="border:1px solid #ddd;padding:7px">실제집행</th>
           <th style="border:1px solid #ddd;padding:7px">잔액</th>
           <th style="border:1px solid #ddd;padding:7px">비고</th>
-          <th style="border:1px solid #ddd;padding:7px">관리</th>
         </tr></thead>
         <tbody id="budgetRowsV101"></tbody>
       </table>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-      <button class="btn btn-add" onclick="addBudgetRowV101()">+ 예산항목</button>
-      <button class="btn btn-save" onclick="saveBudgetManagerV101()">☁ 예산·정산 저장</button>
-      <button class="btn btn-add" onclick="syncBudgetToDocumentsV102()">↔ 계획서·결과보고서 반영</button>
-      <button class="btn" onclick="clearBudgetDraftV101()">임시저장 삭제</button>
+      <button class="btn btn-plan" onclick="goBudgetPlanEditV1703()">⚙ 계획예산 편성·수정</button>
+      <button class="btn btn-result" onclick="goExpenseEditV1703()">💳 지출내역 등록·수정</button>
     </div>
     <div id="budgetSummaryV101" style="margin-top:14px"></div>
   </div>
@@ -3321,19 +3318,20 @@ function attachmentRowsV167(values){
   function escAttrV101(v){ return String(v??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   function renderBudgetRowsV101(){
-    const tb=document.getElementById('budgetRowsV101'); if(!tb) return;
-    if(!budgetRowsDataV101.length) budgetRowsDataV101=[{item:'',basis:'',planned:0,actual:0,note:''}];
+    const tb=document.getElementById('budgetRowsV101');if(!tb)return;
+    if(!budgetRowsDataV101.length){
+      tb.innerHTML='<tr><td colspan="6" style="border:1px solid #cbd5e1;padding:16px;text-align:center;color:#64748b">등록된 예산항목이 없습니다. 아래 [계획예산 편성·수정]에서 등록해 주세요.</td></tr>';
+      renderBudgetSummaryV101();return;
+    }
     tb.innerHTML=budgetRowsDataV101.map((r,i)=>{
-      const remain=numV101(r.planned)-numV101(r.actual);
-      return `<tr>
-        <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.item)}" oninput="updateBudgetCellV101(${i},'item',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.basis)}" oninput="updateBudgetCellV101(${i},'basis',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:5px"><input type="number" style="width:120px" value="${numV101(r.planned)}" oninput="updateBudgetCellV101(${i},'planned',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:5px"><input type="number" style="width:120px" value="${numV101(r.actual)}" oninput="updateBudgetCellV101(${i},'actual',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:7px;text-align:right">${moneyV10(remain)}</td>
-        <td style="border:1px solid #ddd;padding:5px"><input style="width:100%" value="${escAttrV101(r.note)}" oninput="updateBudgetCellV101(${i},'note',this.value)"></td>
-        <td style="border:1px solid #ddd;padding:5px"><button class="btn btn-del" onclick="removeBudgetRowV101(${i})">삭제</button></td>
-      </tr>`;
+      const p=numV101(r.planned),a=numV101(r.actual),remain=p-a;
+      return '<tr style="background:'+(i%2===0?'#fff':'#f8fafc')+'">'+
+        '<td style="border:1px solid #cbd5e1;padding:9px;font-weight:600">'+esc(r.item||'-')+'</td>'+
+        '<td style="border:1px solid #cbd5e1;padding:9px">'+esc(r.basis||'-')+'</td>'+
+        '<td style="border:1px solid #cbd5e1;padding:9px;text-align:right">'+moneyV10(p)+'</td>'+
+        '<td style="border:1px solid #cbd5e1;padding:9px;text-align:right;color:#047857;font-weight:600">'+moneyV10(a)+'</td>'+
+        '<td style="border:1px solid #cbd5e1;padding:9px;text-align:right;font-weight:600;color:'+(remain<0?'#b91c1c':'#334155')+'">'+moneyV10(remain)+'</td>'+
+        '<td style="border:1px solid #cbd5e1;padding:9px">'+esc(r.note||'-')+'</td></tr>';
     }).join('');
     renderBudgetSummaryV101();
   }
@@ -3375,10 +3373,20 @@ function attachmentRowsV167(values){
     document.getElementById('budgetProjectNameV101').textContent=pr.data?.project_name||'';
     const rr=await sb.from('project_budget_items').select('*').eq('project_id',projectId).order('sort_order',{ascending:true});
     budgetRowsDataV101=(rr.data||[]).map(x=>({id:x.id,item:x.item_name||'',basis:x.calculation_basis||'',planned:numV101(x.planned_amount),actual:numV101(x.actual_amount),note:x.note||''}));
-    const draft=localStorage.getItem(budgetDraftKeyV101());
-    if(draft){ try{ const d=JSON.parse(draft); if(Array.isArray(d.rows) && confirm('이전에 자동 임시저장된 예산 내용을 복원할까요?')) budgetRowsDataV101=d.rows; }catch(e){} }
     renderBudgetRowsV101();
     document.getElementById('budgetModalV101').style.display='flex';
+  }
+  async function goBudgetPlanEditV1703(){
+    const projectId=budgetProjectIdV101;
+    if(!projectId)return alert('사업을 먼저 선택해 주세요.');
+    closeBudgetManagerV101();
+    await openBudgetPlanV1472(projectId);
+  }
+  async function goExpenseEditV1703(){
+    const projectId=budgetProjectIdV101;
+    if(!projectId)return alert('사업을 먼저 선택해 주세요.');
+    closeBudgetManagerV101();
+    await openExpenseLedgerV1474(projectId);
   }
   function closeBudgetManagerV101(){ document.getElementById('budgetModalV101').style.display='none'; }
   async function saveBudgetManagerV101(){
