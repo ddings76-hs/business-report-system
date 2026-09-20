@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-build="v18.4-20260921-participant-persist-order">
+<html lang="ko" data-build="v19.6-20260921-participation-search-print">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -256,7 +256,7 @@
 <body>
 <div id="authOverlay" style="position:fixed;inset:0;background:#f5f7fa;z-index:99999;display:flex;align-items:center;justify-content:center;">
   <div style="width:min(430px,92vw);background:#fff;border:1px solid #ddd;border-radius:14px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.12);">
-    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v18.4 · 참여자저장복원·출력순서</h2>
+    <h2 style="margin:0 0 8px;">사업계획·결과보고 시스템 v19.6 · 사업별 참여현황</h2>
     <p style="font-size:13px;color:#666;margin:0 0 20px;">직원 계정으로 로그인하면 공동 사업 DB를 사용할 수 있습니다.</p>
     <label>이메일</label><input id="loginEmail" type="email" style="width:100%;padding:10px;margin:5px 0 12px;box-sizing:border-box;">
     <label>비밀번호</label><input id="loginPassword" type="password" style="width:100%;padding:10px;margin:5px 0 14px;box-sizing:border-box;">
@@ -486,12 +486,93 @@
         <button type="button" id="btn-mode-list" class="mode-btn" onclick="switchMode('LIST')">📁 사업목록</button>
         <button type="button" id="btn-mode-dashboard" class="mode-btn" onclick="switchModeV831Dashboard()">📊 사업관리</button>
         <button type="button" id="btn-mode-annual-budget-v1471" class="mode-btn" onclick="switchAnnualBudgetV1471()">💰 예산·지출</button>
+        <button type="button" id="btn-mode-annual-result-v190" class="mode-btn" onclick="switchAnnualResultV190()">📈 연간 사업결과</button>
+        <button type="button" id="btn-mode-part-search-v196" class="mode-btn" onclick="switchParticipantSearchV196()">👥 사업별 참여현황</button>
         <button type="button" id="btn-employee-v87" class="mode-btn" style="display:none;" onclick="openAdminV82()">👥 직원관리</button>
       </div>
     </div>
   </div>
 
   <!-- 입력 폼 1: 사업계획 전용 입력 폼 -->
+
+  <div id="section-annual-result-v190" class="form-section no-print" style="display:none;">
+    <h2 class="section-list-head">연간 사업결과 <span style="font-size:11px;color:#64748b;font-weight:normal">초안</span></h2>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+      <select id="annualResultYearV190" style="width:120px"><option value="2026" selected>2026년</option><option value="2025">2025년</option><option value="2024">2024년</option></select>
+      <button type="button" class="btn btn-save" onclick="loadAnnualResultV190()">저장된 결과보고서 집계</button>
+      <button type="button" class="btn" onclick="openAnnualReportV195()">📄 연간 사업결과 보고서</button>
+      <span id="annualResultMsgV190" style="font-size:12px;color:#64748b">조회 전용</span>
+    </div>
+    <div id="annualResultCardsV190" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:15px"></div>
+    <div class="annual-box-v190"><h3>참여자 연간 현황 <small>연인원 · 연개소 기준</small></h3><div id="annualParticipantV190"></div></div>
+    
+    <div class="annual-box-v190">
+      <h3>계획 대비 연간 실적</h3>
+      <div id="annualPlanVsResultV191"></div>
+    </div>
+    <div class="annual-box-v190">
+      <h3>연간 예산 · 집행 현황</h3>
+      <div id="annualBudgetResultV191"></div>
+    </div>
+    <div class="annual-box-v190">
+      <h3>사업분야별 연간 종합실적 <small>분야별 소계 · 클릭하여 세부사업 확인</small></h3>
+      <div id="annualFieldSummaryV194"></div>
+    </div>
+    <div class="annual-box-v190">
+      <h3>사업분야(영역) · 세부사업별 연간실적 <small>사업계획서 「사업분야(영역)」 기준</small></h3>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:9px">
+        <select id="annualSubFilterV192" onchange="filterAnnualSubV192()" style="min-width:180px"><option value="">전체 세부사업</option></select>
+        <span style="font-size:11px;color:#64748b">사업계획서의 사업분야(영역)를 우선 사용하며, 별도 세부사업 값이 없으면 사업명을 세부사업으로 표시합니다.</span>
+      </div>
+      <div id="annualSubprojectV192"></div>
+    </div>
+    <div class="annual-box-v190">
+      <h3>사업별 주요성과 · 환류</h3>
+      <div id="annualOutcomeV191"></div>
+    </div>
+<div class="annual-box-v190"><h3>사업별 결과 현황</h3><div style="overflow:auto"><table class="form-table" style="min-width:760px"><thead><tr><th>사업명</th><th>실제 참여인원</th><th>참여기관</th><th>직무분야 합계</th><th>기관구분 인원</th><th>상태</th></tr></thead><tbody id="annualProjectRowsV190"><tr><td colspan="6" class="td-center">집계 버튼을 눌러주세요.</td></tr></tbody></table></div></div>
+    <div style="padding:10px;border:1px solid #bfdbfe;border-radius:7px;background:#eff6ff;font-size:12px;color:#1e3a8a">연간 통계 조회 전용 초안입니다. 원본 수정은 각 사업의 결과보고서에서 합니다.</div>
+  </div>
+
+
+
+  <div id="section-part-search-v196" class="form-section no-print" style="display:none;">
+    <h2 class="section-list-head">사업별 참여현황 조회</h2>
+    <div class="part-search-panel-v196">
+      <select id="psYearV196"><option value="2026">2026년</option><option value="2025">2025년</option><option value="2024">2024년</option></select>
+      <select id="psFieldV196"><option value="">전체 사업분야</option></select>
+      <input id="psKeywordV196" type="text" placeholder="사업명 검색" oninput="filterParticipantSearchV196()">
+      <button type="button" class="btn btn-save" onclick="loadParticipantSearchV196()">조회</button>
+      <button type="button" class="btn" onclick="printParticipantSearchV196()">🖨️ 검색결과 종합출력</button>
+    </div>
+    <div id="psMsgV196" style="font-size:12px;color:#64748b;margin:7px 0 10px"></div>
+    <div style="overflow:auto"><table class="form-table" style="min-width:900px">
+      <thead><tr><th>사업분야</th><th>사업명</th><th>실제 참여인원</th><th>참여기관</th><th>직무합계</th><th>기관인원</th><th>기능</th></tr></thead>
+      <tbody id="psRowsV196"></tbody>
+    </table></div>
+    <div id="psDetailV196" style="margin-top:14px"></div>
+  </div>
+
+  <div id="section-annual-report-v195" class="form-section" style="display:none;">
+    <div class="no-print" style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px">
+      <button type="button" class="btn" onclick="switchAnnualResultV190()">← 연간 사업결과</button>
+      <button type="button" class="btn btn-save" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+    </div>
+    <div id="annualReportPaperV195" class="annual-report-paper-v195">
+      <h1 id="annualReportTitleV195">연간 사업결과 보고서</h1>
+      <div id="annualReportBodyV195"></div>
+    </div>
+  </div>
+
+
+  <div id="section-part-print-v196" class="form-section" style="display:none;">
+    <div class="no-print" style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px">
+      <button class="btn" type="button" onclick="switchParticipantSearchV196()">← 참여현황 조회</button>
+      <button class="btn btn-save" type="button" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+    </div>
+    <div id="psPrintPaperV196" class="annual-report-paper-v195"></div>
+  </div>
+
   <div id="section-home-v86" class="form-section">
     <div class="no-print" style="padding:4px 0 16px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
@@ -8567,6 +8648,388 @@ document.addEventListener('input',function(e){
  }
  wrapGenerateV182();
  document.addEventListener('DOMContentLoaded',wrapGenerateV182);
+})();
+</script>
+
+
+<style>
+#btn-mode-annual-result-v190.active-annual-result-v190{background:#ecfdf5;border-color:#059669;color:#047857}
+.annual-box-v190{border:1px solid #cbd5e1;border-radius:9px;padding:13px;background:#fff;margin-bottom:14px}
+.annual-box-v190 h3{font-size:14px;margin:0 0 10px}.annual-box-v190 h3 small{font-size:11px;color:#64748b;font-weight:normal}
+.annual-card-v190{border:1px solid #cbd5e1;border-radius:8px;padding:11px;background:#f8fafc;font-size:12px}.annual-card-v190 strong{display:block;font-size:20px;margin-top:3px}
+.annual-table-v190{width:100%;border-collapse:collapse;font-size:12px}.annual-table-v190 th,.annual-table-v190 td{border:1px solid #cbd5e1;padding:6px;text-align:center}.annual-table-v190 th{background:#f1f5f9}
+</style>
+<script>
+(function(){
+ const JOBS=['요양보호사','사회복지사','간호(조무)사','물리·작업치료사','시설장·관리자','기타'], ORGS=['노인요양시설','주야간보호','방문요양','기타'];
+ const n=v=>Math.max(0,Number(v||0)||0), esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+ window.switchAnnualResultV190=function(){
+   document.querySelectorAll('.form-section').forEach(x=>{x.classList.remove('active');x.style.display='none'});
+   document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active-plan','active-result','active-list','active-external','active-annual-result-v190'));
+   const s=document.getElementById('section-annual-result-v190');s.style.display='block';s.classList.add('active');
+   document.getElementById('btn-mode-annual-result-v190')?.classList.add('active-annual-result-v190'); loadAnnualResultV190();
+ };
+ window.loadAnnualResultV190=async function(){
+   const year=Number(document.getElementById('annualResultYearV190').value),msg=document.getElementById('annualResultMsgV190');
+   msg.textContent='집계 중...';
+   try{
+     const q=await sb.from('project_documents').select('id,project_id,data,updated_at').eq('doc_type','RESULT').order('updated_at',{ascending:false}); if(q.error)throw q.error;
+     const rows=(q.data||[]).map(doc=>{let d=doc.data||{};if(typeof d==='string'){try{d=JSON.parse(d)}catch(_){d={}}}return{doc,d,p:d.participant_status_v181||null,name:d.r_projName||d.r_projectName||d.projectName||'(사업명 미확인)'}})
+       .filter(r=>{const dates=[r.d.r_startDate,r.d.r_endDate,r.d.startDate,r.d.endDate,r.d.r_date].filter(Boolean).join(' ');return dates?dates.includes(String(year)):new Date(r.doc.updated_at).getFullYear()===year});
+     renderAnnualV190(rows,year);msg.textContent=year+'년 결과보고서 '+rows.length+'건 집계';
+   }catch(e){msg.textContent='집계 실패: '+(e?.message||e)}
+ };
+ function renderAnnualV190(rows,year){
+   const jobs=Object.fromEntries(JOBS.map(k=>[k,0])),oc=Object.fromEntries(ORGS.map(k=>[k,0])),op=Object.fromEntries(ORGS.map(k=>[k,0]));let actual=0,withP=0;
+   rows.forEach(r=>{actual+=n(r.p?.actual_participants||r.d.r_actualParticipants);if(r.p){withP++;JOBS.forEach(k=>jobs[k]+=n(r.p.jobs?.[k]));ORGS.forEach(k=>{oc[k]+=n(r.p.organizations?.[k]?.count);op[k]+=n(r.p.organizations?.[k]?.people)})}});
+   const orgTotal=Object.values(oc).reduce((a,b)=>a+b,0),jobTotal=Object.values(jobs).reduce((a,b)=>a+b,0);
+   document.getElementById('annualResultCardsV190').innerHTML=[['결과보고 사업',rows.length+'건'],['참여현황 입력사업',withP+'건'],['실제 참여 연인원',actual.toLocaleString()+'명'],['참여 연개소',orgTotal.toLocaleString()+'개소']].map(x=>'<div class="annual-card-v190">'+x[0]+'<strong>'+x[1]+'</strong></div>').join('');
+   document.getElementById('annualParticipantV190').innerHTML='<table class="annual-table-v190"><tr><th>직무분야</th>'+JOBS.map(k=>'<th>'+esc(k)+'</th>').join('')+'<th>합계</th></tr><tr><th>연인원</th>'+JOBS.map(k=>'<td>'+jobs[k].toLocaleString()+'</td>').join('')+'<td>'+jobTotal.toLocaleString()+'</td></tr></table><div style="height:9px"></div><table class="annual-table-v190"><tr><th>기관구분</th>'+ORGS.map(k=>'<th>'+esc(k)+'</th>').join('')+'<th>합계</th></tr><tr><th>연개소</th>'+ORGS.map(k=>'<td>'+oc[k].toLocaleString()+'</td>').join('')+'<td>'+orgTotal.toLocaleString()+'</td></tr><tr><th>연인원</th>'+ORGS.map(k=>'<td>'+op[k].toLocaleString()+'</td>').join('')+'<td>'+Object.values(op).reduce((a,b)=>a+b,0).toLocaleString()+'</td></tr></table>';
+   document.getElementById('annualProjectRowsV190').innerHTML=rows.length?rows.map(r=>{const ap=n(r.p?.actual_participants||r.d.r_actualParticipants),a=ORGS.reduce((s,k)=>s+n(r.p?.organizations?.[k]?.count),0),j=JOBS.reduce((s,k)=>s+n(r.p?.jobs?.[k]),0),p=ORGS.reduce((s,k)=>s+n(r.p?.organizations?.[k]?.people),0);return'<tr><td>'+esc(r.name)+'</td><td>'+ap+'명</td><td>'+a+'개소</td><td>'+j+'명</td><td>'+p+'명</td><td>'+(r.p?'참여현황 있음':'기존 결과보고')+'</td></tr>'}).join(''):'<tr><td colspan="6" class="td-center">'+year+'년 결과보고서가 없습니다.</td></tr>';
+ }
+})();
+</script>
+
+
+<script>
+/* v19.1 연간 사업결과 종합현황: PLAN + RESULT + 예산/지출 연결 */
+(function(){
+ const money=v=>(Number(v||0)||0);
+ const pct=(a,b)=>b>0?((a/b)*100).toFixed(1)+'%':'-';
+ const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+ const first=(d,keys)=>{for(const k of keys){if(d?.[k]!==undefined&&d?.[k]!==null&&d?.[k]!=='')return d[k]}return''};
+ function parseData(v){if(typeof v==='string'){try{return JSON.parse(v)}catch(_){return{}}}return v||{}}
+ function plannedPeopleV191(d){
+   const st=d.standard||{};
+   return money(st.planned_participants||first(d,['p_targetCount','p_participants','plannedParticipants']));
+ }
+ function actualPeopleV191(d){
+   const st=d.standard||{};
+   return money(st.actual_participants||first(d,['r_actualParticipants','actualParticipants'])||d.participant_status_v181?.actual_participants);
+ }
+ function planBudgetV191(d){
+   if(Array.isArray(d.budget))return d.budget.reduce((a,x)=>a+money(x?.['p-bg-amount']??x?.[2]??x?.amount),0);
+   return money(first(d,['totalBudget','plannedBudget']));
+ }
+ function resultBudgetV191(d){
+   if(Array.isArray(d.resultBudget))return d.resultBudget.reduce((a,x)=>a+money(x?.amount??x?.[2]),0);
+   if(Array.isArray(d.budget))return d.budget.reduce((a,x)=>a+money(x?.['r-bg-amount']??x?.actual??x?.spent),0);
+   return money(first(d,['actualBudget','totalExpense','r_totalExpense']));
+ }
+ function yearMatchV191(d,updated,year){
+   const vals=['r_actualDate','r_dateLoc','r_startDate','r_endDate','p_startDate','p_endDate','projectDate','year'].map(k=>d?.[k]).filter(Boolean).join(' ');
+   return vals?vals.includes(String(year)):new Date(updated).getFullYear()===year;
+ }
+
+ window.loadAnnualResultV190=async function(){
+   const year=Number(document.getElementById('annualResultYearV190').value),msg=document.getElementById('annualResultMsgV190');
+   msg.textContent='계획·결과·예산·지출을 종합 집계 중...';
+   try{
+     const [docsQ,itemsQ,txQ]=await Promise.all([
+       sb.from('project_documents').select('id,project_id,doc_type,data,updated_at').in('doc_type',['PLAN','RESULT']).order('updated_at',{ascending:false}),
+       sb.from('project_budget_items').select('project_id,planned_amount'),
+       sb.from('project_budget_transactions').select('project_id,amount,status')
+     ]);
+     if(docsQ.error)throw docsQ.error;
+     const byProject={};
+     for(const doc of (docsQ.data||[])){
+       const d=parseData(doc.data);
+       if(!yearMatchV191(d,doc.updated_at,year))continue;
+       const p=byProject[doc.project_id]||(byProject[doc.project_id]={project_id:doc.project_id,plan:null,result:null,updated:doc.updated_at});
+       if(doc.doc_type==='PLAN'&&!p.plan)p.plan=d;
+       if(doc.doc_type==='RESULT'&&!p.result)p.result=d;
+     }
+     const budgetItems={}; if(!itemsQ.error)(itemsQ.data||[]).forEach(x=>budgetItems[x.project_id]=(budgetItems[x.project_id]||0)+money(x.planned_amount));
+     const expenses={}; if(!txQ.error)(txQ.data||[]).forEach(x=>{if(x.status!=='cancelled')expenses[x.project_id]=(expenses[x.project_id]||0)+money(x.amount)});
+     const rows=Object.values(byProject).filter(x=>x.result).map(x=>{
+       const r=x.result||{},p=x.plan||{},ps=r.participant_status_v181||null;
+       const name=first(r,['r_projName','r_projectName','projectName'])||first(p,['p_projName','p_projectName','projectName'])||'(사업명 미확인)';
+       return {...x,name,participant:ps,plannedPeople:plannedPeopleV191(p),actualPeople:actualPeopleV191(r),
+         plannedBudget:budgetItems[x.project_id]||planBudgetV191(p),actualBudget:expenses[x.project_id]||resultBudgetV191(r),
+         good:first(r,['r_evalGood','evaluationGood','good']),bad:first(r,['r_evalBad','evaluationBad','bad']),planText:first(r,['r_evalPlan','evaluationPlan','nextPlan'])};
+     });
+     if(typeof renderAnnualV190==='function')renderAnnualV190(rows.map(x=>({d:x.result,p:x.participant,name:x.name})),year);
+     window._annualRowsV192=rows; renderSummaryV191(rows,year); if(window.renderAnnualSubprojectV192)window.renderAnnualSubprojectV192(rows);
+     msg.textContent=year+'년 결과보고 사업 '+rows.length+'건 종합 집계';
+   }catch(e){console.error(e);msg.textContent='종합 집계 실패: '+(e?.message||e)}
+ };
+
+ function renderSummaryV191(rows,year){
+   const pp=rows.reduce((a,x)=>a+x.plannedPeople,0),ap=rows.reduce((a,x)=>a+x.actualPeople,0);
+   const pb=rows.reduce((a,x)=>a+x.plannedBudget,0),ab=rows.reduce((a,x)=>a+x.actualBudget,0);
+   const completed=rows.length;
+   document.getElementById('annualPlanVsResultV191').innerHTML=
+    '<table class="annual-table-v190"><thead><tr><th>구분</th><th>계획</th><th>실적</th><th>달성률</th></tr></thead><tbody>'+
+    '<tr><th>참여인원</th><td>'+pp.toLocaleString()+'명</td><td>'+ap.toLocaleString()+'명</td><td>'+pct(ap,pp)+'</td></tr>'+
+    '<tr><th>결과보고 완료</th><td>'+completed.toLocaleString()+'건</td><td>'+completed.toLocaleString()+'건</td><td>100.0%</td></tr></tbody></table>';
+
+   document.getElementById('annualBudgetResultV191').innerHTML=
+    '<table class="annual-table-v190"><thead><tr><th>계획예산</th><th>실제집행</th><th>잔액</th><th>집행률</th></tr></thead><tbody><tr>'+
+    '<td>'+pb.toLocaleString()+'원</td><td>'+ab.toLocaleString()+'원</td><td>'+(pb-ab).toLocaleString()+'원</td><td>'+pct(ab,pb)+'</td></tr></tbody></table>';
+
+   document.getElementById('annualOutcomeV191').innerHTML=rows.length?
+    '<table class="annual-table-v190"><thead><tr><th style="width:20%">사업명</th><th>주요성과</th><th>문제점·개선사항</th><th>차년도 환류계획</th></tr></thead><tbody>'+
+    rows.map(x=>'<tr><td>'+esc(x.name)+'</td><td style="text-align:left">'+esc(x.good||'-')+'</td><td style="text-align:left">'+esc(x.bad||'-')+'</td><td style="text-align:left">'+esc(x.planText||'-')+'</td></tr>').join('')+
+    '</tbody></table>':'<div class="td-center">해당 연도 결과보고서가 없습니다.</div>';
+
+   /* 사업별 현황을 계획대비·예산까지 확장 */
+   const body=document.getElementById('annualProjectRowsV190'),table=body?.closest('table');
+   if(table){
+     table.querySelector('thead').innerHTML='<tr><th>사업명</th><th>계획인원</th><th>실제인원</th><th>달성률</th><th>계획예산</th><th>집행액</th><th>집행률</th><th>결과보고</th></tr>';
+     body.innerHTML=rows.length?rows.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+x.plannedPeople.toLocaleString()+'명</td><td>'+x.actualPeople.toLocaleString()+'명</td><td>'+pct(x.actualPeople,x.plannedPeople)+'</td><td>'+x.plannedBudget.toLocaleString()+'원</td><td>'+x.actualBudget.toLocaleString()+'원</td><td>'+pct(x.actualBudget,x.plannedBudget)+'</td><td>완료</td></tr>').join(''):'<tr><td colspan="8">'+year+'년 결과보고서가 없습니다.</td></tr>';
+   }
+ }
+})();
+</script>
+
+
+<style>
+.subproject-row-v192{cursor:pointer}.subproject-row-v192:hover{background:#f8fafc}
+.subproject-detail-v192{display:none;background:#f8fafc}.subproject-detail-v192.open{display:table-row}
+</style>
+<script>
+/* v19.2 세부사업별 연간실적 - 저장된 분류값만 사용, 없으면 미분류 */
+(function(){
+ let cache=[];
+ const n=v=>Number(v||0)||0, pct=(a,b)=>b>0?((a/b)*100).toFixed(1)+'%':'-';
+ const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+ function first(d,keys){for(const k of keys){const v=d?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=='')return String(v).trim()}return''}
+ function category(x){
+   const p=x.plan||{},r=x.result||{};
+   const major=first(p,['p_businessCategory','businessCategory','category','projectCategory','p_category','p_field','businessField','projectField','field','area','businessArea','projectArea'])||first(r,['r_businessCategory','businessCategory','category','projectCategory','r_category','r_field','businessField','projectField','field','area','businessArea','projectArea']);
+   const sub=first(p,['p_subBusiness','subBusiness','subProject','projectType','p_projectType','businessType'])||first(r,['r_subBusiness','subBusiness','subProject','projectType','businessType']);
+   const fallbackName=first(p,['p_projName','p_projectName','projectName','title'])||first(r,['r_projName','r_projectName','projectName','title']);
+   return {major:major||'미분류',sub:sub||fallbackName||'미분류'};
+ }
+ function render(rows){
+   cache=rows||[];
+   const groups={};
+   cache.forEach(x=>{
+     const c=category(x),key=c.major+'|||'+c.sub;
+     const g=groups[key]||(groups[key]={major:c.major,sub:c.sub,rows:[],pp:0,ap:0,pb:0,ab:0,org:0});
+     g.rows.push(x);g.pp+=n(x.plannedPeople);g.ap+=n(x.actualPeople);g.pb+=n(x.plannedBudget);g.ab+=n(x.actualBudget);
+     const ps=x.participant; if(ps)g.org+=n(ps.totals?.org_count)||['노인요양시설','주야간보호','방문요양','기타'].reduce((a,k)=>a+n(ps.organizations?.[k]?.count),0);
+   });
+   const list=Object.values(groups).sort((a,b)=>(a.major+a.sub).localeCompare(b.major+b.sub,'ko'));
+   const sel=document.getElementById('annualSubFilterV192'),old=sel?.value||'';
+   if(sel){sel.innerHTML='<option value="">전체 세부사업</option>'+list.map(g=>'<option value="'+esc(g.major+'|||'+g.sub)+'">'+esc(g.major+' > '+g.sub)+'</option>').join('');sel.value=old}
+   const chosen=sel?.value||'', show=chosen?list.filter(g=>g.major+'|||'+g.sub===chosen):list;
+   document.getElementById('annualSubprojectV192').innerHTML=show.length?
+    '<div style="overflow:auto"><table class="annual-table-v190" style="min-width:850px"><thead><tr><th>사업분야</th><th>세부사업</th><th>사업수</th><th>계획인원</th><th>실제 연인원</th><th>달성률</th><th>참여 연개소</th><th>계획예산</th><th>집행액</th><th>집행률</th></tr></thead><tbody>'+
+    show.map((g,i)=>'<tr class="subproject-row-v192" onclick="toggleSubV192('+i+')"><td>'+esc(g.major)+'</td><td><b>'+esc(g.sub)+'</b> ▾</td><td>'+g.rows.length+'건</td><td>'+g.pp.toLocaleString()+'명</td><td>'+g.ap.toLocaleString()+'명</td><td>'+pct(g.ap,g.pp)+'</td><td>'+g.org.toLocaleString()+'개소</td><td>'+g.pb.toLocaleString()+'원</td><td>'+g.ab.toLocaleString()+'원</td><td>'+pct(g.ab,g.pb)+'</td></tr>'+
+    '<tr id="subdetail-v192-'+i+'" class="subproject-detail-v192"><td colspan="10"><div style="padding:6px 12px;text-align:left"><b>포함 사업</b><br>'+g.rows.map(x=>'• '+esc(x.name)+' — '+n(x.actualPeople).toLocaleString()+'명 / '+n(x.actualBudget).toLocaleString()+'원').join('<br>')+'</div></td></tr>').join('')+
+    '</tbody></table></div>':'<div class="td-center">집계할 세부사업이 없습니다.</div>';
+   window._subGroupsV192=show;
+ }
+ window.toggleSubV192=i=>document.getElementById('subdetail-v192-'+i)?.classList.toggle('open');
+ window.filterAnnualSubV192=()=>render(cache);
+
+ /* v19.1 renderer를 감싸 세부사업 표도 동시에 생성 */
+ const oldRender=window.renderSummaryV191;
+ // renderSummaryV191 is lexical in v19.1, so hook load by observing annual project table update.
+ const target=document.getElementById('annualProjectRowsV190');
+ if(target){
+   const ob=new MutationObserver(()=>{
+     if(window._annualRowsV192)render(window._annualRowsV192);
+   });
+   ob.observe(target,{childList:true});
+ }
+ window.renderAnnualSubprojectV192=render;
+})();
+</script>
+
+
+<script>
+/* v19.3 실제 사업계획서의 사업분야(영역) 필드 연결 보조 */
+(function(){
+ const base=window.renderAnnualSubprojectV192;
+ if(!base)return;
+ window.renderAnnualSubprojectV192=function(rows){
+   base(rows);
+   const unresolved=(rows||[]).filter(x=>{
+     const d=x.plan||{};
+     return !['p_businessCategory','businessCategory','category','projectCategory','p_category','p_field','businessField','projectField','field','area','businessArea','projectArea']
+       .some(k=>d[k]!==undefined&&d[k]!==null&&String(d[k]).trim()!=='');
+   });
+   if(unresolved.length){
+     console.info('[v19.3] 사업분야 미연결 자료 수:',unresolved.length,
+       '확인 가능한 계획서 키:',[...new Set(unresolved.flatMap(x=>Object.keys(x.plan||{})))].filter(k=>/field|area|category|business|project|분야|영역/i.test(k)));
+   }
+ };
+})();
+</script>
+
+
+<style>
+.field-summary-v194{cursor:pointer}.field-summary-v194:hover{background:#f8fafc}
+.field-detail-v194{display:none;background:#fafafa}.field-detail-v194.open{display:table-row}
+</style>
+<script>
+/* v19.4 사업분야별 소계: 기존 v19.3 연간 rows를 읽기 전용으로 재집계 */
+(function(){
+ const n=v=>Number(v||0)||0, pct=(a,b)=>b>0?((a/b)*100).toFixed(1)+'%':'-';
+ const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+ const ORGS=['노인요양시설','주야간보호','방문요양','기타'];
+ function first(d,keys){for(const k of keys){const v=d?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=='')return String(v).trim()}return''}
+ function fieldOf(x){
+   const p=x.plan||{},r=x.result||{};
+   return first(p,['p_businessCategory','businessCategory','category','projectCategory','p_category','p_field','businessField','projectField','field','area','businessArea','projectArea'])||
+          first(r,['r_businessCategory','businessCategory','category','projectCategory','r_category','r_field','businessField','projectField','field','area','businessArea','projectArea'])||'미분류';
+ }
+ function render(rows){
+   const g={};
+   (rows||[]).forEach(x=>{
+     const f=fieldOf(x),z=g[f]||(g[f]={field:f,rows:[],pp:0,ap:0,pb:0,ab:0,org:0});
+     z.rows.push(x);z.pp+=n(x.plannedPeople);z.ap+=n(x.actualPeople);z.pb+=n(x.plannedBudget);z.ab+=n(x.actualBudget);
+     const ps=x.participant;
+     if(ps)z.org+=n(ps.totals?.org_count)||ORGS.reduce((a,k)=>a+n(ps.organizations?.[k]?.count),0);
+   });
+   const list=Object.values(g).sort((a,b)=>a.field.localeCompare(b.field,'ko'));
+   const el=document.getElementById('annualFieldSummaryV194');if(!el)return;
+   el.innerHTML=list.length?'<div style="overflow:auto"><table class="annual-table-v190" style="min-width:900px"><thead><tr><th>사업분야</th><th>사업 수</th><th>계획인원</th><th>실제 연인원</th><th>달성률</th><th>참여 연개소</th><th>계획예산</th><th>집행액</th><th>집행률</th></tr></thead><tbody>'+
+   list.map((z,i)=>'<tr class="field-summary-v194" onclick="toggleFieldV194('+i+')"><td><b>'+esc(z.field)+'</b> ▾</td><td>'+z.rows.length+'건</td><td>'+z.pp.toLocaleString()+'명</td><td>'+z.ap.toLocaleString()+'명</td><td>'+pct(z.ap,z.pp)+'</td><td>'+z.org.toLocaleString()+'개소</td><td>'+z.pb.toLocaleString()+'원</td><td>'+z.ab.toLocaleString()+'원</td><td>'+pct(z.ab,z.pb)+'</td></tr>'+
+   '<tr id="field-detail-v194-'+i+'" class="field-detail-v194"><td colspan="9"><div style="padding:8px 14px;text-align:left">'+
+   z.rows.map(x=>'<div style="padding:4px 0;border-bottom:1px dashed #e2e8f0">• <b>'+esc(x.name)+'</b> &nbsp; 계획 '+n(x.plannedPeople).toLocaleString()+'명 → 실적 '+n(x.actualPeople).toLocaleString()+'명 / 집행 '+n(x.actualBudget).toLocaleString()+'원</div>').join('')+
+   '</div></td></tr>').join('')+'</tbody></table></div>':'<div class="td-center">집계할 사업분야가 없습니다.</div>';
+ }
+ window.toggleFieldV194=i=>document.getElementById('field-detail-v194-'+i)?.classList.toggle('open');
+ window.renderAnnualFieldSummaryV194=render;
+
+ // v19.1 load path already exposes _annualRowsV192; hook the existing subproject render.
+ const prev=window.renderAnnualSubprojectV192;
+ if(prev){
+   window.renderAnnualSubprojectV192=function(rows){prev(rows);render(rows)};
+ }
+ if(window._annualRowsV192)render(window._annualRowsV192);
+})();
+</script>
+
+
+<style>
+.annual-report-paper-v195{max-width:900px;margin:0 auto;background:#fff;padding:28px 34px;border:1px solid #cbd5e1}
+.annual-report-paper-v195 h1{text-align:center;font-size:24px;margin:0 0 24px}
+.annual-report-paper-v195 h2{font-size:17px;border-left:5px solid #1d4ed8;padding-left:9px;margin:24px 0 10px}
+.annual-report-paper-v195 h3{font-size:14px;margin:16px 0 7px}
+.report-table-v195{width:100%;border-collapse:collapse;font-size:12px}
+.report-table-v195 th,.report-table-v195 td{border:1px solid #94a3b8;padding:6px;text-align:center;vertical-align:middle}
+.report-table-v195 th{background:#f1f5f9}
+.report-left-v195{text-align:left!important;white-space:pre-wrap}
+@media print{
+ body *{visibility:hidden!important}
+ #section-annual-report-v195,#section-annual-report-v195 *{visibility:visible!important}
+ #section-annual-report-v195{position:absolute;left:0;top:0;width:100%;display:block!important}
+ .annual-report-paper-v195{border:0;max-width:none;padding:0}
+ .no-print{display:none!important}
+}
+</style>
+<script>
+/* v19.5 연간 사업결과 자동 보고서 */
+(function(){
+ const JOBS=['요양보호사','사회복지사','간호(조무)사','물리·작업치료사','시설장·관리자','기타'];
+ const ORGS=['노인요양시설','주야간보호','방문요양','기타'];
+ const n=v=>Number(v||0)||0,pct=(a,b)=>b>0?((a/b)*100).toFixed(1)+'%':'-';
+ const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+ function first(d,keys){for(const k of keys){const v=d?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=='')return String(v).trim()}return''}
+ function field(x){const p=x.plan||{},r=x.result||{};return first(p,['p_businessCategory','businessCategory','category','projectCategory','p_category','p_field','businessField','projectField','field','area','businessArea','projectArea'])||first(r,['r_businessCategory','businessCategory','category','projectCategory','r_category','r_field','businessField','projectField','field','area','businessArea','projectArea'])||'미분류'}
+ window.openAnnualReportV195=function(){
+   const rows=window._annualRowsV192||[],year=document.getElementById('annualResultYearV190')?.value||new Date().getFullYear();
+   if(!rows.length){alert('먼저 연간 사업결과를 집계해 주세요.');return}
+   document.querySelectorAll('.form-section').forEach(x=>{x.style.display='none';x.classList.remove('active')});
+   const sec=document.getElementById('section-annual-report-v195');sec.style.display='block';sec.classList.add('active');
+   document.getElementById('annualReportTitleV195').textContent=year+'년 연간 사업결과 보고서';
+   render(rows,year);
+ };
+ function render(rows,year){
+   let pp=0,ap=0,pb=0,ab=0,org=0;
+   const jobs=Object.fromEntries(JOBS.map(k=>[k,0])),oc=Object.fromEntries(ORGS.map(k=>[k,0])),op=Object.fromEntries(ORGS.map(k=>[k,0])),fields={};
+   rows.forEach(x=>{
+     pp+=n(x.plannedPeople);ap+=n(x.actualPeople);pb+=n(x.plannedBudget);ab+=n(x.actualBudget);
+     const ps=x.participant;if(ps){JOBS.forEach(k=>jobs[k]+=n(ps.jobs?.[k]));ORGS.forEach(k=>{oc[k]+=n(ps.organizations?.[k]?.count);op[k]+=n(ps.organizations?.[k]?.people)});org+=n(ps.totals?.org_count)||ORGS.reduce((a,k)=>a+n(ps.organizations?.[k]?.count),0)}
+     const f=field(x),g=fields[f]||(fields[f]={rows:[],pp:0,ap:0,pb:0,ab:0,org:0});g.rows.push(x);g.pp+=n(x.plannedPeople);g.ap+=n(x.actualPeople);g.pb+=n(x.plannedBudget);g.ab+=n(x.actualBudget);if(ps)g.org+=n(ps.totals?.org_count)||ORGS.reduce((a,k)=>a+n(ps.organizations?.[k]?.count),0);
+   });
+   const body=document.getElementById('annualReportBodyV195');
+   body.innerHTML=
+    '<h2>Ⅰ. 연간 사업 추진현황</h2><table class="report-table-v195"><tr><th>결과보고 사업</th><th>계획인원</th><th>실제 연인원</th><th>참여 달성률</th><th>참여 연개소</th></tr><tr><td>'+rows.length+'건</td><td>'+pp.toLocaleString()+'명</td><td>'+ap.toLocaleString()+'명</td><td>'+pct(ap,pp)+'</td><td>'+org.toLocaleString()+'개소</td></tr></table>'+
+    '<h2>Ⅱ. 사업분야별 추진실적</h2>'+fieldTable(fields)+
+    '<h2>Ⅲ. 참여자 현황</h2>'+participantTables(jobs,oc,op)+
+    '<h2>Ⅳ. 예산 집행현황</h2><table class="report-table-v195"><tr><th>계획예산</th><th>집행액</th><th>잔액</th><th>집행률</th></tr><tr><td>'+pb.toLocaleString()+'원</td><td>'+ab.toLocaleString()+'원</td><td>'+(pb-ab).toLocaleString()+'원</td><td>'+pct(ab,pb)+'</td></tr></table>'+
+    '<h2>Ⅴ. 사업별 주요성과 및 환류</h2><table class="report-table-v195"><thead><tr><th>사업명</th><th>주요성과</th><th>문제점·개선사항</th><th>차년도 환류계획</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.name)+'</td><td class="report-left-v195">'+esc(x.good||'-')+'</td><td class="report-left-v195">'+esc(x.bad||'-')+'</td><td class="report-left-v195">'+esc(x.planText||'-')+'</td></tr>').join('')+'</tbody></table>';
+ }
+ function fieldTable(fields){
+   return '<table class="report-table-v195"><thead><tr><th>사업분야</th><th>사업 수</th><th>계획인원</th><th>실제 연인원</th><th>달성률</th><th>참여 연개소</th><th>계획예산</th><th>집행액</th><th>집행률</th></tr></thead><tbody>'+Object.values(fields).sort((a,b)=>field(a.rows[0]).localeCompare(field(b.rows[0]),'ko')).map(g=>'<tr><td>'+esc(field(g.rows[0]))+'</td><td>'+g.rows.length+'건</td><td>'+g.pp.toLocaleString()+'</td><td>'+g.ap.toLocaleString()+'</td><td>'+pct(g.ap,g.pp)+'</td><td>'+g.org.toLocaleString()+'</td><td>'+g.pb.toLocaleString()+'</td><td>'+g.ab.toLocaleString()+'</td><td>'+pct(g.ab,g.pb)+'</td></tr>').join('')+'</tbody></table>';
+ }
+ function participantTables(jobs,oc,op){
+   return '<h3>1. 직무분야별 참여인원</h3><table class="report-table-v195"><tr><th>구분</th>'+JOBS.map(k=>'<th>'+esc(k)+'</th>').join('')+'<th>합계</th></tr><tr><th>연인원</th>'+JOBS.map(k=>'<td>'+jobs[k].toLocaleString()+'</td>').join('')+'<td>'+Object.values(jobs).reduce((a,b)=>a+b,0).toLocaleString()+'</td></tr></table>'+
+   '<h3>2. 기관구분별 참여현황</h3><table class="report-table-v195"><tr><th>구분</th>'+ORGS.map(k=>'<th>'+esc(k)+'</th>').join('')+'<th>합계</th></tr><tr><th>연개소</th>'+ORGS.map(k=>'<td>'+oc[k].toLocaleString()+'</td>').join('')+'<td>'+Object.values(oc).reduce((a,b)=>a+b,0).toLocaleString()+'</td></tr><tr><th>연인원</th>'+ORGS.map(k=>'<td>'+op[k].toLocaleString()+'</td>').join('')+'<td>'+Object.values(op).reduce((a,b)=>a+b,0).toLocaleString()+'</td></tr></table>';
+ }
+})();
+</script>
+
+
+<style>
+.part-search-panel-v196{display:flex;gap:7px;flex-wrap:wrap;align-items:center;padding:10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px}
+.part-search-panel-v196 select{min-width:135px}.part-search-panel-v196 input{min-width:230px;flex:1}
+.ps-card-v196{border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:13px}
+.ps-grid-v196{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:7px;margin:9px 0}
+.ps-stat-v196{background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:9px;text-align:center}.ps-stat-v196 b{display:block;font-size:18px}
+@media print{
+ #section-part-print-v196,#section-part-print-v196 *{visibility:visible!important}
+ #section-part-print-v196{position:absolute;left:0;top:0;width:100%;display:block!important}
+}
+</style>
+<script>
+/* v19.6 사업별 참여현황 검색·상세·개별/종합 출력 */
+(function(){
+ const JOBS=['요양보호사','사회복지사','간호(조무)사','물리·작업치료사','시설장·관리자','기타'];
+ const ORGS=['노인요양시설','주야간보호','방문요양','기타'];
+ let all=[],filtered=[];
+ const n=v=>Number(v||0)||0,esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+ function parse(v){if(typeof v==='string'){try{return JSON.parse(v)}catch(_){return{}}}return v||{}}
+ function first(d,keys){for(const k of keys){const v=d?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=='')return String(v).trim()}return''}
+ function field(d){return first(d,['r_businessCategory','businessCategory','category','projectCategory','r_category','r_field','businessField','projectField','field','area','businessArea','projectArea'])||'미분류'}
+ function yearMatch(d,u,y){const s=[d.r_actualDate,d.r_dateLoc,d.r_startDate,d.r_endDate,d.r_date,d.year].filter(Boolean).join(' ');return s?s.includes(String(y)):new Date(u).getFullYear()===y}
+ window.switchParticipantSearchV196=function(){
+   document.querySelectorAll('.form-section').forEach(x=>{x.style.display='none';x.classList.remove('active')});
+   document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active-plan','active-result','active-list','active-external','active-annual-result-v190'));
+   const s=document.getElementById('section-part-search-v196');s.style.display='block';s.classList.add('active');
+   loadParticipantSearchV196();
+ };
+ window.loadParticipantSearchV196=async function(){
+   const y=Number(document.getElementById('psYearV196').value),msg=document.getElementById('psMsgV196');msg.textContent='저장된 결과보고서 조회 중...';
+   try{
+     const q=await sb.from('project_documents').select('id,project_id,data,updated_at').eq('doc_type','RESULT').order('updated_at',{ascending:false});if(q.error)throw q.error;
+     all=(q.data||[]).map(x=>{const d=parse(x.data),p=d.participant_status_v181||null;return{x,d,p,name:first(d,['r_projName','r_projectName','projectName','title'])||'(사업명 미확인)',field:field(d)}}).filter(z=>yearMatch(z.d,z.x.updated_at,y));
+     const fields=[...new Set(all.map(x=>x.field))].sort((a,b)=>a.localeCompare(b,'ko')),sel=document.getElementById('psFieldV196'),old=sel.value;
+     sel.innerHTML='<option value="">전체 사업분야</option>'+fields.map(x=>'<option>'+esc(x)+'</option>').join('');if(fields.includes(old))sel.value=old;
+     filterParticipantSearchV196();msg.textContent=y+'년 결과보고서 '+all.length+'건 조회';
+   }catch(e){msg.textContent='조회 실패: '+(e?.message||e)}
+ };
+ window.filterParticipantSearchV196=function(){
+   const f=document.getElementById('psFieldV196').value,k=document.getElementById('psKeywordV196').value.trim().toLowerCase();
+   filtered=all.filter(x=>(!f||x.field===f)&&(!k||x.name.toLowerCase().includes(k)));
+   document.getElementById('psRowsV196').innerHTML=filtered.length?filtered.map((x,i)=>{
+     const p=x.p,actual=n(p?.actual_participants||x.d.r_actualParticipants),oc=ORGS.reduce((a,z)=>a+n(p?.organizations?.[z]?.count),0),jt=JOBS.reduce((a,z)=>a+n(p?.jobs?.[z]),0),op=ORGS.reduce((a,z)=>a+n(p?.organizations?.[z]?.people),0);
+     return '<tr><td>'+esc(x.field)+'</td><td>'+esc(x.name)+'</td><td>'+actual+'명</td><td>'+oc+'개소</td><td>'+jt+'명</td><td>'+op+'명</td><td><button class="btn" onclick="showParticipantDetailV196('+i+')">상세보기</button> <button class="btn" onclick="printParticipantOneV196('+i+')">출력</button></td></tr>'
+   }).join(''):'<tr><td colspan="7" class="td-center">검색 결과가 없습니다.</td></tr>';
+ };
+ function tables(x){
+   const p=x.p||{},actual=n(p.actual_participants||x.d.r_actualParticipants),oc=ORGS.reduce((a,z)=>a+n(p.organizations?.[z]?.count),0);
+   return '<div class="ps-grid-v196"><div class="ps-stat-v196">실제 참여인원<b>'+actual.toLocaleString()+'명</b></div><div class="ps-stat-v196">참여기관<b>'+oc.toLocaleString()+'개소</b></div></div>'+
+   '<h3>직무분야별 참여인원</h3><table class="report-table-v195"><tr><th>구분</th>'+JOBS.map(z=>'<th>'+esc(z)+'</th>').join('')+'<th>합계</th></tr><tr><th>연인원</th>'+JOBS.map(z=>'<td>'+n(p.jobs?.[z]).toLocaleString()+'</td>').join('')+'<td>'+JOBS.reduce((a,z)=>a+n(p.jobs?.[z]),0).toLocaleString()+'</td></tr></table>'+
+   '<h3>기관구분별 참여현황</h3><table class="report-table-v195"><tr><th>구분</th>'+ORGS.map(z=>'<th>'+esc(z)+'</th>').join('')+'<th>합계</th></tr><tr><th>연개소</th>'+ORGS.map(z=>'<td>'+n(p.organizations?.[z]?.count).toLocaleString()+'</td>').join('')+'<td>'+oc.toLocaleString()+'</td></tr><tr><th>연인원</th>'+ORGS.map(z=>'<td>'+n(p.organizations?.[z]?.people).toLocaleString()+'</td>').join('')+'<td>'+ORGS.reduce((a,z)=>a+n(p.organizations?.[z]?.people),0).toLocaleString()+'</td></tr></table>';
+ }
+ window.showParticipantDetailV196=function(i){const x=filtered[i];document.getElementById('psDetailV196').innerHTML='<div class="ps-card-v196"><h3>'+esc(x.name)+'</h3><div style="font-size:12px;color:#64748b">사업분야: '+esc(x.field)+'</div>'+tables(x)+'</div>';document.getElementById('psDetailV196').scrollIntoView({behavior:'smooth',block:'start'})};
+ function openPrint(title,content){
+   document.querySelectorAll('.form-section').forEach(x=>x.style.display='none');const s=document.getElementById('section-part-print-v196');s.style.display='block';
+   document.getElementById('psPrintPaperV196').innerHTML='<h1>'+esc(title)+'</h1>'+content;
+ }
+ window.printParticipantOneV196=function(i){const x=filtered[i];openPrint('사업별 참여현황','<h2>'+esc(x.name)+'</h2><p>사업분야: '+esc(x.field)+'</p>'+tables(x))};
+ window.printParticipantSearchV196=function(){
+   if(!filtered.length){alert('출력할 검색 결과가 없습니다.');return}
+   const y=document.getElementById('psYearV196').value,f=document.getElementById('psFieldV196').value||'전체 사업분야';
+   let tj=0,to=0;filtered.forEach(x=>{tj+=n(x.p?.actual_participants||x.d.r_actualParticipants);to+=ORGS.reduce((a,z)=>a+n(x.p?.organizations?.[z]?.count),0)});
+   openPrint(y+'년 사업별 참여현황','<p>검색범위: '+esc(f)+' / '+filtered.length+'개 사업</p><div class="ps-grid-v196"><div class="ps-stat-v196">참여 연인원<b>'+tj.toLocaleString()+'명</b></div><div class="ps-stat-v196">참여 연개소<b>'+to.toLocaleString()+'개소</b></div></div>'+filtered.map(x=>'<h2>'+esc(x.name)+'</h2><p>사업분야: '+esc(x.field)+'</p>'+tables(x)).join(''));
+ };
 })();
 </script>
 
