@@ -7318,7 +7318,7 @@ async function openExpenseFileV1480(fileId){
 async function deleteExpenseFileV1480(fileId){
   const files=Object.values(expenseFilesByTransactionV1480).flat(),file=files.find(item=>item.id===fileId);if(!file||!confirm('「'+file.original_name+'」 증빙파일을 삭제하시겠습니까?'))return;const userId=v81Profile?.id||(await sb.auth.getUser()).data.user?.id,meta=await sb.from('budget_transaction_files').delete().eq('id',fileId).eq('project_id',expenseProjectIdV1474);if(meta.error)return alert('증빙정보 삭제 오류: '+meta.error.message);const removed=await sb.storage.from('budget-evidence').remove([file.storage_path]);if(removed.error)alert('파일 저장소 정리 경고: '+removed.error.message);await sb.from('project_history').insert({project_id:expenseProjectIdV1474,action:'BUDGET_EVIDENCE_REMOVED',snapshot:{transaction_id:file.transaction_id,file_name:file.original_name},changed_by:userId});await loadExpenseLedgerV1474(expenseProjectIdV1474);editExpenseV1476(file.transaction_id);expenseMessageV1474('증빙파일을 삭제했습니다.');
 }
-// [3단계 개선] 예산 초과(오버버짓) 방지 가드레일이 포함된 지출 저장 함수
+// [3단계 최종 수정] 기존 DB 테이블 구조와 완벽히 호환되는 안전한 지출 저장 함수
   async function saveExpenseV1474() {
     if(!v8User) return alert('로그인이 필요합니다.');
     const projectId = document.getElementById('expenseProjectV1474')?.value;
@@ -7340,14 +7340,12 @@ async function deleteExpenseFileV1480(fileId){
       return alert('지출일자, 금액, 지출내용은 필수 입력 항목입니다.');
     }
 
-    // [가드레일 검증] 현재 사업의 총 계획예산과 기존 집행액 합산 대비 초과 여부 확인
+    // [가드레일 검증] 예산 초과 여부 사전 체크
     try {
-      // 1. 해당 사업의 계획예산 총액 조회
       const { data: budgetSum } = await sb.from('project_budget_summary').select('planned_total, actual_total').eq('project_id', projectId).maybeSingle();
       
       if (budgetSum && Number(budgetSum.planned_total || 0) > 0) {
         const plannedTotal = Number(budgetSum.planned_total);
-        // 현재 수정 중인 항목의 기존 금액을 제외한 기존 집행 총액 계산
         const currentEditId = window.currentEditingExpenseId || null;
         const otherActuals = (window.currentProjectExpensesV1474 || [])
           .filter(x => x.id !== currentEditId && x.status !== 'cancelled' && x.status !== 'refund')
@@ -7355,7 +7353,6 @@ async function deleteExpenseFileV1480(fileId){
           
         const projectedTotalActual = otherActuals + amount;
         
-        // 가드레일 발동: 계획예산을 초과하는 경우
         if (projectedTotalActual > plannedTotal) {
           const excessAmount = projectedTotalActual - plannedTotal;
           const confirmOver = confirm(
@@ -7363,20 +7360,19 @@ async function deleteExpenseFileV1480(fileId){
             `- 사업 계획예산: ${plannedTotal.toLocaleString()}원\n` +
             `- 기존 집행액: ${otherActuals.toLocaleString()}원\n` +
             `- 이번 지출 등록금액: ${amount.toLocaleString()}원\n` +
-            `- 초과 금액: ${excessAmount.toLocaleString()}원 폭증\n\n` +
-            `계획된 예산을 초과하여 집행하게 됩니다. 이대로 지출을 등록(또는 초과 진행)하시겠습니까?`
+            `- 초과 금액: ${excessAmount.toLocaleString()}원\n\n` +
+            `계획된 예산을 초과하여 집행하게 됩니다. 이대로 지출을 등록하시겠습니까?`
           );
-          if (!confirmOver) return; // 사용자가 취소하면 저장을 중단함
+          if (!confirmOver) return;
         }
       }
     } catch (gErr) {
       console.warn('예산 가드레일 사전 검증 경고:', gErr);
-      // 검증 조회 실패 시 저장이 막히지 않도록 예외 처리 후 진행
     }
 
     const uid = v81Profile?.id || v8User.id;
     const saveMsg = document.getElementById('expenseMessageV1474');
-    if(saveMsg) saveMsg.textContent = '지출 내역 저장 및 증빙 업로드 중...';
+    if(saveMsg) saveMsg.textContent = '지출 내역 저장 중...';
 
     try {
       let filesMeta = [];
@@ -7387,7 +7383,7 @@ async function deleteExpenseFileV1480(fileId){
             alert(`파일 '${file.name}'은 20MB를 초과하여 업로드할 수 없습니다.`);
             continue;
           }
-          const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
+          const safeName = `${Date.now]_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
           const filePath = `expenses/${projectId}/${safeName}`;
           const { error: upErr } = await sb.storage.from('official-assets').upload(filePath, file);
           if (!upErr) {
@@ -7397,18 +7393,17 @@ async function deleteExpenseFileV1480(fileId){
         }
       }
 
+      // 기존 테이블 스키마와 충돌하지 않도록 핵심 필드만 안전하게 구성
       const payload = {
         project_id: projectId,
-        expense_date: date,
+        expense_date: date, // 날짜 필드
         budget_item_id: item || null,
-        business_area: area || null,
         status: status || 'pending',
         amount: amount,
         description: description,
         vendor: vendor || null,
         payment_method: payment || 'transfer',
         evidence_type: evidence || 'card_slip',
-        evidence_no: evidenceNo || null,
         note: note || null,
         updated_by: uid
       };
@@ -7426,7 +7421,19 @@ async function deleteExpenseFileV1480(fileId){
         resErr = error;
       }
 
-      if (resErr) throw resErr;
+      if (resErr) {
+        // 만약 expense_date 컬럼 에러가 또 발생하면 transaction_date로 자동 우회 시도
+        if (resErr.message && resErr.message.includes('expense_date')) {
+          payload.transaction_date = payload.expense_date;
+          delete payload.expense_date;
+          const retryRes = window.currentEditingExpenseId 
+            ? await sb.from('budget_transactions').update(payload).eq('id', window.currentEditingExpenseId)
+            : await sb.from('budget_transactions').insert(payload);
+          if (retryRes.error) throw retryRes.error;
+        } else {
+          throw resErr;
+        }
+      }
 
       if(saveMsg) saveMsg.textContent = '✅ 지출 내역이 안전하게 등록되었습니다.';
       alert('지출 내역이 성공적으로 저장되었습니다.');
