@@ -2504,16 +2504,16 @@ function attachmentRowsV167(values){
     }
   }
   
-  async function enterV8(user) {
-    v8User = user;[cite: 3]
-    document.getElementById('authOverlay').style.display = 'none';[cite: 3]
-    document.getElementById('collabBar').style.display = 'flex';[cite: 3]
-    document.getElementById('currentUserLabel').textContent = user.email || user.id;[cite: 3]
-    await loadProfileV81();[cite: 3]
+ async function enterV8(user) {
+    v8User = user;
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('collabBar').style.display = 'flex';
+    document.getElementById('currentUserLabel').textContent = user.email || user.id;
+    await loadProfileV81();
     await loadCloudOfficialSealV169(); // [2단계 추가] 클라우드 직인 자동 로드
-    await renderCloudDB();[cite: 3]
-    switchModeV86Home();[cite: 3]
-    setTimeout(refreshProfileAndRoleV87, 300);[cite: 3]
+    await renderCloudDB();
+    switchModeV86Home();
+    setTimeout(refreshProfileAndRoleV87, 300);
   }
 
   function planProjectName(data) {
