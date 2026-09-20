@@ -3381,23 +3381,47 @@ function attachmentRowsV167(values){
     document.getElementById('budgetModalV101').style.display='flex';
   }
   function closeBudgetManagerV101(){ document.getElementById('budgetModalV101').style.display='none'; }
+  // [1단계 개선] 안전한 DB 트랜잭션 RPC 호출 방식으로 전면 개편
   async function saveBudgetManagerV101(){
-    if(!budgetProjectIdV101) return;
-    const uid=v81Profile?.id || (await sb.auth.getUser()).data.user?.id;
-    const del=await sb.from('project_budget_items').delete().eq('project_id',budgetProjectIdV101);
-    if(del.error) return alert('기존 예산항목 정리 실패: '+del.error.message);
-    const rows=budgetRowsDataV101.filter(r=>r.item||r.basis||numV101(r.planned)||numV101(r.actual)||r.note).map((r,i)=>({
-      project_id:budgetProjectIdV101,item_name:r.item||'예산항목',calculation_basis:r.basis||null,
-      planned_amount:numV101(r.planned),actual_amount:numV101(r.actual),note:r.note||null,sort_order:i,updated_by:uid
-    }));
-    if(rows.length){
-      const ins=await sb.from('project_budget_items').insert(rows);
-      if(ins.error) return alert('예산·정산 저장 실패: '+ins.error.message);
+    if(!budgetProjectIdV101) return alert('사업을 먼저 선택해주세요.');
+    const uid = v81Profile?.id || (await sb.auth.getUser()).data.user?.id;
+    if(!uid) return alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
+
+    // 저장 버튼 연타 방지
+    const saveBtn = document.querySelector('#budgetModalV101 .btn-save');
+    if(saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '저장 중...'; }
+
+    // 유효한 행만 필터링 및 포맷팅
+    const rows = budgetRowsDataV101
+      .filter(r => r.item || r.basis || numV101(r.planned) || numV101(r.actual) || r.note)
+      .map((r, i) => ({
+        item_name: r.item || '예산항목',
+        calculation_basis: r.basis || '',
+        planned_amount: numV101(r.planned),
+        actual_amount: numV101(r.actual),
+        note: r.note || '',
+        sort_order: i
+      }));
+
+    try {
+      // Supabase RPC 단일 트랜잭션 호출 (도중에 끊겨도 이전 데이터 보존됨)
+      const { error } = await sb.rpc('save_project_budget_items', {
+        p_project_id: budgetProjectIdV101,
+        p_items: rows,
+        p_user_id: uid
+      });
+
+      if(error) throw error;
+
+      clearBudgetDraftV101();
+      alert('예산·정산 내역이 안전하게 저장되었습니다.');
+      await renderIntegratedProjectV10(budgetProjectIdV101);
+    } catch(e) {
+      console.error('예산 저장 트랜잭션 오류:', e);
+      alert('예산 저장 실패 (기존 데이터가 안전하게 보호되었습니다): ' + (e.message || e));
+    } finally {
+      if(saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '☁ 예산·정산 저장'; }
     }
-    await sb.from('project_history').insert({project_id:budgetProjectIdV101,action:'BUDGET_UPDATED',snapshot:{budget_items:rows},changed_by:uid});
-    clearBudgetDraftV101();
-    alert('예산·정산이 저장되었습니다.');
-    await renderIntegratedProjectV10(budgetProjectIdV101);
   }
 
   const V102_DRAFT_PREFIX='v102_form_draft_';
