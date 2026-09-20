@@ -6932,14 +6932,27 @@ function budgetStateV1471(planned,actual){
 function annualBudgetCardV1471(label,value,color){
   return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:9px;padding:14px"><div style="font-size:12px;color:#64748b">'+label+'</div><div style="font-size:22px;font-weight:700;color:'+(color||'#0f172a')+'">'+value+'</div></div>';
 }
-function switchAnnualBudgetV1471(){
-  if(typeof resetMainPanelsV127==='function')resetMainPanelsV127();
-  document.querySelectorAll('.form-section').forEach(section=>section.classList.remove('active'));
-  document.querySelectorAll('.mode-btn').forEach(button=>button.className='mode-btn');
-  const panel=document.getElementById('annual-budget-mode-v1471');if(panel)panel.style.display='block';
-  const button=document.getElementById('btn-mode-annual-budget-v1471');if(button)button.className='mode-btn active-db';
-  renderAnnualBudgetV1471();
-}
+// [예산탭 및 예산·지출 모드 전환 함수 누락 해결]
+  function switchAnnualBudgetV1471() {
+    resetMainPanelsV127();
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.className = 'mode-btn');
+    document.querySelectorAll('.form-section').forEach(sec => sec.classList.remove('active'));
+    
+    // 예산·지출 버튼 활성화 클래스 부여
+    const btn = document.getElementById('btn-mode-annual-budget-v1471');
+    if (btn) btn.className = 'mode-btn active-list';
+    
+    // 예산 영역 패널 표시
+    const annualPanel = document.getElementById('annual-budget-mode-v1471');
+    if (annualPanel) {
+      annualPanel.style.display = 'block';
+    }
+    
+    // 로그인 상태라면 연간 예산 목록 렌더링 호출
+    if (typeof renderAnnualBudgetV1471 === 'function') {
+      renderAnnualBudgetV1471();
+    }
+  }
 async function renderAnnualBudgetV1471(){
   const box=document.getElementById('annualBudgetTableV1471');
   if(!box)return;
