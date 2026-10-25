@@ -9098,5 +9098,57 @@ document.addEventListener('input',function(e){
  document.addEventListener('DOMContentLoaded',dailyRenderV197);
 })();
 </script>
+<!-- v19.8 employee activity reporting (read-only shared history, local annotations) -->
+<style>
+#activityModalV198{display:none;position:fixed;inset:0;z-index:100120;background:rgba(15,23,42,.6);align-items:center;justify-content:center}
+#activityModalV198 .activity-shell{width:min(970px,96vw);max-height:91vh;overflow:auto;background:white;padding:22px;border-radius:12px;box-sizing:border-box}
+#activityModalV198 .activity-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0}
+#activityModalV198 .activity-grid label{font-size:12px;color:#475569;font-weight:bold}
+#activityModalV198 .activity-grid input,#activityModalV198 .activity-grid select{margin-top:4px}
+#activityModalV198 .activity-report{white-space:pre-wrap;line-height:1.8;font-size:13px;border:1px solid #ddd;border-radius:8px;padding:16px;min-height:160px;background:#f8fafc}
+@media print{#activityModalV198{display:none!important}}
+</style>
+<div id="activityModalV198" class="no-print" role="dialog" aria-modal="true" aria-label="직원별 업무현황">
+  <div class="activity-shell">
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="margin:0">직원별 일일·주간 업무현황</h2><button type="button" class="btn btn-del" onclick="closeActivityV198()">닫기</button></div>
+   <p style="font-size:12px;color:#64748b;margin:8px 0">공동 DB에 저장된 실제 사업 활동이력을 읽어 초안을 생성합니다. 로그인 시간만으로 업무 수행을 판정하지 않습니다. 보고 내용은 제출 전 확인해 주세요.</p>
+   <div class="activity-grid">
+    <div><label for="activityEmployeeV198">조회 직원</label><select id="activityEmployeeV198"><option value="">내 계정</option></select></div>
+    <div><label for="activityPeriodV198">보고 단위</label><select id="activityPeriodV198" onchange="setActivityPeriodV198()"><option value="daily">일일 업무</option><option value="weekly">주간 업무</option></select></div>
+    <div><label for="activityDateV198">기준 날짜</label><input id="activityDateV198" type="date"></div>
+    <div style="display:flex;align-items:end"><button type="button" class="btn btn-plan" onclick="generateActivityV198()" style="width:100%">활동이력 불러오기</button></div>
+   </div>
+   <p id="activityStatusV198" style="font-size:12px;color:#475569"></p>
+   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+    <div><label style="font-size:12px;font-weight:bold">시스템 밖에서 수행한 업무 · 직접 보완</label><textarea id="activityManualV198" rows="5" placeholder="예: 시청 담당자 유선 협의, 교육 현장 준비, 직원 업무 지도 등" style="width:100%;margin-top:5px"></textarea><button type="button" class="btn btn-add" onclick="saveActivityNoteV198()">내 보완내용 저장(이 브라우저)</button></div>
+    <div><label style="font-size:12px;font-weight:bold">차기 업무계획 · 직접 보완</label><textarea id="activityNextV198" rows="5" placeholder="예: 교육 결과보고 검토, 다음 주 예산 편성" style="width:100%;margin-top:5px"></textarea></div>
+   </div>
+   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:13px 0"><button type="button" class="btn btn-result" onclick="composeActivityReportV198()">보완내용 반영</button><button type="button" class="btn btn-add" onclick="copyActivityV198()">보고서 복사</button><button type="button" class="btn btn-add" onclick="downloadActivityV198()">TXT 다운로드</button></div>
+   <div id="activityReportV198" class="activity-report" aria-live="polite">직원과 기간을 선택한 후 [활동이력 불러오기]를 눌러 주세요.</div>
+   <p style="font-size:11px;color:#64748b">※ 현재 시험판은 기존 DB의 project_history를 읽기만 하며 DB 구조를 변경하지 않습니다. 수동 보완 기록은 선택 직원별 공유 저장이 아닌 현재 브라우저에만 보관됩니다. 열람 가능한 직원 범위는 기존 Supabase RLS 정책을 따릅니다.</p>
+  </div>
+</div>
+<script>
+(function(){
+ 'use strict';
+ const ACTIONS={CREATE_PLAN:'사업계획서 작성',UPDATE_PLAN:'사업계획서 수정',BUDGET_UPDATED:'사업예산 수정',PLAN_BUDGET_UPDATED:'계획예산 수정',WORKFLOW_UPDATED:'사업 진행단계 변경',PROJECT_COMPLETED:'사업 완료',REVIEW_REQUESTED:'검토 요청',PROJECT_ARCHIVED:'사업 보관',ATTACHMENTS_UPDATED:'증빙·붙임파일 변경',LEDGER_SYNCED_TO_DOCUMENTS:'회계자료 문서 반영',BUDGET_EVIDENCE_REMOVED:'지출 증빙 변경',CANONICAL_DATA_SYNC:'사업 데이터 동기화'};
+ let activityCacheV198=[];let activityNamesV198={};let activityHeadingV198='';
+ const el=id=>document.getElementById(id);
+ const localDay=d=>{const x=new Date(d);return [x.getFullYear(),String(x.getMonth()+1).padStart(2,'0'),String(x.getDate()).padStart(2,'0')].join('-')};
+ const startWeek=d=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()-((x.getDay()+6)%7));return localDay(x)};
+ const noteKey=()=> 'activityNoteV198:'+String(v8User?.id||'unknown')+':'+el('activityPeriodV198').value+':'+el('activityDateV198').value;
+ window.openActivityV198=async function(){if(typeof v8User==='undefined'||!v8User)return alert('로그인 후 이용할 수 있습니다.');el('activityModalV198').style.display='flex';el('activityDateV198').value=localDay(new Date());await activityLoadEmployeesV198();await generateActivityV198()};
+ window.closeActivityV198=()=>el('activityModalV198').style.display='none';
+ async function activityLoadEmployeesV198(){const sel=el('activityEmployeeV198');sel.innerHTML='';const me=document.createElement('option');me.value=v8User.id;me.textContent=(typeof v81Profile!=='undefined'&&v81Profile?.name)||v8User.email||'내 계정';sel.append(me);activityNamesV198={[v8User.id]:me.textContent};if(typeof v81Profile!=='undefined'&&v81Profile?.role==='staff')return;try{const r=await sb.from('profiles').select('id,name,position').order('name');if(r.error)throw r.error;(r.data||[]).forEach(p=>{if(!p.id||p.id===v8User.id)return;activityNamesV198[p.id]=p.name||p.id;const o=document.createElement('option');o.value=p.id;o.textContent=(p.name||p.id)+(p.position?' · '+p.position:'');sel.append(o)})}catch(err){el('activityStatusV198').textContent='다른 직원 프로필 조회 제한: '+err.message}};
+ window.setActivityPeriodV198=()=>{el('activityStatusV198').textContent='조회 단위를 변경했습니다. 활동이력을 다시 불러와 주세요.'};
+ window.generateActivityV198=async function(){if(!v8User)return;const date=el('activityDateV198').value;if(!date)return alert('기준 날짜를 선택해 주세요.');const weekly=el('activityPeriodV198').value==='weekly';const start=weekly?startWeek(date):date;let next=new Date(start+'T00:00:00');next.setDate(next.getDate()+(weekly?7:1));const end=localDay(next);const uid=el('activityEmployeeV198').value||v8User.id;activityHeadingV198=(weekly?'주간':'일일')+' 업무현황 | '+start+(weekly?' ~ '+localDay(new Date(next.getTime()-86400000)):'')+' | '+(activityNamesV198[uid]||uid);el('activityStatusV198').textContent='공동 업무이력 조회 중...';activityCacheV198=[];try{const res=await sb.from('project_history').select('project_id,action,changed_at,changed_by').eq('changed_by',uid).gte('changed_at',start+'T00:00:00+09:00').lt('changed_at',end+'T00:00:00+09:00').order('changed_at',{ascending:true}).limit(500);if(res.error)throw res.error;activityCacheV198=res.data||[];const ids=[...new Set(activityCacheV198.map(x=>x.project_id).filter(Boolean))];let names={};if(ids.length){const pr=await sb.from('projects').select('id,project_name').in('id',ids);if(!pr.error)(pr.data||[]).forEach(p=>{names[p.id]=p.project_name})}activityCacheV198=activityCacheV198.map(r=>({...r,projectName:names[r.project_id]||'사업번호 '+(r.project_id||'미지정')}));el('activityStatusV198').textContent='조회 '+activityCacheV198.length+'건'+(activityCacheV198.length===500?' (최대 500건: 추가 조회 필요)':'')+' · 조회 가능한 DB 활동만 반영됩니다.'}catch(err){el('activityStatusV198').textContent='공동 이력 조회 실패: '+err.message+' · 보고서 생성에 실패한 상태입니다.';el('activityReportV198').textContent='DB 조회 오류로 자동완성할 수 없습니다.';return}el('activityManualV198').value=localStorage.getItem(noteKey())||'';composeActivityReportV198()};
+ window.saveActivityNoteV198=function(){localStorage.setItem(noteKey(),el('activityManualV198').value);composeActivityReportV198();el('activityStatusV198').textContent+=' · 이 브라우저에 보완내용 저장됨'};
+ window.composeActivityReportV198=function(){const lines=[activityHeadingV198,'','1. 시스템에 기록된 수행업무'];if(activityCacheV198.length){activityCacheV198.forEach(r=>{const time=new Date(r.changed_at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});lines.push('· '+time+' | '+r.projectName+' | '+(ACTIONS[r.action]||r.action||'기타 변경'))})}else lines.push('· 해당 기간에 조회된 시스템 활동이 없습니다. (업무 미수행을 의미하지 않음)');lines.push('','2. 시스템 외 수행업무 / 보완사항',el('activityManualV198').value.trim()||'· 별도 입력 없음','','3. 향후 추진사항',el('activityNextV198').value.trim()||'· 별도 입력 없음','','※ 자동수집 이력은 업무의 내용·소요시간을 완전하게 나타내지 않습니다. 제출 전 담당자가 확인하세요.');el('activityReportV198').textContent=lines.join('\n')};
+ window.copyActivityV198=async function(){try{await navigator.clipboard.writeText(el('activityReportV198').textContent);el('activityStatusV198').textContent='보고서 내용을 복사했습니다.'}catch(err){alert('복사 실패: '+err.message)}};
+ window.downloadActivityV198=function(){const blob=new Blob([el('activityReportV198').textContent],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='업무현황_'+el('activityDateV198').value+'.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+ function addActivityBtn(){const nav=document.querySelector('.mode-management-v170 .mode-group-items-v170')||document.querySelector('.mode-selector');if(!nav||document.getElementById('activityButtonV198'))return;const b=document.createElement('button');b.type='button';b.id='activityButtonV198';b.className='mode-btn';b.textContent='📝 일일·주간 업무현황';b.addEventListener('click',openActivityV198);nav.append(b)}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addActivityBtn);else addActivityBtn();
+})();
+</script>
 </body>
 </html>
