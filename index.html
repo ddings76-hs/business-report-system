@@ -582,6 +582,19 @@
         </div>
         <button class="btn btn-add" onclick="renderHomeV86()">새로고침</button>
       </div>
+      <section id="dailyTasksPanelV197" class="no-print" style="border:1px solid #bfdbfe;border-radius:12px;padding:15px;margin-top:15px;background:#f8fbff">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap"><div><h3 style="margin:0;color:#1d4ed8">📅 오늘의 업무 · 마감 알림</h3><div id="dailyStatusV197" style="font-size:12px;color:#475569;margin-top:4px"></div></div><button type="button" class="btn btn-plan" onclick="dailyToggleFormV197()">＋ 업무 추가</button></div>
+        <div id="dailyTaskFormV197" style="display:none;margin:12px 0;padding:12px;background:white;border:1px solid #cbd5e1;border-radius:8px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px">
+            <label style="font-size:12px">업무명<input id="dailyTitleV197" type="text" maxlength="160" placeholder="예: 사업 결과보고 검토" style="margin-top:4px" /></label>
+            <label style="font-size:12px">마감일<input id="dailyDueV197" type="date" style="margin-top:4px;padding:7px;width:100%;box-sizing:border-box" /></label>
+            <label style="font-size:12px">우선순위<select id="dailyPriorityV197" style="margin-top:4px"><option value="normal">보통</option><option value="high">중요</option></select></label>
+            <label style="font-size:12px">반복<select id="dailyRepeatV197" style="margin-top:4px"><option value="none">반복 없음</option><option value="daily">매일</option><option value="weekly">매주</option><option value="monthly">매월</option></select></label>
+          </div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button type="button" class="btn btn-add" onclick="dailyToggleFormV197(false)">취소</button><button type="button" class="btn btn-plan" onclick="dailyAddV197()">업무 저장</button></div>
+        </div>
+        <div id="dailyTaskListV197" aria-live="polite" style="margin-top:11px"></div>
+        <div style="font-size:11px;color:#64748b;margin-top:11px">시험 버전: 업무 알림은 현재 PC의 브라우저에 저장됩니다. 다른 PC·직원 계정과 자동 동기화되지 않으며, 브라우저 데이터 삭제 시 사라질 수 있습니다. 중요 업무는 별도 기록을 유지해 주세요.</div>
+      </section>
       <div id="homeCardsV86" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:16px 0;"></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;">
         <div style="border:1px solid #ddd;border-radius:9px;padding:14px;background:#fff;">
@@ -2425,7 +2438,60 @@ function attachmentRowsV167(values){
     const host=document.createElement('div');host.className='doc-output-export-v166';host.style.cssText='position:fixed;left:-10000px;top:0;width:170mm;visibility:hidden;';host.append(clone);document.body.append(host);
     let content;
     try{paginateDocumentCoversV166(clone);content=clone.innerHTML;}finally{host.remove();}
-    return "<!doctype html><html lang='ko' xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><title>"+esc(title||'문서')+"</title>"+style+"</head><body class='doc-output-export-v166'>"+content+"</body></html>";
+    return "<!doctype html><html lang='ko' xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><title>"+esc(title||'문서')+"</title>"+style+"</head><body class='doc-output-export-v166'>"+content+"<script>
+/* v19.7 Daily Work Planner: isolated prototype, local-only per authenticated account */
+(function(){
+ 'use strict';
+ const prefix='hsgc-daily-v197:';
+ const userKey=()=>prefix+(typeof v8User!=='undefined'&&v8User?.id?v8User.id:'guest');
+ const localDate=(d=new Date())=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+ const parseDate=s=>new Date(s+'T12:00:00');
+ const escTask=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function read(){try{const x=JSON.parse(localStorage.getItem(userKey())||'[]');return Array.isArray(x)?x.filter(o=>o&&typeof o.title==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(o.due)):[]}catch(_){return []}}
+ function save(rows){try{localStorage.setItem(userKey(),JSON.stringify(rows));return true}catch(e){alert('업무 저장 실패: 브라우저 저장 공간을 확인해 주세요.');return false}}
+ function activeDate(t,today){
+   if(t.repeat==='none')return t.due;
+   const original=parseDate(t.due),now=parseDate(today);
+   if(original>now)return t.due;
+   if(t.repeat==='daily')return today;
+   if(t.repeat==='weekly'){const days=Math.floor((now-original)/86400000);const n=Math.floor(days/7)*7;const next=new Date(original);next.setDate(next.getDate()+n);return localDate(next)}
+   if(t.repeat==='monthly'){
+     const day=original.getDate(),year=now.getFullYear(),month=now.getMonth();
+     let target=new Date(year,month,Math.min(day,new Date(year,month+1,0).getDate()),12);
+     if(target<original)target=original;
+     return localDate(target);
+   }
+   return t.due;
+ }
+ function dueStatus(t,today){
+   const d=activeDate(t,today),delta=Math.round((parseDate(d)-parseDate(today))/86400000);
+   const done=t.repeat==='none'?!!t.done:((t.doneDates||[]).includes(d));
+   return {d,delta,done};
+ }
+ window.dailyToggleFormV197=function(force){const el=document.getElementById('dailyTaskFormV197');if(!el)return;el.style.display=force===false?'none':el.style.display==='none'?'block':'none';if(el.style.display==='block')document.getElementById('dailyDueV197').value ||= localDate()};
+ window.dailyAddV197=function(){const title=document.getElementById('dailyTitleV197').value.trim(),due=document.getElementById('dailyDueV197').value;if(!title||!/^\d{4}-\d{2}-\d{2}$/.test(due))return alert('업무명과 마감일을 입력해 주세요.');const rows=read();rows.push({id:crypto?.randomUUID?.()||String(Date.now())+Math.random(),title,due,priority:document.getElementById('dailyPriorityV197').value,repeat:document.getElementById('dailyRepeatV197').value,done:false,doneDates:[]});if(save(rows)){document.getElementById('dailyTitleV197').value='';dailyToggleFormV197(false);dailyRenderV197()}};
+ window.dailyDoneV197=function(id,checked){const rows=read(),t=rows.find(x=>x.id===id);if(!t)return;const today=localDate(),date=activeDate(t,today);if(t.repeat==='none')t.done=checked;else{t.doneDates=Array.isArray(t.doneDates)?t.doneDates:[];t.doneDates=checked?[...new Set([...t.doneDates,date])]:t.doneDates.filter(x=>x!==date)}if(save(rows))dailyRenderV197()};
+ window.dailyDeleteV197=function(id){if(!confirm('이 업무를 삭제하시겠습니까?'))return;const rows=read().filter(x=>x.id!==id);if(save(rows))dailyRenderV197()};
+ window.dailyRenderV197=function(){
+   const box=document.getElementById('dailyTaskListV197'),status=document.getElementById('dailyStatusV197');if(!box||!status)return;
+   const today=localDate(),rows=read().map(t=>({...t,s:dueStatus(t,today)}));
+   const pending=rows.filter(x=>!x.s.done),urgent=pending.filter(x=>x.s.delta<0),due=pending.filter(x=>x.s.delta===0),soon=pending.filter(x=>x.s.delta>0&&x.s.delta<=7);
+   status.textContent=`기한 초과 ${urgent.length}건 · 오늘 ${due.length}건 · 7일 이내 ${soon.length}건 · 전체 ${rows.length}건`;
+   const sorted=rows.sort((a,b)=>Number(a.s.done)-Number(b.s.done)||a.s.delta-b.s.delta||(b.priority==='high')-(a.priority==='high'));
+   box.innerHTML=sorted.length?sorted.map(t=>{
+     const s=t.s,label=s.done?'완료':s.delta<0?'기한 초과 '+(-s.delta)+'일':s.delta===0?'오늘 마감':s.delta<=7?'D-'+s.delta:t.s.due;
+     return `<div style="display:flex;align-items:center;gap:9px;padding:9px 3px;border-bottom:1px solid #dbeafe;opacity:${s.done?'.55':'1'}"><input aria-label="업무 완료" type="checkbox" data-complete-id="${escTask(t.id)}" ${s.done?'checked':''} style="width:18px;height:18px;flex:none"><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow-wrap:anywhere;${s.done?'text-decoration:line-through;':''}">${escTask(t.title)} ${t.priority==='high'?'<span style="font-size:10px;color:#b91c1c">● 중요</span>':''}</div><div style="font-size:11px;color:${s.delta<0&&!s.done?'#b91c1c':'#64748b'}">${escTask(label)} · ${escTask(s.d)}${t.repeat!=='none'?' · 반복':''}</div></div><button type="button" class="btn btn-del" data-delete-id="${escTask(t.id)}" style="padding:4px 7px">삭제</button></div>`;
+   }).join(''):'<div style="font-size:13px;color:#64748b;padding:13px 2px">등록된 업무가 없습니다. ＋ 업무 추가를 눌러 첫 업무를 등록하세요.</div>';
+ };
+ document.addEventListener('change',e=>{const id=e.target?.getAttribute?.('data-complete-id');if(id)dailyDoneV197(id,!!e.target.checked)});
+ document.addEventListener('click',e=>{const btn=e.target?.closest?.('[data-delete-id]');if(btn)dailyDeleteV197(btn.getAttribute('data-delete-id'))});
+ const original=window.switchModeV86Home;
+ if(typeof original==='function')window.switchModeV86Home=function(...args){const r=original.apply(this,args);setTimeout(dailyRenderV197,0);return r};
+ document.addEventListener('DOMContentLoaded',dailyRenderV197);
+})();
+</script>
+
+</body></html>";
   }
 
   function printDoc(targetId) {
