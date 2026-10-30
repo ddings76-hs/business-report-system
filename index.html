@@ -748,7 +748,7 @@
     <div id="p-sub-section-1" class="sub-section active">
       <div id="standardPlanV106" style="border:2px solid #1f4e8c;border-radius:10px;padding:16px;margin-bottom:18px;background:#fff">
         <h2 style="margin:0 0 8px;color:#173f78">Ⅰ. 사업 개요</h2>
-        <div style="font-size:12px;color:#666;margin-bottom:12px">입력한 내용은 내부기안문과 사업계획서에 동일하게 반영됩니다.</div>
+        <div style="font-size:12px;color:#666;margin-bottom:12px">항목명과 내용을 수정할 수 있습니다. 삭제한 항목은 입력값을 보존한 채 기안문·계획서 출력과 필수입력 검사에서 제외되며 다시 복원할 수 있습니다.</div>
         <table style="width:100%;border-collapse:collapse">
           <tbody id="standardPlanBodyV106">
             <tr><th style="border:1px solid #bbb;padding:8px;width:180px">사업명</th><td style="border:1px solid #bbb;padding:6px"><input id="sp_project_name" style="width:100%" placeholder="사업명을 입력하세요"></td></tr>
@@ -765,6 +765,7 @@
             <tr><th style="border:1px solid #bbb;padding:8px">평가·환류 계획</th><td style="border:1px solid #bbb;padding:6px"><textarea id="sp_evaluation_plan" style="width:100%;min-height:55px"></textarea></td></tr>
           </tbody>
         </table>
+        <div id="standardPlanRestoreV200" style="display:none;margin-top:9px;padding:9px;border:1px dashed #94a3b8;border-radius:6px;background:#f8fafc"></div>
         <div style="margin-top:9px"><button type="button" class="btn btn-add" onclick="addCustomPlanFieldV106()">＋ 추가항목</button></div>
         <div id="customPlanFieldsV106" style="margin-top:8px"></div>
       </div>
@@ -1889,17 +1890,17 @@ function attachmentRowsV167(values){
     const stdCheck=(typeof getStandardPlanV106==='function'?getStandardPlanV106():{})||{};
     const requiredPlan=[
       ['사업명',stdCheck.project_name,'sp_project_name'],
-      ['운영일시',stdCheck.operation_date,'sp_operation_date'],
-      ['참여대상',stdCheck.target_group,'sp_target_group']
-    ];
+      [planFieldLabelV200('operation_date'),stdCheck.operation_date,'sp_operation_date','operation_date'],
+      [planFieldLabelV200('target_group'),stdCheck.target_group,'sp_target_group','target_group']
+    ].filter(row=>!row[3]||planFieldVisibleV200(row[3]));
     const missPlan=requiredPlan.find(x=>!String(x[1]??'').trim());
     if(missPlan){
       alert(missPlan[0]+'을(를) 입력해 주세요.');
       const el=document.getElementById(missPlan[2]);if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}
       return;
     }
-    if(Number(stdCheck.planned_participants||0)<=0){
-      alert('계획인원을 1명 이상 입력해 주세요.');
+    if(planFieldVisibleV200('planned_participants')&&Number(stdCheck.planned_participants||0)<=0){
+      alert(planFieldLabelV200('planned_participants')+'을(를) 1명 이상 입력해 주세요.');
       const el=document.getElementById('sp_planned_participants');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}
       return;
     }
@@ -1922,19 +1923,13 @@ function attachmentRowsV167(values){
     const value=(id,text)=>{const el=document.getElementById(id);if(el)el.innerText=text||'';};
 
     const standardOverviewRows = [
-      ['사업명', stdPlan.project_name],
-      ['사업분야', stdPlan.business_area],
-      ['추진배경 및 필요성', stdPlan.background],
-      ['사업목적', stdPlan.purpose],
-      ['기대효과', stdPlan.expected_effect],
-      ['운영일시', stdPlan.operation_date],
-      ['참여대상', stdPlan.target_group],
-      ['계획인원', (stdPlan.planned_participants === '' || stdPlan.planned_participants == null) ? '' : Number(stdPlan.planned_participants || 0) + '명'],
-      ['주요내용', stdPlan.content],
-      ['운영장소', stdPlan.location],
-      ['운영방법', stdPlan.operation_method],
-      ['평가·환류 계획', stdPlan.evaluation_plan]
-    ];
+      ['project_name', stdPlan.project_name],['business_area', stdPlan.business_area],
+      ['background', stdPlan.background],['purpose', stdPlan.purpose],['expected_effect', stdPlan.expected_effect],
+      ['operation_date', stdPlan.operation_date],['target_group', stdPlan.target_group],
+      ['planned_participants', (stdPlan.planned_participants === '' || stdPlan.planned_participants == null) ? '' : Number(stdPlan.planned_participants || 0) + '명'],
+      ['content', stdPlan.content],['location', stdPlan.location],['operation_method', stdPlan.operation_method],
+      ['evaluation_plan', stdPlan.evaluation_plan]
+    ].filter(([key])=>planFieldVisibleV200(key)).map(([key,value])=>[planFieldLabelV200(key),value]);
     const customOverviewRows=(stdPlan.custom_fields||[]).map(x=>[x.label||'',x.value||'']).filter(x=>x[0]&&String(x[1]??'').trim());
     const overviewRows=standardOverviewRows.concat(customOverviewRows);
 
@@ -1942,23 +1937,25 @@ function attachmentRowsV167(values){
       `<tr><th class="td-center">${esc(k)}</th><td style="line-height:1.65;">${generatedTextHtmlV164(v)}</td></tr>`
     ).join('')+'</tbody>';
 
-    const targetText=[stdPlan.target_group,Number(stdPlan.planned_participants||0)>0?Number(stdPlan.planned_participants)+'명':''].filter(Boolean).join(' ');
+    const targetText=[planFieldVisibleV200('target_group')?stdPlan.target_group:'',planFieldVisibleV200('planned_participants')&&Number(stdPlan.planned_participants||0)>0?Number(stdPlan.planned_participants)+'명':''].filter(Boolean).join(' ');
+    const targetDraftVisible=planFieldVisibleV200('target_group')||planFieldVisibleV200('planned_participants');
+    const targetDraftLabel=planFieldVisibleV200('target_group')?planFieldLabelV200('target_group'):planFieldLabelV200('planned_participants');
     const customDraftRows=(stdPlan.custom_fields||[]).map(x=>[x.label||'',x.value||'']).filter(x=>x[0]&&String(x[1]??'').trim());
     const draftBudget=calcPlanBudget();
     let draftItems = [
-      ['사업명', cleanGeneratedTextV164(stdPlan.project_name)],
-      ['사업목적', paragraphGeneratedTextV164(stdPlan.purpose)],
-      ['운영일시', cleanGeneratedTextV164(stdPlan.operation_date)],
-      ['대상', cleanGeneratedTextV164(targetText)],
-      ['장소', cleanGeneratedTextV164(stdPlan.location)],
-      ['주요내용', paragraphGeneratedTextV164(stdPlan.content)],
-      ...customDraftRows,
-      ['소요예산', draftBudget>0?koreanMoneyV134(draftBudget):'없음'],
-      ['재원', draftBudget>0?(officialResourceV1484(document.getElementById('p_budgetSource').value,document.getElementById('p_budgetCategory').value)||'미입력'):'해당 없음']
-    ];
+      ['project_name',planFieldLabelV200('project_name'),cleanGeneratedTextV164(stdPlan.project_name)],
+      ['purpose',planFieldLabelV200('purpose'),paragraphGeneratedTextV164(stdPlan.purpose)],
+      ['operation_date',planFieldLabelV200('operation_date'),cleanGeneratedTextV164(stdPlan.operation_date)],
+      ['target_summary',targetDraftLabel,cleanGeneratedTextV164(targetText)],
+      ['location',planFieldLabelV200('location'),cleanGeneratedTextV164(stdPlan.location)],
+      ['content',planFieldLabelV200('content'),paragraphGeneratedTextV164(stdPlan.content)],
+      ...customDraftRows.map(row=>['custom',row[0],row[1]]),
+      ['budget','소요예산',draftBudget>0?koreanMoneyV134(draftBudget):'없음'],
+      ['resource','재원',draftBudget>0?(officialResourceV1484(document.getElementById('p_budgetSource').value,document.getElementById('p_budgetCategory').value)||'미입력'):'해당 없음']
+    ].filter(([key])=>['custom','budget','resource'].includes(key)||(key==='target_summary'?targetDraftVisible:planFieldVisibleV200(key)));
     const ga = ['가','나','다','라','마','바','사','아','자','차','카','타','파','하'];
-    draftItems.filter(x=>x[1]).forEach((x,i)=>{
-      summary += `<div class="doc-list-item">${ga[i]||String(i+1)}. ${esc(x[0])} : ${generatedTextHtmlV164(x[1])}</div>`;
+    draftItems.filter(x=>x[2]).forEach((x,i)=>{
+      summary += `<div class="doc-list-item">${ga[i]||String(i+1)}. ${esc(x[1])} : ${generatedTextHtmlV164(x[2])}</div>`;
     });
     const yearMatch=String(stdPlan.operation_date||'').match(/(?:19|20)\d{2}/),planYear=yearMatch?yearMatch[0]:String(new Date().getFullYear());
     const titledName=/^(?:19|20)\d{2}/.test(firstProjName)?firstProjName:planYear+' '+firstProjName;
@@ -4258,6 +4255,57 @@ function attachmentRowsV167(values){
     try{await renderIntegratedProjectV105(projectId);}catch(e){console.error('v10.5 canonical render',e);}
   };
 
+  const STANDARD_PLAN_FIELDS_V200=[
+    ['project_name','sp_project_name','사업명'],['business_area','sp_business_area','사업분야(영역)'],
+    ['background','sp_background','추진배경 및 필요성'],['purpose','sp_purpose','사업목적'],
+    ['expected_effect','sp_expected_effect','기대효과'],['operation_date','sp_operation_date','운영일시'],
+    ['target_group','sp_target_group','참여대상'],['planned_participants','sp_planned_participants','계획인원'],
+    ['content','sp_content','주요내용'],['location','sp_location','운영장소'],
+    ['operation_method','sp_operation_method','운영방법'],['evaluation_plan','sp_evaluation_plan','평가·환류 계획']
+  ];
+  let standardPlanSettingsV200={};
+  function standardPlanSettingV200(key){
+    const base=STANDARD_PLAN_FIELDS_V200.find(row=>row[0]===key);
+    const saved=standardPlanSettingsV200[key]||{};
+    return {label:String(saved.label||base?.[2]||key),visible:saved.visible!==false};
+  }
+  function planFieldVisibleV200(key){return standardPlanSettingV200(key).visible;}
+  function planFieldLabelV200(key){return standardPlanSettingV200(key).label;}
+  function updateStandardPlanLabelV200(key,value){
+    const fallback=STANDARD_PLAN_FIELDS_V200.find(row=>row[0]===key)?.[2]||key;
+    standardPlanSettingsV200[key]={...standardPlanSettingV200(key),label:String(value||'').trim()||fallback};
+  }
+  function hideStandardPlanFieldV200(key){
+    standardPlanSettingsV200[key]={...standardPlanSettingV200(key),visible:false};
+    renderStandardPlanSettingsV200();
+  }
+  function restoreStandardPlanFieldV200(key){
+    standardPlanSettingsV200[key]={...standardPlanSettingV200(key),visible:true};
+    renderStandardPlanSettingsV200();
+  }
+  function mountStandardPlanEditorV200(){
+    STANDARD_PLAN_FIELDS_V200.forEach(([key,id])=>{
+      const control=document.getElementById(id),row=control?.closest('tr'),th=row?.querySelector('th');
+      if(!control||!row||!th)return;
+      row.dataset.standardPlanKey=key;
+      if(!th.querySelector('.sp-label-v200')){
+        th.innerHTML=`<div style="display:flex;gap:5px;align-items:center"><input class="sp-label-v200" aria-label="항목명" style="min-width:0;flex:1;font-weight:bold;text-align:center" oninput="updateStandardPlanLabelV200('${key}',this.value)"><button type="button" class="btn btn-del" style="padding:4px 7px;white-space:nowrap" onclick="hideStandardPlanFieldV200('${key}')">삭제</button></div>`;
+      }
+      const label=th.querySelector('.sp-label-v200');
+      if(label&&label!==document.activeElement)label.value=planFieldLabelV200(key);
+    });
+    renderStandardPlanSettingsV200();
+  }
+  function renderStandardPlanSettingsV200(){
+    STANDARD_PLAN_FIELDS_V200.forEach(([key,id])=>{
+      const row=document.getElementById(id)?.closest('tr');if(row)row.style.display=planFieldVisibleV200(key)?'table-row':'none';
+    });
+    const hidden=STANDARD_PLAN_FIELDS_V200.filter(([key])=>!planFieldVisibleV200(key));
+    const box=document.getElementById('standardPlanRestoreV200');if(!box)return;
+    box.style.display=hidden.length?'block':'none';
+    box.innerHTML=hidden.length?'<b style="font-size:12px">삭제한 항목</b> <span style="font-size:11px;color:#64748b">입력값은 보존되며 출력에서 제외됩니다.</span><div style="margin-top:5px">'+hidden.map(([key])=>`<button type="button" class="btn btn-add" style="margin:3px;padding:4px 8px" onclick="restoreStandardPlanFieldV200('${key}')">↩ ${esc(planFieldLabelV200(key))} 복원</button>`).join('')+'</div>':'';
+  }
+
   let customPlanFieldsV106=[];
   function v106Val(id){return document.getElementById(id)?.value?.trim()||'';}
   function addCustomPlanFieldV106(label='',value=''){
@@ -4285,6 +4333,7 @@ function attachmentRowsV167(values){
     location:v106Val('sp_location'),
     operation_method:v106Val('sp_operation_method'),
     evaluation_plan:v106Val('sp_evaluation_plan'),
+    field_settings:Object.fromEntries(STANDARD_PLAN_FIELDS_V200.map(([key])=>[key,standardPlanSettingV200(key)])),
     custom_fields:customPlanFieldsV106.map(x=>({label:x.label||'',value:x.value||''})).filter(x=>x.label||x.value)
    };
   }
@@ -4294,6 +4343,8 @@ function attachmentRowsV167(values){
    set('sp_expected_effect',std.expected_effect); set('sp_operation_date',std.operation_date); set('sp_target_group',std.target_group);
    set('sp_planned_participants',std.planned_participants??''); set('sp_content',std.content); set('sp_location',std.location);
    set('sp_operation_method',std.operation_method); set('sp_evaluation_plan',std.evaluation_plan);
+   standardPlanSettingsV200=std.field_settings&&typeof std.field_settings==='object'?JSON.parse(JSON.stringify(std.field_settings)):{};
+   mountStandardPlanEditorV200();
    customPlanFieldsV106=Array.isArray(std.custom_fields)?std.custom_fields.map(x=>({id:'cpf_'+Math.random().toString(36).slice(2),label:x.label||'',value:x.value||''})):[];
    renderCustomPlanFieldsV106();
   }
@@ -4460,6 +4511,7 @@ function attachmentRowsV167(values){
   };
   document.addEventListener('DOMContentLoaded',()=>{
     hideDuplicateLegacyOverviewV1061();
+    mountStandardPlanEditorV200();
     const p=document.getElementById('standardPlanV106');
     if(p)p.addEventListener('input',syncStandardToLegacyV1061,true);
   });
@@ -9148,6 +9200,40 @@ document.addEventListener('input',function(e){
  window.downloadActivityV198=function(){const blob=new Blob([el('activityReportV198').textContent],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='업무현황_'+el('activityDateV198').value+'.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
  function addActivityBtn(){const nav=document.querySelector('.mode-management-v170 .mode-group-items-v170')||document.querySelector('.mode-selector');if(!nav||document.getElementById('activityButtonV198'))return;const b=document.createElement('button');b.type='button';b.id='activityButtonV198';b.className='mode-btn';b.textContent='📝 일일·주간 업무현황';b.addEventListener('click',openActivityV198);nav.append(b)}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addActivityBtn);else addActivityBtn();
+})();
+</script>
+<script>
+// ===== v20.0: 기안문 빈 항목 제거 및 사업개요 항목 편집 보완 =====
+(function(){
+  'use strict';
+  function cleanEmptyPlanDraftItemsV200(){
+    const summary=document.getElementById('out_p_overview_summary');if(!summary)return 0;
+    let removed=0;
+    summary.querySelectorAll(':scope > .doc-list-item').forEach(item=>{
+      const name=item.querySelector('.doc-list-name-v165')?.textContent?.trim()||'';
+      const value=item.querySelector('.doc-list-value-v165')?.textContent?.replace(/\u00a0/g,' ')?.trim()||'';
+      const raw=item.textContent.replace(/\u00a0/g,' ').replace(/^\s*(?:[가-하]|\d+)\.\s*/,'').replace(/^\s*[:：]\s*/,'').trim();
+      if((item.querySelector('.doc-list-name-v165')&&!name&&!value)||(!item.querySelector('.doc-list-name-v165')&&!raw)){
+        item.remove();removed++;
+      }
+    });
+    if(removed&&typeof renumberPlanDraftItemsV1543==='function')renumberPlanDraftItemsV1543();
+    return removed;
+  }
+  window.cleanEmptyPlanDraftItemsV200=cleanEmptyPlanDraftItemsV200;
+  const finishBase=window.finishPlanDraftEditV1543;
+  if(typeof finishBase==='function')window.finishPlanDraftEditV1543=function(){
+    cleanEmptyPlanDraftItemsV200();
+    return finishBase.apply(this,arguments);
+  };
+  const deleteBase=window.deletePlanDraftItemV1543;
+  if(typeof deleteBase==='function')window.deletePlanDraftItemV1543=function(){
+    const result=deleteBase.apply(this,arguments);
+    cleanEmptyPlanDraftItemsV200();
+    return result;
+  };
+  const initialize=()=>{if(typeof mountStandardPlanEditorV200==='function')mountStandardPlanEditorV200();};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize);else initialize();
 })();
 </script>
 </body>
