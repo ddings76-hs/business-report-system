@@ -1988,11 +1988,11 @@ function attachmentRowsV167(values){
       group:row.querySelector('.p-sch-group-v161')?.value?.trim()||'',
       content:row.querySelector('.p-sch-val')?.value?.trim()||''
     })).filter(row=>row.schedule||row.group||row.content);
-    let sRows=scheduleRowsV161.map(row=>`<tr><td class="td-center">${generatedTextHtmlV164(row.schedule)}</td><td class="td-center">${generatedTextHtmlV164(row.group)}</td><td>${generatedTextHtmlV164(row.content)}</td></tr>`).join('');
+    let sRows=scheduleRowsV161.map(row=>`<tr><td class="td-center" style="white-space:nowrap;word-break:keep-all;overflow-wrap:normal;font-size:9.8pt;letter-spacing:-0.03em">${generatedTextHtmlV164(row.schedule)}</td><td class="td-center" style="word-break:keep-all">${generatedTextHtmlV164(row.group)}</td><td style="word-break:keep-all">${generatedTextHtmlV164(row.content)}</td></tr>`).join('');
     const scheduleKeyTitleV15410=document.getElementById('p_schedule_key_title_v15410')?.value.trim()||'일정';
     const scheduleGroupTitleV161=document.getElementById('p_schedule_group_title_v161')?.value.trim()||'구분';
     const scheduleContentTitleV161=document.getElementById('p_schedule_content_title_v161')?.value.trim()||'내용';
-    let sTbl='<thead><tr><th>'+esc(scheduleKeyTitleV15410)+'</th><th>'+esc(scheduleGroupTitleV161)+'</th><th>'+esc(scheduleContentTitleV161)+'</th></tr></thead><tbody>'+(sRows||'<tr><td colspan="3" class="td-center">작성된 세부 일정이 없습니다.</td></tr>')+'</tbody>';
+    let sTbl='<colgroup><col style="width:23%"><col style="width:21%"><col style="width:56%"></colgroup><thead><tr><th>'+esc(scheduleKeyTitleV15410)+'</th><th>'+esc(scheduleGroupTitleV161)+'</th><th>'+esc(scheduleContentTitleV161)+'</th></tr></thead><tbody>'+(sRows||'<tr><td colspan="3" class="td-center">작성된 세부 일정이 없습니다.</td></tr>')+'</tbody>';
     document.getElementById('out_p_sched_table').innerHTML = sTbl;
     document.getElementById('out_p_schedule_block').style.display = window.planScheduleVisible === false ? 'none' : 'block';
     document.getElementById('out_p_program_schedule_section').style.display =
@@ -9236,5 +9236,23 @@ document.addEventListener('input',function(e){
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize);else initialize();
 })();
 </script>
+<style id="schedule-date-layout-v201">
+/* v20.1 세부 일정표: 날짜가 숫자·월·일 중간에서 잘리지 않도록 보정 */
+body .doc-sheet .output-schedule-v161 th:nth-child(1){width:23% !important;}
+body .doc-sheet .output-schedule-v161 th:nth-child(2){width:21% !important;}
+body .doc-sheet .output-schedule-v161 th:nth-child(3){width:56% !important;}
+body .doc-sheet .output-schedule-v161 td:nth-child(1){
+  white-space:nowrap !important;
+  word-break:keep-all !important;
+  overflow-wrap:normal !important;
+  letter-spacing:-0.03em;
+  font-size:9.8pt !important;
+}
+body .doc-sheet .output-schedule-v161 td:nth-child(2),
+body .doc-sheet .output-schedule-v161 td:nth-child(3){
+  word-break:keep-all !important;
+  overflow-wrap:break-word !important;
+}
+</style>
 </body>
 </html>
